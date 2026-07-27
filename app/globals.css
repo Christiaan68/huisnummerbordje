@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Donker "gietijzer/emaille-oven"-fond — het product (de crème/witte
+       plaquette) springt hier letterlijk uit, zoals een bordje aan een
+       gevel in avondlicht. */
+    --background: 165 14% 9%;
+    --foreground: 42 28% 93%;
+
+    --card: 165 12% 13%;
+    --card-foreground: 42 28% 93%;
+
+    /* Koper: de metalen rand/bevestiging van een emaille bordje —
+       bewust géén terracotta. */
+    --primary: 22 52% 42%;
+    --primary-foreground: 42 30% 97%;
+
+    --secondary: 165 10% 18%;
+    --secondary-foreground: 42 28% 93%;
+
+    --muted: 165 10% 16%;
+    --muted-foreground: 42 12% 68%;
+
+    --accent: 150 22% 28%;
+    --accent-foreground: 42 28% 93%;
+
+    --destructive: 6 55% 40%;
+    --destructive-foreground: 42 30% 97%;
+
+    --border: 165 10% 22%;
+    --input: 165 10% 22%;
+    --ring: 22 52% 42%;
+
+    /* De emaille plaquette zelf: warm porselein-wit */
+    --plate: 42 32% 94%;
+    --plate-foreground: 200 30% 14%;
+
+    --radius: 0.25rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
