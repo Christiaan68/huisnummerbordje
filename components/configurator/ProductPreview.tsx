@@ -1,5 +1,6 @@
 "use client";
 
+import { useLayoutEffect, useRef } from "react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import {
   productShapes,
@@ -21,6 +22,8 @@ function getContrastTextColor(hex: string): string {
 
 export function ProductPreview() {
   const { selection } = useConfigurator();
+  const plateRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
 
   const shape = productShapes.find((s) => s.id === selection.shapeId);
   const color = productColors.find((c) => c.id === selection.colorId);
@@ -28,13 +31,9 @@ export function ProductPreview() {
   const font = productFonts.find((f) => f.id === selection.fontId);
 
   const isOval = shape?.id === "ovaal";
-  // Verhouding van de gekozen maat; zonder maat een neutraal vierkant.
   const ratio = size ? size.width / size.height : 1;
   const textColor = color ? getContrastTextColor(color.hex) : undefined;
   const fontFamily = font?.cssFamily ?? "var(--font-fraunces), Georgia, serif";
-  // Schaalt elke ingetypte mm-waarde naar een passende preview-lettergrootte.
-  // Regels hebben een kleinere mm-range dan het huisnummer, dus een lagere
-  // schaalfactor om de preview verhoudingsgewijs kloppend te houden.
   const toPreviewSize = (mm: number | null, fallback: number, scale: number) =>
     mm ? mm * scale : fallback;
   const numberFontSize = toPreviewSize(selection.numberSizeMm, 34, 0.5);
@@ -43,7 +42,35 @@ export function ProductPreview() {
 
   const hasLine1 = (shape?.extraLines ?? 0) >= 1;
   const hasLine2 = (shape?.extraLines ?? 0) >= 2;
-  const isCurved = selection.finish !== "vlak"; // toon glans als standaard totdat vlak expliciet gekozen is
+  const isCurved = selection.finish !== "vlak";
+
+  // Meet na elke render de daadwerkelijke positie van het tekstblok en
+  // corrigeer 'm zodat hij precies verticaal gecentreerd staat in de
+  // plaquette. Dit werkt betrouwbaar voor élk lettertype/elke grootte,
+  // in tegenstelling tot een vast percentage (lettertypes verschillen
+  // onderling in hoeveel "lucht" ze boven/onder de tekst laten).
+ const opticalCorrectionByFont: Record<string, number> = {
+    classic: 0.14,
+    elegant: 0.16,
+    modern: 0,
+    industrial: 0,
+  };
+  const opticalCorrection =
+    (opticalCorrectionByFont[font?.id ?? ""] ?? 0) * numberFontSize;
+
+  useLayoutEffect(() => {
+    const plate = plateRef.current;
+    const text = textRef.current;
+    if (!plate || !text) return;
+
+    text.style.transform = "translateY(0px)";
+    const plateRect = plate.getBoundingClientRect();
+    const textRect = text.getBoundingClientRect();
+    const plateCenterY = plateRect.top + plateRect.height / 2;
+    const textCenterY = textRect.top + textRect.height / 2;
+    const delta = plateCenterY - textCenterY - opticalCorrection;
+    text.style.transform = `translateY(${delta}px)`;
+  });
 
   return (
     <div className="lg:sticky lg:top-10">
@@ -53,6 +80,7 @@ export function ProductPreview() {
 
       <div className="mx-auto w-full max-w-[260px]">
         <div
+          ref={plateRef}
           className={cn(
             "relative flex flex-col items-center justify-center border-[6px] p-6 text-center shadow-[0_20px_35px_rgba(0,0,0,0.35)] transition-all duration-300",
             !color && "bg-secondary"
@@ -65,10 +93,7 @@ export function ProductPreview() {
             color: textColor,
           }}
         >
-          <div
-            className="flex w-full flex-col items-center justify-center gap-2"
-            style={{ transform: `translateY(-${numberFontSize * 0.05}px)` }}
-          >
+          <div ref={textRef} className="flex w-full flex-col items-center gap-2">
             <span
               className="leading-none"
               style={{ fontFamily, fontSize: `${numberFontSize}px` }}
