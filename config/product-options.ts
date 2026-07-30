@@ -84,34 +84,34 @@ export const productColors: ProductColor[] = [
 export const productSizes: ProductSize[] = [
   // Vorm: Huisnummer (0 regels)
   { id: "nummer-105x105", shapeId: "nummer", name: "105 × 105 mm", width: 105, height: 105, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
-  { id: "nummer-105x120", shapeId: "nummer", name: "105 × 120 mm", width: 105, height: 120, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
-  { id: "nummer-105x148", shapeId: "nummer", name: "105 × 148 mm", width: 105, height: 148, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
-  { id: "nummer-105x210", shapeId: "nummer", name: "105 × 210 mm", width: 105, height: 210, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
+  { id: "nummer-105x120", shapeId: "nummer", name: "105 × 120 mm", width: 120, height: 105, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
+  { id: "nummer-105x148", shapeId: "nummer", name: "105 × 148 mm", width: 148, height: 105, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
+  { id: "nummer-105x210", shapeId: "nummer", name: "105 × 210 mm", width: 210, height: 105, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
   { id: "nummer-148x148", shapeId: "nummer", name: "148 × 148 mm", width: 148, height: 148, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
-  { id: "nummer-148x210", shapeId: "nummer", name: "148 × 210 mm", width: 148, height: 210, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
+  { id: "nummer-148x210", shapeId: "nummer", name: "148 × 210 mm", width: 210, height: 148, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
   { id: "nummer-210x210", shapeId: "nummer", name: "210 × 210 mm", width: 210, height: 210, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
-  { id: "nummer-210x297", shapeId: "nummer", name: "210 × 297 mm", width: 210, height: 297, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
+  { id: "nummer-210x297", shapeId: "nummer", name: "210 × 297 mm", width: 297, height: 210, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
 
   // Vorm: Huisnummer + 1 regel
   { id: "1regel-148x148", shapeId: "nummer-1regel", name: "148 × 148 mm", width: 148, height: 148, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
-  { id: "1regel-148x210", shapeId: "nummer-1regel", name: "148 × 210 mm", width: 148, height: 210, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
+  { id: "1regel-148x210", shapeId: "nummer-1regel", name: "148 × 210 mm", width: 210, height: 148, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
   { id: "1regel-210x210", shapeId: "nummer-1regel", name: "210 × 210 mm", width: 210, height: 210, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
-  { id: "1regel-210x297", shapeId: "nummer-1regel", name: "210 × 297 mm", width: 210, height: 297, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
-  { id: "1regel-250x200", shapeId: "nummer-1regel", name: "250 × 200 mm", width: 250, height: 200, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
+  { id: "1regel-210x297", shapeId: "nummer-1regel", name: "210 × 297 mm", width: 297, height: 210, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
+  { id: "1regel-250x200", shapeId: "nummer-1regel", name: "250 × 200 mm", width: 200, height: 250, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
 
   // Vorm: Huisnummer + 2 regels
   { id: "2regels-148x148", shapeId: "nummer-2regels", name: "148 × 148 mm", width: 148, height: 148, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
-  { id: "2regels-148x210", shapeId: "nummer-2regels", name: "148 × 210 mm", width: 148, height: 210, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
+  { id: "2regels-148x210", shapeId: "nummer-2regels", name: "148 × 210 mm", width: 210, height: 148, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
   { id: "2regels-210x210", shapeId: "nummer-2regels", name: "210 × 210 mm", width: 210, height: 210, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
-  { id: "2regels-210x297", shapeId: "nummer-2regels", name: "210 × 297 mm", width: 210, height: 297, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
-  { id: "2regels-250x200", shapeId: "nummer-2regels", name: "250 × 200 mm", width: 250, height: 200, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
+  { id: "2regels-210x297", shapeId: "nummer-2regels", name: "210 × 297 mm", width: 297, height: 210, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
+  { id: "2regels-250x200", shapeId: "nummer-2regels", name: "250 × 200 mm", width: 200, height: 250, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
 
   // Vorm: Ovaal (alleen gewelfd)
-  { id: "ovaal-105x150", shapeId: "ovaal", name: "105 × 150 mm", width: 105, height: 150, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
-  { id: "ovaal-125x175", shapeId: "ovaal", name: "125 × 175 mm", width: 125, height: 175, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
-  { id: "ovaal-143x183", shapeId: "ovaal", name: "143 × 183 mm", width: 143, height: 183, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
-  { id: "ovaal-160x210", shapeId: "ovaal", name: "160 × 210 mm", width: 160, height: 210, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
-  { id: "ovaal-220x300", shapeId: "ovaal", name: "220 × 300 mm", width: 220, height: 300, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
+  { id: "ovaal-105x150", shapeId: "ovaal", name: "105 × 150 mm", width: 150, height: 105, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
+  { id: "ovaal-125x175", shapeId: "ovaal", name: "125 × 175 mm", width: 175, height: 125, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
+  { id: "ovaal-143x183", shapeId: "ovaal", name: "143 × 183 mm", width: 183, height: 143, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
+  { id: "ovaal-160x210", shapeId: "ovaal", name: "160 × 210 mm", width: 210, height: 160, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
+  { id: "ovaal-220x300", shapeId: "ovaal", name: "220 × 300 mm", width: 300, height: 220, unit: "mm", priceFlatCents: null, priceCurvedCents: null, active: true, createdAt: "" },
 ];
 
 export const productFonts: ProductFont[] = [
