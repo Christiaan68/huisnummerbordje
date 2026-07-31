@@ -120,6 +120,7 @@ export async function POST(request: Request) {
       extraLine1: data.extraLine1,
       extraLine2: data.extraLine2,
       fontName: font.name,
+      quantity: contact.quantity,
     });
 
     const { error: customerError } = await resend.emails.send({

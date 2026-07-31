@@ -29,7 +29,15 @@ export function ContactDetailsForm({
     formState: { errors },
   } = useForm<ContactDetails>({
     resolver: zodResolver(contactDetailsSchema),
-    defaultValues: { name: "", address: "", city: "", email: "", phone: "" },
+    defaultValues: {
+      name: "",
+      address: "",
+      postalCode: "",
+      city: "",
+      email: "",
+      phone: "",
+      quantity: "",
+    },
   });
 
   return (
@@ -64,19 +72,37 @@ export function ContactDetailsForm({
         )}
       </div>
 
-      <div>
-        <label htmlFor="city" className="mb-1.5 block text-sm font-medium text-foreground">
-          Woonplaats
-        </label>
-        <input
-          id="city"
-          type="text"
-          {...register("city")}
-          className={fieldClass(!!errors.city)}
-        />
-        {errors.city && (
-          <p className="mt-1 text-sm text-destructive">{errors.city.message}</p>
-        )}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="postalCode" className="mb-1.5 block text-sm font-medium text-foreground">
+            Postcode
+          </label>
+          <input
+            id="postalCode"
+            type="text"
+            placeholder="1234 AB"
+            {...register("postalCode")}
+            className={fieldClass(!!errors.postalCode)}
+          />
+          {errors.postalCode && (
+            <p className="mt-1 text-sm text-destructive">{errors.postalCode.message}</p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="city" className="mb-1.5 block text-sm font-medium text-foreground">
+            Woonplaats
+          </label>
+          <input
+            id="city"
+            type="text"
+            {...register("city")}
+            className={fieldClass(!!errors.city)}
+          />
+          {errors.city && (
+            <p className="mt-1 text-sm text-destructive">{errors.city.message}</p>
+          )}
+        </div>
       </div>
 
       <div>
@@ -106,6 +132,24 @@ export function ContactDetailsForm({
         />
         {errors.phone && (
           <p className="mt-1 text-sm text-destructive">{errors.phone.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor="quantity" className="mb-1.5 block text-sm font-medium text-foreground">
+          Aantal
+        </label>
+        <input
+          id="quantity"
+          type="text"
+          inputMode="numeric"
+          maxLength={2}
+          placeholder="1"
+          {...register("quantity")}
+          className={cn(fieldClass(!!errors.quantity), "w-24")}
+        />
+        {errors.quantity && (
+          <p className="mt-1 text-sm text-destructive">{errors.quantity.message}</p>
         )}
       </div>
 

@@ -16,6 +16,14 @@ export const contactDetailsSchema = z.object({
     .trim()
     .min(1, "Vul je adres in.")
     .max(150, "Maximaal 150 tekens."),
+  postalCode: z
+    .string()
+    .trim()
+    .min(1, "Vul je postcode in.")
+    .regex(
+      /^[1-9][0-9]{3}\s?[A-Za-z]{2}$/,
+      "Vul een geldige postcode in (bijvoorbeeld 1234 AB)."
+    ),
   city: z
     .string()
     .trim()
@@ -32,6 +40,12 @@ export const contactDetailsSchema = z.object({
     .max(30, "Maximaal 30 tekens.")
     .optional()
     .or(z.literal("")),
+  quantity: z
+    .string()
+    .trim()
+    .min(1, "Vul het aantal in.")
+    .max(2, "Maximaal 2 cijfers.")
+    .regex(/^[0-9]+$/, "Alleen cijfers toegestaan."),
 });
 
 export type ContactDetails = z.infer<typeof contactDetailsSchema>;

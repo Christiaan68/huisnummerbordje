@@ -13,9 +13,11 @@ interface ConfigurationEmailData {
   contact: {
     name: string;
     address: string;
+    postalCode: string;
     city: string;
     email: string;
     phone?: string;
+    quantity: string;
   };
 }
 
@@ -61,9 +63,11 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                     ${row("Naam", data.contact.name)}
                     ${row("Adres", data.contact.address)}
+                    ${row("Postcode", data.contact.postalCode)}
                     ${row("Woonplaats", data.contact.city)}
                     ${row("E-mail", data.contact.email)}
                     ${data.contact.phone ? row("Telefoon", data.contact.phone) : ""}
+                    ${row("Aantal", data.contact.quantity)}
                   </table>
                 </td>
               </tr>
