@@ -19,6 +19,7 @@ interface ConfigurationEmailData {
     phone?: string;
     quantity: string;
   };
+  orderLabel?: string;
 }
 
 /**
@@ -98,6 +99,7 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
                         .filter(Boolean)
                         .join(" / ")
                     )}
+                    ${data.orderLabel ? row("Volgorde", data.orderLabel) : ""}
                     ${row("Lettertype", data.fontName)}
                     ${row("Datum", date)}
                   </table>

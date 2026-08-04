@@ -25,6 +25,7 @@ export const createConfigurationSchema = z
     numberSizeMm: z.number(),
     line1SizeMm: z.number().optional(),
     line2SizeMm: z.number().optional(),
+    numberPosition: z.enum(["start", "middle", "end"]).optional().default("start"),
   })
   .superRefine((data, ctx) => {
     const shape = productShapes.find((s) => s.id === data.shapeId);

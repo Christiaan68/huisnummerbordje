@@ -10,7 +10,6 @@ import {
 } from "@/config/product-options";
 import { cn } from "@/lib/utils";
 
-/** Bepaalt of witte of donkere tekst het beste contrasteert met de gekozen kleur. */
 function getContrastTextColor(hex: string): string {
   const clean = hex.replace("#", "");
   const r = parseInt(clean.substring(0, 2), 16);
@@ -44,14 +43,43 @@ export function ProductPreview() {
   const hasLine2 = (shape?.extraLines ?? 0) >= 2;
   const isCurved = selection.finish !== "vlak";
 
-  const opticalCorrectionByFont: Record<string, number> = {
-    classic: 0.17,
-    elegant: 0.17,
-    modern: 0,
-    industrial: 0,
-  };
-  const opticalCorrection =
-    (opticalCorrectionByFont[font?.id ?? ""] ?? 0) * numberFontSize;
+  const numberNode = (
+    <span key="number" className="leading-none" style={{ fontFamily, fontSize: `${numberFontSize}px` }}>
+      {selection.customText || "12"}
+    </span>
+  );
+  const line1Node = hasLine1 ? (
+    <span key="line1" className="leading-none" style={{ fontFamily, fontSize: `${line1FontSize}px` }}>
+      {selection.extraLine1 || "Voorbeeldtekst"}
+    </span>
+  ) : null;
+  const line2Node = hasLine2 ? (
+    <span key="line2" className="leading-none" style={{ fontFamily, fontSize: `${line2FontSize}px` }}>
+      {selection.extraLine2 || "Voorbeeldtekst"}
+    </span>
+  ) : null;
+
+  const extraLineCount = (hasLine1 ? 1 : 0) + (hasLine2 ? 1 : 0);
+  let orderedNodes: (JSX.Element | null)[];
+  let orderedSizes: number[];
+  if (extraLineCount === 0) {
+    orderedNodes = [numberNode];
+    orderedSizes = [numberFontSize];
+  } else if (extraLineCount === 1) {
+    orderedNodes = selection.numberPosition === "end" ? [line1Node, numberNode] : [numberNode, line1Node];
+    orderedSizes = selection.numberPosition === "end" ? [line1FontSize, numberFontSize] : [numberFontSize, line1FontSize];
+  } else if (selection.numberPosition === "middle") {
+    orderedNodes = [line1Node, numberNode, line2Node];
+    orderedSizes = [line1FontSize, numberFontSize, line2FontSize];
+  } else if (selection.numberPosition === "end") {
+    orderedNodes = [line1Node, line2Node, numberNode];
+    orderedSizes = [line1FontSize, line2FontSize, numberFontSize];
+  } else {
+    orderedNodes = [numberNode, line1Node, line2Node];
+    orderedSizes = [numberFontSize, line1FontSize, line2FontSize];
+  }
+
+  const opticalCorrection = 0;
 
   useLayoutEffect(() => {
     const plate = plateRef.current;
@@ -66,54 +94,6 @@ export function ProductPreview() {
     const delta = plateCenterY - textCenterY - opticalCorrection;
     text.style.transform = `translateY(${delta}px)`;
   });
-
-  // Bouwt de weergave-volgorde van huisnummer + eventuele tekstregel(s) op,
-  // op basis van de gekozen positie ("Volgorde wisselen"-knop op de
-  // Tekst-stap).
-  const numberNode = (
-    <span
-      key="number"
-      className="leading-none"
-      style={{ fontFamily, fontSize: `${numberFontSize}px` }}
-    >
-      {selection.customText || "12"}
-    </span>
-  );
-  const line1Node = hasLine1 ? (
-    <span
-      key="line1"
-      className="leading-none"
-      style={{ fontFamily, fontSize: `${line1FontSize}px` }}
-    >
-      {selection.extraLine1 || "Voorbeeldtekst"}
-    </span>
-  ) : null;
-  const line2Node = hasLine2 ? (
-    <span
-      key="line2"
-      className="leading-none"
-      style={{ fontFamily, fontSize: `${line2FontSize}px` }}
-    >
-      {selection.extraLine2 || "Voorbeeldtekst"}
-    </span>
-  ) : null;
-
-  const extraLineCount = (hasLine1 ? 1 : 0) + (hasLine2 ? 1 : 0);
-  let orderedNodes: (JSX.Element | null)[];
-  if (extraLineCount === 0) {
-    orderedNodes = [numberNode];
-  } else if (extraLineCount === 1) {
-    orderedNodes =
-      selection.numberPosition === "end"
-        ? [line1Node, numberNode]
-        : [numberNode, line1Node];
-  } else if (selection.numberPosition === "middle") {
-    orderedNodes = [line1Node, numberNode, line2Node];
-  } else if (selection.numberPosition === "end") {
-    orderedNodes = [line1Node, line2Node, numberNode];
-  } else {
-    orderedNodes = [numberNode, line1Node, line2Node];
-  }
 
   return (
     <div className="lg:sticky lg:top-10">
@@ -145,8 +125,7 @@ export function ProductPreview() {
               className="pointer-events-none absolute inset-0"
               style={{
                 borderRadius: isOval ? "50%" : "12px",
-                background:
-                  "linear-gradient(135deg, rgba(255,255,255,0.35), transparent 45%)",
+                background: "linear-gradient(135deg, rgba(255,255,255,0.35), transparent 45%)",
               }}
               aria-hidden="true"
             />
@@ -160,9 +139,7 @@ export function ProductPreview() {
           </div>
           <div className="flex justify-between border-b border-border/60 pb-1.5">
             <dt className="text-muted-foreground">Afwerking</dt>
-            <dd className="capitalize text-foreground">
-              {selection.finish ?? "—"}
-            </dd>
+            <dd className="capitalize text-foreground">{selection.finish ?? "—"}</dd>
           </div>
           <div className="flex justify-between border-b border-border/60 pb-1.5">
             <dt className="text-muted-foreground">Kleur</dt>
@@ -176,12 +153,8 @@ export function ProductPreview() {
             <dt className="text-muted-foreground">Tekengrootte</dt>
             <dd className="text-foreground">
               {selection.numberSizeMm ? `${selection.numberSizeMm} mm` : "—"}
-              {hasLine1 &&
-                selection.line1SizeMm &&
-                ` / ${selection.line1SizeMm} mm`}
-              {hasLine2 &&
-                selection.line2SizeMm &&
-                ` / ${selection.line2SizeMm} mm`}
+              {hasLine1 && selection.line1SizeMm && ` / ${selection.line1SizeMm} mm`}
+              {hasLine2 && selection.line2SizeMm && ` / ${selection.line2SizeMm} mm`}
             </dd>
           </div>
           <div className="flex justify-between">

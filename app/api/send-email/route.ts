@@ -11,12 +11,25 @@ import {
   productFonts,
 } from "@/config/product-options";
 
-/**
- * POST /api/send-email
- * Ontvangt de volledige configuratie (nog niet opgeslagen in Supabase —
- * dat volgt in FASE 12), valideert server-side, en verstuurt direct een
- * bevestigingsmail naar ADMIN_EMAIL via Resend.
- */
+function buildOrderLabel(
+  shape: { extraLines: number },
+  position: "start" | "middle" | "end"
+): string | undefined {
+  if (shape.extraLines === 0) return undefined;
+  if (shape.extraLines === 1) {
+    return position === "end"
+      ? "Tekstregel boven, huisnummer onder"
+      : "Huisnummer boven, tekstregel onder";
+  }
+  if (position === "middle") {
+    return "Tekstregel 1 boven, huisnummer midden, tekstregel 2 onder";
+  }
+  if (position === "end") {
+    return "Tekstregel 1 boven, tekstregel 2 midden, huisnummer onder";
+  }
+  return "Huisnummer boven, tekstregel 1 midden, tekstregel 2 onder";
+}
+
 export async function POST(request: Request) {
   let body: unknown;
   try {
@@ -72,6 +85,8 @@ export async function POST(request: Request) {
     );
   }
 
+  const orderLabel = buildOrderLabel(shape, data.numberPosition);
+
   const html = renderConfigurationEmail({
     shapeName: shape.name,
     finish: data.finish,
@@ -85,6 +100,7 @@ export async function POST(request: Request) {
     line2SizeMm: data.line2SizeMm,
     fontName: font.name,
     contact,
+    orderLabel,
   });
 
   try {
@@ -106,10 +122,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Bevestigingsmail naar de klant zelf. Dit is een tweede, aparte mail
-    // met een klantvriendelijke toon — mislukt deze, dan blokkeert dat niet
-    // de hoofdflow (de interne melding is al binnen), maar we laten het wel
-    // duidelijk weten in de respons.
     const customerHtml = renderCustomerConfirmationEmail({
       contactName: contact.name,
       shapeName: shape.name,
@@ -121,6 +133,7 @@ export async function POST(request: Request) {
       extraLine2: data.extraLine2,
       fontName: font.name,
       quantity: contact.quantity,
+      orderLabel,
     });
 
     const { error: customerError } = await resend.emails.send({

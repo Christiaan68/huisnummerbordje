@@ -91,8 +91,8 @@ export interface CreateConfigurationInput {
   numberSizeMm: number;
   line1SizeMm?: number;
   line2SizeMm?: number;
+  numberPosition: "start" | "middle" | "end";
 }
-
 export interface SendConfigurationEmailInput {
   configurationId: string;
 }

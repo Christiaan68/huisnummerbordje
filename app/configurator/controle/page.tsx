@@ -76,6 +76,7 @@ export default function ControlePage() {
       numberSizeMm: selection.numberSizeMm,
       line1SizeMm: selection.line1SizeMm ?? undefined,
       line2SizeMm: selection.line2SizeMm ?? undefined,
+      numberPosition: selection.numberPosition,
       ...contact,
     };
 

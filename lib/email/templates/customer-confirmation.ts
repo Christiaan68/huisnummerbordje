@@ -9,6 +9,7 @@ interface CustomerConfirmationData {
   extraLine2?: string;
   fontName: string;
   quantity: string;
+  orderLabel?: string;
 }
 
 /**
@@ -61,6 +62,7 @@ export function renderCustomerConfirmationEmail(
                     ${row("Huisnummer", data.customText)}
                     ${data.extraLine1 ? row("Tekstregel 1", data.extraLine1) : ""}
                     ${data.extraLine2 ? row("Tekstregel 2", data.extraLine2) : ""}
+                    ${data.orderLabel ? row("Volgorde", data.orderLabel) : ""}
                     ${row("Lettertype", data.fontName)}
                     ${row("Aantal", data.quantity)}
                   </table>
