@@ -44,14 +44,9 @@ export function ProductPreview() {
   const hasLine2 = (shape?.extraLines ?? 0) >= 2;
   const isCurved = selection.finish !== "vlak";
 
-  // Meet na elke render de daadwerkelijke positie van het tekstblok en
-  // corrigeer 'm zodat hij precies verticaal gecentreerd staat in de
-  // plaquette. Dit werkt betrouwbaar voor élk lettertype/elke grootte,
-  // in tegenstelling tot een vast percentage (lettertypes verschillen
-  // onderling in hoeveel "lucht" ze boven/onder de tekst laten).
- const opticalCorrectionByFont: Record<string, number> = {
-    classic: 0.14,
-    elegant: 0.16,
+  const opticalCorrectionByFont: Record<string, number> = {
+    classic: 0.17,
+    elegant: 0.17,
     modern: 0,
     industrial: 0,
   };
@@ -71,6 +66,54 @@ export function ProductPreview() {
     const delta = plateCenterY - textCenterY - opticalCorrection;
     text.style.transform = `translateY(${delta}px)`;
   });
+
+  // Bouwt de weergave-volgorde van huisnummer + eventuele tekstregel(s) op,
+  // op basis van de gekozen positie ("Volgorde wisselen"-knop op de
+  // Tekst-stap).
+  const numberNode = (
+    <span
+      key="number"
+      className="leading-none"
+      style={{ fontFamily, fontSize: `${numberFontSize}px` }}
+    >
+      {selection.customText || "12"}
+    </span>
+  );
+  const line1Node = hasLine1 ? (
+    <span
+      key="line1"
+      className="leading-none"
+      style={{ fontFamily, fontSize: `${line1FontSize}px` }}
+    >
+      {selection.extraLine1 || "Voorbeeldtekst"}
+    </span>
+  ) : null;
+  const line2Node = hasLine2 ? (
+    <span
+      key="line2"
+      className="leading-none"
+      style={{ fontFamily, fontSize: `${line2FontSize}px` }}
+    >
+      {selection.extraLine2 || "Voorbeeldtekst"}
+    </span>
+  ) : null;
+
+  const extraLineCount = (hasLine1 ? 1 : 0) + (hasLine2 ? 1 : 0);
+  let orderedNodes: (JSX.Element | null)[];
+  if (extraLineCount === 0) {
+    orderedNodes = [numberNode];
+  } else if (extraLineCount === 1) {
+    orderedNodes =
+      selection.numberPosition === "end"
+        ? [line1Node, numberNode]
+        : [numberNode, line1Node];
+  } else if (selection.numberPosition === "middle") {
+    orderedNodes = [line1Node, numberNode, line2Node];
+  } else if (selection.numberPosition === "end") {
+    orderedNodes = [line1Node, line2Node, numberNode];
+  } else {
+    orderedNodes = [numberNode, line1Node, line2Node];
+  }
 
   return (
     <div className="lg:sticky lg:top-10">
@@ -94,33 +137,7 @@ export function ProductPreview() {
           }}
         >
           <div ref={textRef} className="flex w-full flex-col items-center gap-2">
-            <span
-              className="leading-none"
-              style={{ fontFamily, fontSize: `${numberFontSize}px` }}
-            >
-              {selection.customText || "12"}
-            </span>
-
-            {(hasLine1 || hasLine2) && (
-              <div className="flex flex-col items-center gap-1">
-                {hasLine1 && (
-                  <span
-                    className="leading-none"
-                    style={{ fontFamily, fontSize: `${line1FontSize}px` }}
-                  >
-                    {selection.extraLine1 || "Voorbeeldtekst"}
-                  </span>
-                )}
-                {hasLine2 && (
-                  <span
-                    className="leading-none"
-                    style={{ fontFamily, fontSize: `${line2FontSize}px` }}
-                  >
-                    {selection.extraLine2 || "Voorbeeldtekst"}
-                  </span>
-                )}
-              </div>
-            )}
+            {orderedNodes.filter(Boolean)}
           </div>
 
           {isCurved && (

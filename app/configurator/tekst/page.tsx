@@ -1,5 +1,6 @@
 import { ConfiguratorNav } from "@/components/configurator/ConfiguratorNav";
 import { TextInput } from "@/components/configurator/TextInput";
+import { NumberPositionToggle } from "@/components/configurator/NumberPositionToggle";
 
 export default function TekstPage() {
   return (
@@ -15,6 +16,8 @@ export default function TekstPage() {
       <div className="mt-8">
         <TextInput />
       </div>
+
+      <NumberPositionToggle />
 
       <ConfiguratorNav stepId="tekst" />
     </div>

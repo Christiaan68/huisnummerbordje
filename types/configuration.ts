@@ -1,10 +1,5 @@
 import type { PlateFinish, ProductColor, ProductFont, ProductShape, ProductSize } from "./product";
 
-/**
- * Status van een configuratie doorheen de flow:
- * draft -> confirmed -> paid -> completed
- * of: cancelled op elk moment vóór completed.
- */
 export type ConfigurationStatus =
   | "draft"
   | "confirmed"
@@ -12,15 +7,9 @@ export type ConfigurationStatus =
   | "completed"
   | "cancelled";
 
-/**
- * Voorbereid op toekomstige betaalintegratie (Mollie/Stripe).
- */
 export type PaymentStatus = "unpaid" | "pending" | "paid" | "failed" | "refunded";
 export type PaymentProvider = "mollie" | "stripe" | null;
 
-/**
- * De keuzes die de gebruiker maakt tijdens het doorlopen van de configurator.
- */
 export interface ConfiguratorSelection {
   shapeId: string | null;
   finish: PlateFinish | null;
@@ -39,6 +28,8 @@ export interface ConfiguratorSelection {
   line1SizeMm: number | null;
   /** Tekengrootte van tekstregel 2, in mm. */
   line2SizeMm: number | null;
+  /** Positie van het huisnummer t.o.v. de tekstregel(s) op het bordje. */
+  numberPosition: "start" | "middle" | "end";
 }
 
 export const emptyConfiguratorSelection: ConfiguratorSelection = {
@@ -53,6 +44,7 @@ export const emptyConfiguratorSelection: ConfiguratorSelection = {
   numberSizeMm: null,
   line1SizeMm: null,
   line2SizeMm: null,
+  numberPosition: "start",
 };
 
 export interface ConfiguratorSelectionResolved {
@@ -66,9 +58,6 @@ export interface ConfiguratorSelectionResolved {
   extraLine2: string;
 }
 
-/**
- * Representatie van een rij in de `configurations`-tabel.
- */
 export interface Configuration {
   id: string;
   shapeId: string;
@@ -90,7 +79,6 @@ export interface Configuration {
   updatedAt: string;
 }
 
-/** Payload voor POST /api/configuration */
 export interface CreateConfigurationInput {
   shapeId: string;
   finish: PlateFinish;
@@ -105,7 +93,6 @@ export interface CreateConfigurationInput {
   line2SizeMm?: number;
 }
 
-/** Payload voor POST /api/send-email */
 export interface SendConfigurationEmailInput {
   configurationId: string;
 }
