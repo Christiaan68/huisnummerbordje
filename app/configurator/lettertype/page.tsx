@@ -1,6 +1,5 @@
 import { ConfiguratorNav } from "@/components/configurator/ConfiguratorNav";
 import { FontSelector } from "@/components/configurator/FontSelector";
-import { CharacterSizeInputs } from "@/components/configurator/CharacterSizeInputs";
 
 export default function LettertypePage() {
   return (
@@ -10,18 +9,12 @@ export default function LettertypePage() {
       </p>
       <h1 className="mt-1 font-serif text-2xl text-primary">Lettertype</h1>
       <p className="mt-4 text-muted-foreground">
-        Kies het lettertype voor jouw huisnummerbordje.
+        Kies het lettertype voor jouw huisnummerbordje. De tekengrootte
+        wordt automatisch berekend zodat de tekst het bordje optimaal vult.
       </p>
 
       <div className="mt-8">
         <FontSelector />
-      </div>
-
-      <div className="mt-8">
-        <p className="mb-3 text-sm font-medium text-foreground">
-          Tekengrootte
-        </p>
-        <CharacterSizeInputs />
       </div>
 
       <ConfiguratorNav stepId="lettertype" />

@@ -29,8 +29,7 @@ export default function ControlePage() {
       !selection.finish ||
       !selection.colorId ||
       !selection.sizeId ||
-      !selection.fontId ||
-      !selection.numberSizeMm
+      !selection.fontId
     ) {
       setStatus("error");
       setMessage("Niet alle keuzes zijn compleet. Ga terug en vul ze aan.");
@@ -52,8 +51,7 @@ export default function ControlePage() {
       !selection.finish ||
       !selection.colorId ||
       !selection.sizeId ||
-      !selection.fontId ||
-      !selection.numberSizeMm
+      !selection.fontId
     ) {
       setStatus("error");
       setMessage("Niet alle keuzes zijn compleet. Ga terug en vul ze aan.");
@@ -73,9 +71,6 @@ export default function ControlePage() {
       customText: selection.customText,
       extraLine1: selection.extraLine1 || undefined,
       extraLine2: selection.extraLine2 || undefined,
-      numberSizeMm: selection.numberSizeMm,
-      line1SizeMm: selection.line1SizeMm ?? undefined,
-      line2SizeMm: selection.line2SizeMm ?? undefined,
       numberPosition: selection.numberPosition,
       ...contact,
     };

@@ -5,126 +5,112 @@ import { productShapes } from "@/config/product-options";
 import { houseNumberSchema, extraLineSchema } from "@/lib/validation/text-input.schema";
 import { cn } from "@/lib/utils";
 
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null;
-  return <p className="mt-1 text-sm text-destructive">{message}</p>;
+function fieldClass(hasError: boolean) {
+  return cn(
+    "w-full max-w-xs rounded-sm border bg-secondary px-4 py-3 text-foreground outline-none",
+    hasError ? "border-destructive" : "border-border focus:border-primary"
+  );
 }
 
 export function TextInput() {
   const { selection, dispatch } = useConfigurator();
-
   const shape = productShapes.find((s) => s.id === selection.shapeId);
-  const extraLines = shape?.extraLines ?? 0;
 
-  const houseNumberResult = selection.customText
-    ? houseNumberSchema.safeParse(selection.customText)
-    : null;
-  const line1Result = selection.extraLine1
-    ? extraLineSchema.safeParse(selection.extraLine1)
-    : null;
-  const line2Result = selection.extraLine2
-    ? extraLineSchema.safeParse(selection.extraLine2)
-    : null;
+  if (!shape) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Kies eerst een vorm om de tekst in te vullen.
+      </p>
+    );
+  }
+
+  const numberCheck =
+    selection.customText.length > 0
+      ? houseNumberSchema.safeParse(selection.customText)
+      : null;
+  const line1Check =
+    selection.extraLine1.length > 0
+      ? extraLineSchema.safeParse(selection.extraLine1)
+      : null;
+  const line2Check =
+    selection.extraLine2.length > 0
+      ? extraLineSchema.safeParse(selection.extraLine2)
+      : null;
 
   return (
-    <div className="max-w-sm space-y-6">
+    <div className="space-y-5">
       <div>
-        <label
-          htmlFor="huisnummer"
-          className="mb-1.5 block text-sm font-medium text-foreground"
-        >
-          Huisnummer <span className="text-muted-foreground">(max. 2 tekens)</span>
+        <label htmlFor="customText" className="mb-1.5 block text-sm font-medium text-foreground">
+          Huisnummer
         </label>
         <input
-          id="huisnummer"
+          id="customText"
           type="text"
-          maxLength={2}
+          maxLength={5}
           value={selection.customText}
           onChange={(e) =>
             dispatch({ type: "SET_TEXT", customText: e.target.value })
           }
-          placeholder="bv. 12"
-          className={cn(
-            "w-full rounded-sm border bg-secondary px-4 py-3 text-foreground outline-none",
-            houseNumberResult && !houseNumberResult.success
-              ? "border-destructive"
-              : "border-border focus:border-primary"
-          )}
+          placeholder="bv. 12a"
+          className={fieldClass(!!numberCheck && !numberCheck.success)}
         />
-        <FieldError
-          message={
-            houseNumberResult && !houseNumberResult.success
-              ? houseNumberResult.error.issues[0]?.message
-              : undefined
-          }
-        />
+        <p className="mt-1 text-xs text-muted-foreground">
+          Letters en cijfers, maximaal 5 tekens (bv. 7, 12, 12A, A12, 123AB).
+        </p>
+        {numberCheck && !numberCheck.success && (
+          <p className="mt-1 text-sm text-destructive">
+            {numberCheck.error.issues[0]?.message}
+          </p>
+        )}
       </div>
 
-      {extraLines >= 1 && (
+      {shape.extraLines >= 1 && (
         <div>
-          <label
-            htmlFor="regel1"
-            className="mb-1.5 block text-sm font-medium text-foreground"
-          >
-            Tekstregel 1 <span className="text-muted-foreground">(max. 20 tekens)</span>
+          <label htmlFor="extraLine1" className="mb-1.5 block text-sm font-medium text-foreground">
+            Tekstregel 1
           </label>
           <input
-            id="regel1"
+            id="extraLine1"
             type="text"
             maxLength={20}
             value={selection.extraLine1}
             onChange={(e) =>
               dispatch({ type: "SET_EXTRA_LINE_1", value: e.target.value })
             }
-            placeholder="bv. Van Dijk"
-            className={cn(
-              "w-full rounded-sm border bg-secondary px-4 py-3 text-foreground outline-none",
-              line1Result && !line1Result.success
-                ? "border-destructive"
-                : "border-border focus:border-primary"
-            )}
+            placeholder="bv. Familie Jansen"
+            className={fieldClass(!!line1Check && !line1Check.success)}
           />
-          <FieldError
-            message={
-              line1Result && !line1Result.success
-                ? line1Result.error.issues[0]?.message
-                : undefined
-            }
-          />
+          <p className="mt-1 text-xs text-muted-foreground">Maximaal 20 tekens.</p>
+          {line1Check && !line1Check.success && (
+            <p className="mt-1 text-sm text-destructive">
+              {line1Check.error.issues[0]?.message}
+            </p>
+          )}
         </div>
       )}
 
-      {extraLines >= 2 && (
+      {shape.extraLines >= 2 && (
         <div>
-          <label
-            htmlFor="regel2"
-            className="mb-1.5 block text-sm font-medium text-foreground"
-          >
-            Tekstregel 2 <span className="text-muted-foreground">(max. 20 tekens)</span>
+          <label htmlFor="extraLine2" className="mb-1.5 block text-sm font-medium text-foreground">
+            Tekstregel 2
           </label>
           <input
-            id="regel2"
+            id="extraLine2"
             type="text"
             maxLength={20}
             value={selection.extraLine2}
             onChange={(e) =>
               dispatch({ type: "SET_EXTRA_LINE_2", value: e.target.value })
             }
-            placeholder="bv. Dorpsstraat 12"
-            className={cn(
-              "w-full rounded-sm border bg-secondary px-4 py-3 text-foreground outline-none",
-              line2Result && !line2Result.success
-                ? "border-destructive"
-                : "border-border focus:border-primary"
-            )}
+            placeholder="bv. Amsterdam"
+            className={fieldClass(!!line2Check && !line2Check.success)}
           />
-          <FieldError
-            message={
-              line2Result && !line2Result.success
-                ? line2Result.error.issues[0]?.message
-                : undefined
-            }
-          />
+          <p className="mt-1 text-xs text-muted-foreground">Maximaal 20 tekens.</p>
+          {line2Check && !line2Check.success && (
+            <p className="mt-1 text-sm text-destructive">
+              {line2Check.error.issues[0]?.message}
+            </p>
+          )}
         </div>
       )}
     </div>

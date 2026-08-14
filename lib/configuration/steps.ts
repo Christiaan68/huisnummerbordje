@@ -8,19 +8,11 @@ export interface ConfiguratorStep {
   isComplete: (selection: ConfiguratorSelection) => boolean;
 }
 
-function isValidSize(
-  mm: number | null,
-  range: { min: number; max: number }
-): boolean {
-  return mm !== null && mm >= range.min && mm <= range.max;
-}
-
 export const configuratorSteps: ConfiguratorStep[] = [
   {
     id: "vorm",
     path: "/configurator/vorm",
     label: "Vorm",
-    // Compleet zodra er een vorm ÉN een afwerking gekozen is.
     isComplete: (s) => Boolean(s.shapeId) && Boolean(s.finish),
   },
   {
@@ -58,27 +50,7 @@ export const configuratorSteps: ConfiguratorStep[] = [
     id: "lettertype",
     path: "/configurator/lettertype",
     label: "Lettertype",
-    isComplete: (s) => {
-      if (!s.fontId) return false;
-
-      const shape = productShapes.find((shape) => shape.id === s.shapeId);
-      if (!shape) return false;
-
-      if (!isValidSize(s.numberSizeMm, shape.characterSizeRange)) return false;
-      if (
-        shape.extraLines >= 1 &&
-        !isValidSize(s.line1SizeMm, shape.lineSizeRange)
-      ) {
-        return false;
-      }
-      if (
-        shape.extraLines >= 2 &&
-        !isValidSize(s.line2SizeMm, shape.lineSizeRange)
-      ) {
-        return false;
-      }
-      return true;
-    },
+    isComplete: (s) => Boolean(s.fontId),
   },
   {
     id: "controle",

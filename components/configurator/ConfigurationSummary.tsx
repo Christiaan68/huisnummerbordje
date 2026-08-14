@@ -7,6 +7,7 @@ import {
   productSizes,
   productFonts,
 } from "@/config/product-options";
+import { computeAutoFit } from "@/lib/configuration/text-fit";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -30,6 +31,20 @@ export function ConfigurationSummary() {
       ? size.priceFlatCents
       : size?.priceCurvedCents;
 
+  const hasLine1 = (shape?.extraLines ?? 0) >= 1;
+  const hasLine2 = (shape?.extraLines ?? 0) >= 2;
+
+  const autoFit =
+    size && selection.customText
+      ? computeAutoFit({
+          widthMm: size.width,
+          heightMm: size.height,
+          numberChars: selection.customText.length,
+          line1Chars: hasLine1 ? selection.extraLine1.length || null : null,
+          line2Chars: hasLine2 ? selection.extraLine2.length || null : null,
+        })
+      : null;
+
   return (
     <dl>
       <Row label="Vorm" value={shape?.name ?? "—"} />
@@ -40,34 +55,34 @@ export function ConfigurationSummary() {
       <Row label="Kleur" value={color?.name ?? "—"} />
       <Row label="Maat" value={size?.name ?? "—"} />
       <Row label="Huisnummer" value={selection.customText || "—"} />
-      {shape && shape.extraLines >= 1 && (
+      {hasLine1 && (
         <Row label="Tekstregel 1" value={selection.extraLine1 || "—"} />
       )}
-      {shape && shape.extraLines >= 2 && (
+      {hasLine2 && (
         <Row label="Tekstregel 2" value={selection.extraLine2 || "—"} />
       )}
       <Row
-        label="Tekengrootte"
+        label="Tekengrootte (automatisch)"
         value={
-          [
-            selection.numberSizeMm ? `${selection.numberSizeMm} mm` : null,
-            shape && shape.extraLines >= 1 && selection.line1SizeMm
-              ? `${selection.line1SizeMm} mm`
-              : null,
-            shape && shape.extraLines >= 2 && selection.line2SizeMm
-              ? `${selection.line2SizeMm} mm`
-              : null,
-          ]
-            .filter(Boolean)
-            .join(" / ") || "—"
+          autoFit
+            ? [
+                `${autoFit.numberSizeMm} mm`,
+                autoFit.line1SizeMm ? `${autoFit.line1SizeMm} mm` : null,
+                autoFit.line2SizeMm ? `${autoFit.line2SizeMm} mm` : null,
+              ]
+                .filter(Boolean)
+                .join(" / ")
+            : "—"
         }
       />
       <Row label="Lettertype" value={font?.name ?? "—"} />
       <Row
         label="Prijs"
-        value={price !== null && price !== undefined
-          ? `€ ${(price / 100).toFixed(2).replace(".", ",")}`
-          : "Prijs op aanvraag"}
+        value={
+          price !== null && price !== undefined
+            ? `€ ${(price / 100).toFixed(2).replace(".", ",")}`
+            : "Prijs op aanvraag"
+        }
       />
     </dl>
   );

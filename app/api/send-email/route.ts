@@ -4,6 +4,7 @@ import { contactDetailsSchema } from "@/lib/validation/contact.schema";
 import { createResendClient } from "@/lib/email/resend";
 import { renderConfigurationEmail } from "@/lib/email/templates/configuration-confirmation";
 import { renderCustomerConfirmationEmail } from "@/lib/email/templates/customer-confirmation";
+import { computeAutoFit } from "@/lib/configuration/text-fit";
 import {
   productShapes,
   productColors,
@@ -87,6 +88,14 @@ export async function POST(request: Request) {
 
   const orderLabel = buildOrderLabel(shape, data.numberPosition);
 
+  const autoFit = computeAutoFit({
+    widthMm: size.width,
+    heightMm: size.height,
+    numberChars: data.customText.length,
+    line1Chars: shape.extraLines >= 1 ? data.extraLine1.length || null : null,
+    line2Chars: shape.extraLines >= 2 ? data.extraLine2.length || null : null,
+  });
+
   const html = renderConfigurationEmail({
     shapeName: shape.name,
     finish: data.finish,
@@ -95,9 +104,9 @@ export async function POST(request: Request) {
     customText: data.customText,
     extraLine1: data.extraLine1,
     extraLine2: data.extraLine2,
-    numberSizeMm: data.numberSizeMm,
-    line1SizeMm: data.line1SizeMm,
-    line2SizeMm: data.line2SizeMm,
+    numberSizeMm: autoFit.numberSizeMm,
+    line1SizeMm: autoFit.line1SizeMm ?? undefined,
+    line2SizeMm: autoFit.line2SizeMm ?? undefined,
     fontName: font.name,
     contact,
     orderLabel,

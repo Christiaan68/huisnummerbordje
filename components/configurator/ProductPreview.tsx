@@ -8,6 +8,7 @@ import {
   productFonts,
   productSizes,
 } from "@/config/product-options";
+import { computeAutoFit } from "@/lib/configuration/text-fit";
 import { cn } from "@/lib/utils";
 
 function getContrastTextColor(hex: string): string {
@@ -18,6 +19,8 @@ function getContrastTextColor(hex: string): string {
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return luminance > 0.55 ? "#1a1a1a" : "#f7f5f0";
 }
+
+const PREVIEW_WIDTH_PX = 260;
 
 export function ProductPreview() {
   const { selection } = useConfigurator();
@@ -33,29 +36,54 @@ export function ProductPreview() {
   const ratio = size ? size.width / size.height : 1;
   const textColor = color ? getContrastTextColor(color.hex) : undefined;
   const fontFamily = font?.cssFamily ?? "var(--font-fraunces), Georgia, serif";
-  const toPreviewSize = (mm: number | null, fallback: number, scale: number) =>
-    mm ? mm * scale : fallback;
-  const numberFontSize = toPreviewSize(selection.numberSizeMm, 34, 0.5);
-  const line1FontSize = toPreviewSize(selection.line1SizeMm, 14, 0.35);
-  const line2FontSize = toPreviewSize(selection.line2SizeMm, 14, 0.35);
 
   const hasLine1 = (shape?.extraLines ?? 0) >= 1;
   const hasLine2 = (shape?.extraLines ?? 0) >= 2;
   const isCurved = selection.finish !== "vlak";
 
+  const numberText = selection.customText || "12";
+  const line1Text = selection.extraLine1 || "Voorbeeldtekst";
+  const line2Text = selection.extraLine2 || "Voorbeeldtekst";
+
+  let numberFontSize = 34;
+  let line1FontSize = 14;
+  let line2FontSize = 14;
+
+  if (size) {
+    const fit = computeAutoFit({
+      widthMm: size.width,
+      heightMm: size.height,
+      numberChars: numberText.length,
+      line1Chars: hasLine1 ? line1Text.length : null,
+      line2Chars: hasLine2 ? line2Text.length : null,
+    });
+    const pxPerMm = PREVIEW_WIDTH_PX / size.width;
+    numberFontSize = fit.numberSizeMm * pxPerMm;
+    line1FontSize = fit.line1SizeMm ? fit.line1SizeMm * pxPerMm : line1FontSize;
+    line2FontSize = fit.line2SizeMm ? fit.line2SizeMm * pxPerMm : line2FontSize;
+  }
+
+  const lineGapRatioByFont: Record<string, number> = {
+    classic: 0.16,
+    elegant: 0.16,
+    modern: 0.06,
+    industrial: 0.06,
+  };
+  const gapRatio = lineGapRatioByFont[font?.id ?? ""] ?? 0.08;
+
   const numberNode = (
     <span key="number" className="leading-none" style={{ fontFamily, fontSize: `${numberFontSize}px` }}>
-      {selection.customText || "12"}
+      {numberText}
     </span>
   );
   const line1Node = hasLine1 ? (
     <span key="line1" className="leading-none" style={{ fontFamily, fontSize: `${line1FontSize}px` }}>
-      {selection.extraLine1 || "Voorbeeldtekst"}
+      {line1Text}
     </span>
   ) : null;
   const line2Node = hasLine2 ? (
     <span key="line2" className="leading-none" style={{ fontFamily, fontSize: `${line2FontSize}px` }}>
-      {selection.extraLine2 || "Voorbeeldtekst"}
+      {line2Text}
     </span>
   ) : null;
 
@@ -67,7 +95,10 @@ export function ProductPreview() {
     orderedSizes = [numberFontSize];
   } else if (extraLineCount === 1) {
     orderedNodes = selection.numberPosition === "end" ? [line1Node, numberNode] : [numberNode, line1Node];
-    orderedSizes = selection.numberPosition === "end" ? [line1FontSize, numberFontSize] : [numberFontSize, line1FontSize];
+    orderedSizes =
+      selection.numberPosition === "end"
+        ? [line1FontSize, numberFontSize]
+        : [numberFontSize, line1FontSize];
   } else if (selection.numberPosition === "middle") {
     orderedNodes = [line1Node, numberNode, line2Node];
     orderedSizes = [line1FontSize, numberFontSize, line2FontSize];
@@ -79,7 +110,13 @@ export function ProductPreview() {
     orderedSizes = [numberFontSize, line1FontSize, line2FontSize];
   }
 
-  const opticalCorrection = 0;
+  const nodesWithSpacing = orderedNodes
+    .map((node, index) =>
+      node
+        ? { node, marginTop: index === 0 ? 0 : orderedSizes[index - 1] * gapRatio }
+        : null
+    )
+    .filter(Boolean) as { node: JSX.Element; marginTop: number }[];
 
   useLayoutEffect(() => {
     const plate = plateRef.current;
@@ -91,7 +128,7 @@ export function ProductPreview() {
     const textRect = text.getBoundingClientRect();
     const plateCenterY = plateRect.top + plateRect.height / 2;
     const textCenterY = textRect.top + textRect.height / 2;
-    const delta = plateCenterY - textCenterY - opticalCorrection;
+    const delta = plateCenterY - textCenterY;
     text.style.transform = `translateY(${delta}px)`;
   });
 
@@ -116,8 +153,12 @@ export function ProductPreview() {
             color: textColor,
           }}
         >
-          <div ref={textRef} className="flex w-full flex-col items-center gap-2">
-            {orderedNodes.filter(Boolean)}
+          <div ref={textRef} className="flex w-full flex-col items-center">
+            {nodesWithSpacing.map(({ node, marginTop }) => (
+              <div key={node.key} style={{ marginTop: `${marginTop}px` }}>
+                {node}
+              </div>
+            ))}
           </div>
 
           {isCurved && (
@@ -145,19 +186,11 @@ export function ProductPreview() {
             <dt className="text-muted-foreground">Kleur</dt>
             <dd className="text-foreground">{color?.name ?? "—"}</dd>
           </div>
-          <div className="flex justify-between border-b border-border/60 pb-1.5">
+          <div className="flex justify-between">
             <dt className="text-muted-foreground">Maat</dt>
             <dd className="text-foreground">{size?.name ?? "—"}</dd>
           </div>
-          <div className="flex justify-between border-b border-border/60 pb-1.5">
-            <dt className="text-muted-foreground">Tekengrootte</dt>
-            <dd className="text-foreground">
-              {selection.numberSizeMm ? `${selection.numberSizeMm} mm` : "—"}
-              {hasLine1 && selection.line1SizeMm && ` / ${selection.line1SizeMm} mm`}
-              {hasLine2 && selection.line2SizeMm && ` / ${selection.line2SizeMm} mm`}
-            </dd>
-          </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between border-t border-border/60 pt-1.5">
             <dt className="text-muted-foreground">Lettertype</dt>
             <dd className="text-foreground">{font?.name ?? "—"}</dd>
           </div>

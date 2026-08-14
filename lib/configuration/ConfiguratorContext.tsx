@@ -19,9 +19,6 @@ type Action =
   | { type: "SET_EXTRA_LINE_1"; value: string }
   | { type: "SET_EXTRA_LINE_2"; value: string }
   | { type: "SET_FONT"; fontId: string }
-  | { type: "SET_NUMBER_SIZE"; mm: number | null }
-  | { type: "SET_LINE1_SIZE"; mm: number | null }
-  | { type: "SET_LINE2_SIZE"; mm: number | null }
   | { type: "SET_NUMBER_POSITION"; position: NumberPosition }
   | { type: "RESET" };
 
@@ -32,9 +29,6 @@ function reducer(
   switch (action.type) {
     case "SET_SHAPE": {
       const shape = productShapes.find((s) => s.id === action.shapeId);
-      // Bij het wisselen van vorm: maat, tekengroottes en volgorde opnieuw
-      // laten kiezen (allemaal vorm-specifiek), en afwerking automatisch
-      // invullen als er voor deze vorm maar één afwerking mogelijk is.
       const finish: PlateFinish | null =
         shape && shape.availableFinishes.length === 1
           ? shape.availableFinishes[0]
@@ -45,9 +39,6 @@ function reducer(
         shapeId: action.shapeId,
         finish,
         sizeId: null,
-        numberSizeMm: null,
-        line1SizeMm: null,
-        line2SizeMm: null,
         numberPosition: "start",
       };
     }
@@ -65,12 +56,6 @@ function reducer(
       return { ...state, extraLine2: action.value };
     case "SET_FONT":
       return { ...state, fontId: action.fontId };
-    case "SET_NUMBER_SIZE":
-      return { ...state, numberSizeMm: action.mm };
-    case "SET_LINE1_SIZE":
-      return { ...state, line1SizeMm: action.mm };
-    case "SET_LINE2_SIZE":
-      return { ...state, line2SizeMm: action.mm };
     case "SET_NUMBER_POSITION":
       return { ...state, numberPosition: action.position };
     case "RESET":

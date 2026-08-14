@@ -10,7 +10,7 @@ export const houseNumberSchema = z
   .string()
   .trim()
   .min(1, "Vul een huisnummer in.")
-  .max(2, "Maximaal 2 tekens toegestaan.")
+  .max(5, "Maximaal 5 tekens toegestaan.")
   .regex(/^[a-zA-Z0-9]+$/, "Alleen letters en cijfers zijn toegestaan.");
 
 /**
