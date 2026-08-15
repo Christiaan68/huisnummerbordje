@@ -1,13 +1,15 @@
-import { productSizes, globalPricingOptions } from "@/config/product-options";
 import type { ConfiguratorSelection } from "@/types/configuration";
+import type { PricingData } from "@/lib/configuration/livePricing";
 
 /**
  * Berekent de actuele prijs voor de huidige configuratorkeuzes.
  *
- * Belangrijk: de bedragen komen uit een HANDMATIGE MOMENTOPNAME van de
- * prijsbeheeromgeving (zie de uitleg bovenin config/product-options.ts) —
- * er is nog geen automatische synchronisatie tussen de prijsbeheeromgeving
- * en deze webshop.
+ * De prijsgegevens (`pricingData`) komen NIET meer statisch uit dit bestand
+ * of uit config/product-options.ts, maar worden meegegeven door de
+ * aanroeper — normaal gesproken de live opgehaalde prijzen uit de
+ * prijsbeheeromgeving (zie lib/configuration/livePricing.ts), met een
+ * automatische terugval op de vaste reservekopie als het live ophalen niet
+ * lukt. Dat gebeurt hier niet meer — deze functie is een pure rekenfunctie.
  *
  * Nog niet meegenomen in deze berekening:
  * - de meerprijs voor "speciaal teken" (bewust nog niet gebouwd);
@@ -24,8 +26,11 @@ export interface PriceBreakdown {
 }
 
 export function calculatePrice(
-  selection: ConfiguratorSelection
+  selection: ConfiguratorSelection,
+  pricingData: PricingData
 ): PriceBreakdown | null {
+  const { productSizes, globalPricingOptions } = pricingData;
+
   const size = productSizes.find((s) => s.id === selection.sizeId);
   if (!size || !selection.finish) return null;
 

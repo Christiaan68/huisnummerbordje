@@ -1,10 +1,10 @@
 "use client";
 
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
+import { usePricingData } from "@/lib/configuration/PricingDataContext";
 import {
   productShapes,
   productColors,
-  productSizes,
   productFonts,
 } from "@/config/product-options";
 import { computeAutoFit } from "@/lib/configuration/text-fit";
@@ -21,12 +21,13 @@ function Row({ label, value }: { label: string; value: string }) {
 
 export function ConfigurationSummary() {
   const { selection } = useConfigurator();
+  const pricingData = usePricingData();
 
   const shape = productShapes.find((s) => s.id === selection.shapeId);
   const color = productColors.find((c) => c.id === selection.colorId);
-  const size = productSizes.find((s) => s.id === selection.sizeId);
+  const size = pricingData.productSizes.find((s) => s.id === selection.sizeId);
   const font = productFonts.find((f) => f.id === selection.fontId);
-  const price = calculatePrice(selection);
+  const price = calculatePrice(selection, pricingData);
 
   const hasLine1 = (shape?.extraLines ?? 0) >= 1;
   const hasLine2 = (shape?.extraLines ?? 0) >= 2;

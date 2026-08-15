@@ -2,7 +2,7 @@
 
 import { Check } from "lucide-react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
-import { productSizes } from "@/config/product-options";
+import { usePricingData } from "@/lib/configuration/PricingDataContext";
 import { cn } from "@/lib/utils";
 
 function formatPrice(cents: number | null): string {
@@ -15,6 +15,7 @@ function formatPrice(cents: number | null): string {
 
 export function SizeSelector() {
   const { selection, dispatch } = useConfigurator();
+  const { productSizes } = usePricingData();
 
   const sizes = productSizes.filter(
     (size) => size.shapeId === selection.shapeId && size.active

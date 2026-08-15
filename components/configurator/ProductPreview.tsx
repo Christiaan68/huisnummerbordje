@@ -2,11 +2,11 @@
 
 import { useLayoutEffect, useRef } from "react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
+import { usePricingData } from "@/lib/configuration/PricingDataContext";
 import {
   productShapes,
   productColors,
   productFonts,
-  productSizes,
 } from "@/config/product-options";
 import { computeAutoFit } from "@/lib/configuration/text-fit";
 import { calculatePrice, formatPriceCents } from "@/lib/configuration/pricing";
@@ -25,14 +25,15 @@ const PREVIEW_WIDTH_PX = 260;
 
 export function ProductPreview() {
   const { selection } = useConfigurator();
+  const pricingData = usePricingData();
   const plateRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
 
   const shape = productShapes.find((s) => s.id === selection.shapeId);
   const color = productColors.find((c) => c.id === selection.colorId);
-  const size = productSizes.find((s) => s.id === selection.sizeId);
+  const size = pricingData.productSizes.find((s) => s.id === selection.sizeId);
   const font = productFonts.find((f) => f.id === selection.fontId);
-  const price = calculatePrice(selection);
+  const price = calculatePrice(selection, pricingData);
 
   const isOval = shape?.id === "ovaal";
   const ratio = size ? size.width / size.height : 1;

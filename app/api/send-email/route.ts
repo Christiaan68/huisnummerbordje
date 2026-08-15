@@ -6,10 +6,10 @@ import { renderConfigurationEmail } from "@/lib/email/templates/configuration-co
 import { renderCustomerConfirmationEmail } from "@/lib/email/templates/customer-confirmation";
 import { computeAutoFit } from "@/lib/configuration/text-fit";
 import { calculatePrice } from "@/lib/configuration/pricing";
+import { getLivePricingData } from "@/lib/configuration/livePricing";
 import {
   productShapes,
   productColors,
-  productSizes,
   productFonts,
 } from "@/config/product-options";
 
@@ -66,9 +66,16 @@ export async function POST(request: Request) {
   const data = parsed.data;
   const contact = parsedContact.data;
 
+  // Prijzen (en maten met hun defaultMaxChars) worden hier, server-side,
+  // opnieuw live opgehaald bij de prijsbeheeromgeving — met automatische
+  // terugval op de vaste reservekopie als dat niet lukt. Zo blijft de
+  // bevestigingsmail altijd kloppen met de daadwerkelijke, actuele prijs,
+  // ongeacht wat de klant tijdens het configureren te zien kreeg.
+  const pricingData = await getLivePricingData();
+
   const shape = productShapes.find((s) => s.id === data.shapeId);
   const color = productColors.find((c) => c.id === data.colorId);
-  const size = productSizes.find((s) => s.id === data.sizeId);
+  const size = pricingData.productSizes.find((s) => s.id === data.sizeId);
   const font = productFonts.find((f) => f.id === data.fontId);
 
   if (!shape || !color || !size || !font) {
@@ -100,7 +107,7 @@ export async function POST(request: Request) {
   // Prijs wordt hier, server-side, opnieuw berekend met dezelfde functie als
   // de configurator zelf gebruikt (lib/configuration/pricing.ts) — nooit
   // een door de klant meegestuurd bedrag vertrouwen.
-  const price = calculatePrice(data);
+  const price = calculatePrice(data, pricingData);
   const priceFields = {
     priceTotalCents: price?.totalCents ?? null,
     priceColorSurchargeCents: price?.colorSurchargeCents ?? 0,
