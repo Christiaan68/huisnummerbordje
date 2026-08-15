@@ -42,7 +42,12 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <EnamelPlateSignature />
+            {/* Op mobiel (kleiner dan het "sm"-breakpoint, ca. 640px) tonen
+                we deze foto niet — Christiaan gaf aan dat de
+                homepage-plate.jpg op mobiel niet gebruikt moet worden. */}
+            <div className="hidden sm:block">
+              <EnamelPlateSignature />
+            </div>
           </div>
         </section>
       </main>
