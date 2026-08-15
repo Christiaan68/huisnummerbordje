@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useRef } from "react";
 import { Menu as MenuIcon } from "lucide-react";
 
 export function Header({
@@ -8,14 +11,27 @@ export function Header({
   // "Start configurator"-link daar verwarrend is.
   showConfiguratorLink?: boolean;
 }) {
+  // Wijst naar het <details>-element van het hamburgermenu, zodat we het
+  // programmatisch kunnen sluiten (zie closeMenu hieronder).
+  const menuRef = useRef<HTMLDetailsElement>(null);
+
+  // Sluit het menu bij het klikken op een link erin. Nodig omdat een klik
+  // op bv. "Home" terwijl je al op de homepage staat geen paginawissel
+  // veroorzaakt — zonder deze functie bleef het menu dan open staan en
+  // leek de pagina "vast te lopen".
+  function closeMenu() {
+    if (menuRef.current) {
+      menuRef.current.open = false;
+    }
+  }
+
   return (
     <header className="absolute inset-x-0 top-0 z-20">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
         <div className="flex items-center gap-3">
-          {/* Hamburgermenu (native <details>/<summary>, geen extra
-              JavaScript nodig). Nu "Home" en "Contact" erin — later
-              eenvoudig uit te breiden met extra onderwerpen. */}
-          <details className="group relative">
+          {/* Hamburgermenu (native <details>/<summary>). We sluiten het
+              zelf via closeMenu() zodra een link erin wordt aangeklikt. */}
+          <details ref={menuRef} className="group relative">
             <summary
               aria-label="Menu"
               className="flex cursor-pointer list-none items-center justify-center rounded-sm p-1.5 text-foreground hover:bg-secondary [&::-webkit-details-marker]:hidden"
@@ -25,18 +41,21 @@ export function Header({
             <div className="absolute left-0 top-full mt-2 min-w-[10rem] rounded-sm border border-border bg-card py-1 shadow-lg">
               <Link
                 href="/"
+                onClick={closeMenu}
                 className="block px-4 py-2 text-sm text-foreground hover:bg-secondary"
               >
                 Home
               </Link>
               <Link
                 href="/configurator"
+                onClick={closeMenu}
                 className="block px-4 py-2 text-sm text-foreground hover:bg-secondary"
               >
                 Start configurator
               </Link>
               <Link
                 href="/contact"
+                onClick={closeMenu}
                 className="block px-4 py-2 text-sm text-foreground hover:bg-secondary"
               >
                 Contact
