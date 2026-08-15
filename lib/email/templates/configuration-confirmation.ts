@@ -97,16 +97,6 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
                     ${row("Huisnummer", data.customText)}
                     ${data.extraLine1 ? row("Tekstregel 1", data.extraLine1) : ""}
                     ${data.extraLine2 ? row("Tekstregel 2", data.extraLine2) : ""}
-                    ${row(
-                      "Tekengrootte",
-                      [
-                        `${data.numberSizeMm} mm`,
-                        data.line1SizeMm ? `${data.line1SizeMm} mm` : null,
-                        data.line2SizeMm ? `${data.line2SizeMm} mm` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" / ")
-                    )}
                     ${data.orderLabel ? row("Volgorde", data.orderLabel) : ""}
                     ${row("Lettertype", data.fontName)}
                     ${row("Datum", date)}
