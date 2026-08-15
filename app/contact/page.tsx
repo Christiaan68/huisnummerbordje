@@ -4,7 +4,7 @@ import { Footer } from "@/components/layout/Footer";
 import { companyInfo } from "@/config/site-content";
 
 export const metadata: Metadata = {
-  title: "Bedrijfsgegevens | Emaille Huisnummers",
+  title: "Contact | Emaille Huisnummers",
   description: "Bedrijfsgegevens en contactgegevens van Emaille Huisnummers.",
 };
 
@@ -17,7 +17,7 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function BedrijfsgegevensPage() {
+export default function ContactPage() {
   return (
     <>
       <Header />
@@ -27,10 +27,26 @@ export default function BedrijfsgegevensPage() {
           Over ons
         </p>
         <h1 className="mt-1 font-serif text-3xl text-foreground sm:text-4xl">
-          Bedrijfsgegevens
+          Contact
         </h1>
 
-        <dl className="mt-10">
+        {/* Logo van Langcat, de fabrikant/het bedrijf achter Emaille
+            Huisnummers — linkt door naar hun eigen website. */}
+        <a
+          href="https://www.langcat.nl/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-8 inline-block"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/langcat-logo.jpg"
+            alt="Langcat Emaille"
+            className="h-auto w-40 rounded-sm"
+          />
+        </a>
+
+        <dl className="mt-8">
           <Row label="Bedrijfsnaam" value={companyInfo.name} />
           <Row
             label="Adres"
