@@ -30,6 +30,12 @@ export function Header({
                 Home
               </Link>
               <Link
+                href="/configurator"
+                className="block px-4 py-2 text-sm text-foreground hover:bg-secondary"
+              >
+                Start configurator
+              </Link>
+              <Link
                 href="/contact"
                 className="block px-4 py-2 text-sm text-foreground hover:bg-secondary"
               >

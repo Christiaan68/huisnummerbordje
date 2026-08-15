@@ -7,7 +7,6 @@ import {
   productColors,
   productFonts,
 } from "@/config/product-options";
-import { computeAutoFit } from "@/lib/configuration/text-fit";
 import { calculatePrice, formatPriceCents } from "@/lib/configuration/pricing";
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -32,17 +31,6 @@ export function ConfigurationSummary() {
   const hasLine1 = (shape?.extraLines ?? 0) >= 1;
   const hasLine2 = (shape?.extraLines ?? 0) >= 2;
 
-  const autoFit =
-    size && selection.customText
-      ? computeAutoFit({
-          widthMm: size.width,
-          heightMm: size.height,
-          numberChars: selection.customText.length,
-          line1Chars: hasLine1 ? selection.extraLine1.length || null : null,
-          line2Chars: hasLine2 ? selection.extraLine2.length || null : null,
-        })
-      : null;
-
   return (
     <dl>
       <Row label="Vorm" value={shape?.name ?? "—"} />
@@ -59,20 +47,6 @@ export function ConfigurationSummary() {
       {hasLine2 && (
         <Row label="Tekstregel 2" value={selection.extraLine2 || "—"} />
       )}
-      <Row
-        label="Tekengrootte (automatisch)"
-        value={
-          autoFit
-            ? [
-                `${autoFit.numberSizeMm} mm`,
-                autoFit.line1SizeMm ? `${autoFit.line1SizeMm} mm` : null,
-                autoFit.line2SizeMm ? `${autoFit.line2SizeMm} mm` : null,
-              ]
-                .filter(Boolean)
-                .join(" / ")
-            : "—"
-        }
-      />
       <Row label="Lettertype" value={font?.name ?? "—"} />
       {price && price.colorSurchargeCents > 0 && (
         <Row
