@@ -8,27 +8,18 @@ export const metadata: Metadata = {
   description: "Bedrijfsgegevens en contactgegevens van Emaille Huisnummers.",
 };
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between gap-6 border-b border-border py-3 text-sm">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="text-right font-medium text-foreground">{value}</dd>
-    </div>
-  );
-}
-
 export default function ContactPage() {
   return (
     <>
-      <Header />
+      <Header showConfiguratorLink={false} />
 
       <main className="mx-auto max-w-2xl px-6 pb-20 pt-32 sm:pt-40">
-        <p className="text-sm uppercase tracking-widest text-muted-foreground">
-          Over ons
-        </p>
-        <h1 className="mt-1 font-serif text-3xl text-foreground sm:text-4xl">
+        <h1 className="font-serif text-3xl text-foreground sm:text-4xl">
           Contact
         </h1>
+        <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
+          Emaille Huisnummers is een onderdeel van Langcat Emaille.
+        </p>
 
         {/* Logo van Langcat, de fabrikant/het bedrijf achter Emaille
             Huisnummers — linkt door naar hun eigen website. */}
@@ -46,18 +37,20 @@ export default function ContactPage() {
           />
         </a>
 
-        <dl className="mt-8">
-          <Row label="Bedrijfsnaam" value={companyInfo.name} />
-          <Row
-            label="Adres"
-            value={`${companyInfo.street}, ${companyInfo.postalCode} ${companyInfo.city}`}
-          />
-          <Row label="Land" value={companyInfo.country} />
-          <Row label="Telefoon" value={companyInfo.phone} />
-          <Row label="E-mail" value={companyInfo.email} />
-          <Row label="KVK-nummer" value={companyInfo.kvkNumber} />
-          <Row label="Btw-nummer" value={companyInfo.vatNumber} />
-        </dl>
+        <div className="mt-6 space-y-1 text-left text-sm leading-relaxed text-foreground">
+          <p className="font-medium">{companyInfo.name}</p>
+          <p>{companyInfo.street}</p>
+          <p>
+            {companyInfo.postalCode} {companyInfo.city}
+          </p>
+          <p>{companyInfo.country}</p>
+          <p className="mt-3">{companyInfo.phone}</p>
+          <p>{companyInfo.email}</p>
+          <p className="mt-3 text-muted-foreground">
+            KVK {companyInfo.kvkNumber}
+          </p>
+          <p className="text-muted-foreground">BTW {companyInfo.vatNumber}</p>
+        </div>
       </main>
 
       <Footer />
