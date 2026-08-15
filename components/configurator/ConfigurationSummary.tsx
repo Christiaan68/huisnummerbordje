@@ -8,6 +8,7 @@ import {
   productFonts,
 } from "@/config/product-options";
 import { computeAutoFit } from "@/lib/configuration/text-fit";
+import { calculatePrice, formatPriceCents } from "@/lib/configuration/pricing";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -25,11 +26,7 @@ export function ConfigurationSummary() {
   const color = productColors.find((c) => c.id === selection.colorId);
   const size = productSizes.find((s) => s.id === selection.sizeId);
   const font = productFonts.find((f) => f.id === selection.fontId);
-
-  const price =
-    size && selection.finish === "vlak"
-      ? size.priceFlatCents
-      : size?.priceCurvedCents;
+  const price = calculatePrice(selection);
 
   const hasLine1 = (shape?.extraLines ?? 0) >= 1;
   const hasLine2 = (shape?.extraLines ?? 0) >= 2;
@@ -76,13 +73,21 @@ export function ConfigurationSummary() {
         }
       />
       <Row label="Lettertype" value={font?.name ?? "—"} />
+      {price && price.colorSurchargeCents > 0 && (
+        <Row
+          label="Meerprijs kleur"
+          value={formatPriceCents(price.colorSurchargeCents)}
+        />
+      )}
+      {price && price.extraCharsCents > 0 && (
+        <Row
+          label={`Meerprijs extra tekens (${price.extraCharsCount}×)`}
+          value={formatPriceCents(price.extraCharsCents)}
+        />
+      )}
       <Row
-        label="Prijs"
-        value={
-          price !== null && price !== undefined
-            ? `€ ${(price / 100).toFixed(2).replace(".", ",")}`
-            : "Prijs op aanvraag"
-        }
+        label="Totaalprijs"
+        value={price ? formatPriceCents(price.totalCents) : "Prijs op aanvraag"}
       />
     </dl>
   );

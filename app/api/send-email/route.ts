@@ -5,6 +5,7 @@ import { createResendClient } from "@/lib/email/resend";
 import { renderConfigurationEmail } from "@/lib/email/templates/configuration-confirmation";
 import { renderCustomerConfirmationEmail } from "@/lib/email/templates/customer-confirmation";
 import { computeAutoFit } from "@/lib/configuration/text-fit";
+import { calculatePrice } from "@/lib/configuration/pricing";
 import {
   productShapes,
   productColors,
@@ -96,6 +97,17 @@ export async function POST(request: Request) {
     line2Chars: shape.extraLines >= 2 ? data.extraLine2.length || null : null,
   });
 
+  // Prijs wordt hier, server-side, opnieuw berekend met dezelfde functie als
+  // de configurator zelf gebruikt (lib/configuration/pricing.ts) — nooit
+  // een door de klant meegestuurd bedrag vertrouwen.
+  const price = calculatePrice(data);
+  const priceFields = {
+    priceTotalCents: price?.totalCents ?? null,
+    priceColorSurchargeCents: price?.colorSurchargeCents ?? 0,
+    priceExtraCharsCents: price?.extraCharsCents ?? 0,
+    priceExtraCharsCount: price?.extraCharsCount ?? 0,
+  };
+
   const html = renderConfigurationEmail({
     shapeName: shape.name,
     finish: data.finish,
@@ -110,6 +122,7 @@ export async function POST(request: Request) {
     fontName: font.name,
     contact,
     orderLabel,
+    ...priceFields,
   });
 
   try {
@@ -143,6 +156,7 @@ export async function POST(request: Request) {
       fontName: font.name,
       quantity: contact.quantity,
       orderLabel,
+      ...priceFields,
     });
 
     const { error: customerError } = await resend.emails.send({

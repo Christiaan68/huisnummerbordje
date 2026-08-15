@@ -31,6 +31,11 @@ export interface ProductSize {
   unit: "mm";
   priceFlatCents: number | null;
   priceCurvedCents: number | null;
+  // Aantal tekens dat gratis is voor het huisnummer op deze maat, vóórdat
+  // de meerprijs per extra teken (zie config/product-options.ts,
+  // globalPricingOptions.extraCharPriceCents) gaat gelden. Komt uit de
+  // prijsbeheeromgeving ("Standaard maximaal aantal karakters").
+  defaultMaxChars: number;
   active: boolean;
   createdAt: string;
 }

@@ -1,3 +1,5 @@
+import { formatPriceCents } from "@/lib/configuration/pricing";
+
 interface ConfigurationEmailData {
   shapeName: string;
   finish: "vlak" | "gewelfd";
@@ -20,6 +22,12 @@ interface ConfigurationEmailData {
     quantity: string;
   };
   orderLabel?: string;
+  // Prijs — zie lib/configuration/pricing.ts. priceTotalCents is null
+  // wanneer er (nog) geen prijs bekend is voor deze maat/afwerking.
+  priceTotalCents?: number | null;
+  priceColorSurchargeCents?: number;
+  priceExtraCharsCents?: number;
+  priceExtraCharsCount?: number;
 }
 
 /**
@@ -102,6 +110,25 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
                     ${data.orderLabel ? row("Volgorde", data.orderLabel) : ""}
                     ${row("Lettertype", data.fontName)}
                     ${row("Datum", date)}
+                    ${
+                      data.priceColorSurchargeCents
+                        ? row("Meerprijs kleur", formatPriceCents(data.priceColorSurchargeCents))
+                        : ""
+                    }
+                    ${
+                      data.priceExtraCharsCents
+                        ? row(
+                            `Meerprijs extra tekens (${data.priceExtraCharsCount}×)`,
+                            formatPriceCents(data.priceExtraCharsCents)
+                          )
+                        : ""
+                    }
+                    ${row(
+                      "Totaalprijs",
+                      data.priceTotalCents != null
+                        ? formatPriceCents(data.priceTotalCents)
+                        : "Prijs op aanvraag"
+                    )}
                   </table>
                 </td>
               </tr>

@@ -9,6 +9,7 @@ import {
   productSizes,
 } from "@/config/product-options";
 import { computeAutoFit } from "@/lib/configuration/text-fit";
+import { calculatePrice, formatPriceCents } from "@/lib/configuration/pricing";
 import { cn } from "@/lib/utils";
 
 function getContrastTextColor(hex: string): string {
@@ -31,6 +32,7 @@ export function ProductPreview() {
   const color = productColors.find((c) => c.id === selection.colorId);
   const size = productSizes.find((s) => s.id === selection.sizeId);
   const font = productFonts.find((f) => f.id === selection.fontId);
+  const price = calculatePrice(selection);
 
   const isOval = shape?.id === "ovaal";
   const ratio = size ? size.width / size.height : 1;
@@ -195,6 +197,15 @@ export function ProductPreview() {
             <dd className="text-foreground">{font?.name ?? "—"}</dd>
           </div>
         </dl>
+
+        <div className="mt-4 flex items-center justify-between rounded-sm border border-border/60 bg-card px-4 py-3">
+          <span className="text-xs uppercase tracking-widest text-muted-foreground">
+            Totaalprijs
+          </span>
+          <span className="text-lg font-semibold text-foreground">
+            {price ? formatPriceCents(price.totalCents) : "—"}
+          </span>
+        </div>
       </div>
     </div>
   );

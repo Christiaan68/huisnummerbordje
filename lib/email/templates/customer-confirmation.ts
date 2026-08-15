@@ -1,3 +1,5 @@
+import { formatPriceCents } from "@/lib/configuration/pricing";
+
 interface CustomerConfirmationData {
   contactName: string;
   shapeName: string;
@@ -10,6 +12,12 @@ interface CustomerConfirmationData {
   fontName: string;
   quantity: string;
   orderLabel?: string;
+  // Prijs — zie lib/configuration/pricing.ts. priceTotalCents is null
+  // wanneer er (nog) geen prijs bekend is voor deze maat/afwerking.
+  priceTotalCents?: number | null;
+  priceColorSurchargeCents?: number;
+  priceExtraCharsCents?: number;
+  priceExtraCharsCount?: number;
 }
 
 /**
@@ -65,6 +73,25 @@ export function renderCustomerConfirmationEmail(
                     ${data.orderLabel ? row("Volgorde", data.orderLabel) : ""}
                     ${row("Lettertype", data.fontName)}
                     ${row("Aantal", data.quantity)}
+                    ${
+                      data.priceColorSurchargeCents
+                        ? row("Meerprijs kleur", formatPriceCents(data.priceColorSurchargeCents))
+                        : ""
+                    }
+                    ${
+                      data.priceExtraCharsCents
+                        ? row(
+                            `Meerprijs extra tekens (${data.priceExtraCharsCount}×)`,
+                            formatPriceCents(data.priceExtraCharsCents)
+                          )
+                        : ""
+                    }
+                    ${row(
+                      "Totaalprijs",
+                      data.priceTotalCents != null
+                        ? formatPriceCents(data.priceTotalCents)
+                        : "Prijs op aanvraag"
+                    )}
                   </table>
                 </td>
               </tr>
