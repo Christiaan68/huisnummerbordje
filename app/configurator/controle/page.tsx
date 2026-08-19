@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { ConfigurationSummary } from "@/components/configurator/ConfigurationSummary";
 import { ContactDetailsForm } from "@/components/configurator/ContactDetailsForm";
+import { QuestionModal } from "@/components/configurator/QuestionModal";
 import type { CreateConfigurationInput } from "@/types/configuration";
 import type { ContactDetails } from "@/lib/validation/contact.schema";
 
@@ -18,6 +19,7 @@ export default function ControlePage() {
     "idle"
   );
   const [message, setMessage] = useState<string | null>(null);
+  const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
 
   function handleWijzigen() {
     router.push("/configurator/vorm");
@@ -131,6 +133,18 @@ export default function ControlePage() {
             <ConfigurationSummary />
           </div>
 
+          <p className="mt-4 text-sm text-muted-foreground">
+            Twijfel je nog, of heb je een vraag over deze configuratie?{" "}
+            <button
+              type="button"
+              onClick={() => setIsQuestionModalOpen(true)}
+              className="text-foreground underline underline-offset-4 hover:text-primary"
+            >
+              Stel hier je vraag
+            </button>
+            .
+          </p>
+
           {message && (
             <p
               className={
@@ -170,6 +184,18 @@ export default function ControlePage() {
             gegevens naar ons door.
           </p>
 
+          <p className="mt-2 text-sm text-muted-foreground">
+            Nog een vraag voordat je bevestigt?{" "}
+            <button
+              type="button"
+              onClick={() => setIsQuestionModalOpen(true)}
+              className="text-foreground underline underline-offset-4 hover:text-primary"
+            >
+              Stel hier je vraag
+            </button>
+            .
+          </p>
+
           <div className="mt-8">
             <ContactDetailsForm
               onSubmit={handleContactSubmit}
@@ -206,6 +232,10 @@ export default function ControlePage() {
             </button>
           </div>
         </>
+      )}
+
+      {isQuestionModalOpen && (
+        <QuestionModal onClose={() => setIsQuestionModalOpen(false)} />
       )}
     </div>
   );
