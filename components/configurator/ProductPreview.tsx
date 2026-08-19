@@ -81,12 +81,45 @@ export function ProductPreview() {
   let line2FontSize = 14;
 
   if (size) {
+    // Hoeveel marge er minstens vrij moet blijven zodat de tekst niet over
+    // de schroefjes heen loopt — berekend uit de werkelijke positie/grootte
+    // van de schroefjes hierboven (screwPositions/screwRadius worden verderop
+    // met dezelfde formules bepaald). Rechthoekig bordje: 4 schroefjes in de
+    // hoeken, dus zowel horizontaal als verticaal marge nodig. Ovaal bordje:
+    // 2 schroefjes op de langste as (dus horizontaal bij een liggende ovaal,
+    // verticaal bij een staande) — op de korte as staan ze in het midden,
+    // dus daar is geen extra marge nodig (gemeld door Christiaan, 19-8-2026,
+    // n.a.v. "88888" op een ovaal bordje dat de gaatjes overschreef).
+    const screwRadiusMm = Math.min(size.width, size.height) * 0.045;
+    const screwBufferMm = 3;
+    let minMarginXMm = 0;
+    let minMarginYMm = 0;
+    if (isOval) {
+      const longAxisIsWidth = size.width >= size.height;
+      const axisMarginMm =
+        (longAxisIsWidth ? size.width : size.height) *
+          (0.5 - OVAL_SCREW_AXIS_RATIO) +
+        screwRadiusMm +
+        screwBufferMm;
+      if (longAxisIsWidth) {
+        minMarginXMm = axisMarginMm;
+      } else {
+        minMarginYMm = axisMarginMm;
+      }
+    } else {
+      minMarginXMm = size.width * SCREW_INSET_RATIO + screwRadiusMm + screwBufferMm;
+      minMarginYMm = size.height * SCREW_INSET_RATIO + screwRadiusMm + screwBufferMm;
+    }
+
     const fit = computeAutoFit({
       widthMm: size.width,
       heightMm: size.height,
       numberChars: numberText.length,
       line1Chars: hasLine1 ? line1Text.length : null,
       line2Chars: hasLine2 ? line2Text.length : null,
+      minMarginXMm,
+      minMarginYMm,
+      fontId: font?.id,
     });
     const pxPerMm = PREVIEW_WIDTH_PX / size.width;
     numberFontSize = fit.numberSizeMm * pxPerMm;
