@@ -10,6 +10,7 @@ import {
 } from "@/config/product-options";
 import { computeAutoFit } from "@/lib/configuration/text-fit";
 import { calculatePrice, formatPriceCents } from "@/lib/configuration/pricing";
+import { cn } from "@/lib/utils";
 
 function getContrastTextColor(hex: string): string {
   const clean = hex.replace("#", "");
@@ -21,13 +22,6 @@ function getContrastTextColor(hex: string): string {
 }
 
 const PREVIEW_WIDTH_PX = 260;
-
-// Hoeken waar de 4 "schroefjes" komen te staan, als verhouding (0 t/m 1)
-// van de breedte/hoogte van het bordje. Bij een ovaal bordje trekken we ze
-// iets naar het midden toe (SCREW_OVAL_PULL), anders zouden ze buiten de
-// ovale vorm vallen.
-const SCREW_INSET_RATIO = 0.11;
-const SCREW_OVAL_PULL = 0.76;
 
 export function ProductPreview() {
   const { selection } = useConfigurator();
@@ -49,14 +43,6 @@ export function ProductPreview() {
   const hasLine1 = (shape?.extraLines ?? 0) >= 1;
   const hasLine2 = (shape?.extraLines ?? 0) >= 2;
   const isCurved = selection.finish !== "vlak";
-
-  // Afmetingen van het bordje (in mm, zoals gekozen bij "Maat"). Nog geen
-  // maat gekozen? Dan een neutrale placeholder van 100×100, puur om de
-  // preview al iets te laten tonen.
-  const plateWidth = size?.width ?? 100;
-  const plateHeight = size?.height ?? 100;
-  const plateFill = color?.hex ?? "hsl(var(--secondary))";
-  const frameColor = textColor ?? "hsl(var(--border))";
 
   const numberText = selection.customText || "12";
   const line1Text = selection.extraLine1 || "Voorbeeldtekst";
@@ -88,33 +74,18 @@ export function ProductPreview() {
   };
   const gapRatio = lineGapRatioByFont[font?.id ?? ""] ?? 0.08;
 
-  // fontWeight: 700 (vet) op alle preview-tekst — zo lijkt de preview meer
-  // op een echt geëmailleerd bordje, waar het nummer altijd dik/opvallend
-  // gedrukt is (zie referentiefoto van Christiaan, 19-8-2026).
   const numberNode = (
-    <span
-      key="number"
-      className="leading-none"
-      style={{ fontFamily, fontSize: `${numberFontSize}px`, fontWeight: 700 }}
-    >
+    <span key="number" className="leading-none" style={{ fontFamily, fontSize: `${numberFontSize}px` }}>
       {numberText}
     </span>
   );
   const line1Node = hasLine1 ? (
-    <span
-      key="line1"
-      className="leading-none"
-      style={{ fontFamily, fontSize: `${line1FontSize}px`, fontWeight: 700 }}
-    >
+    <span key="line1" className="leading-none" style={{ fontFamily, fontSize: `${line1FontSize}px` }}>
       {line1Text}
     </span>
   ) : null;
   const line2Node = hasLine2 ? (
-    <span
-      key="line2"
-      className="leading-none"
-      style={{ fontFamily, fontSize: `${line2FontSize}px`, fontWeight: 700 }}
-    >
+    <span key="line2" className="leading-none" style={{ fontFamily, fontSize: `${line2FontSize}px` }}>
       {line2Text}
     </span>
   ) : null;
@@ -164,21 +135,6 @@ export function ProductPreview() {
     text.style.transform = `translateY(${delta}px)`;
   });
 
-  // Positie (als verhouding 0–1) van de 4 schroefjes, voor zowel een
-  // rechthoekig als een ovaal bordje.
-  const screwPositions = [
-    [SCREW_INSET_RATIO, SCREW_INSET_RATIO],
-    [1 - SCREW_INSET_RATIO, SCREW_INSET_RATIO],
-    [SCREW_INSET_RATIO, 1 - SCREW_INSET_RATIO],
-    [1 - SCREW_INSET_RATIO, 1 - SCREW_INSET_RATIO],
-  ].map(([xr, yr]) => [
-    isOval ? 0.5 + (xr - 0.5) * SCREW_OVAL_PULL : xr,
-    isOval ? 0.5 + (yr - 0.5) * SCREW_OVAL_PULL : yr,
-  ]);
-  const screwRadius = Math.min(plateWidth, plateHeight) * 0.045;
-  const frameInset = Math.min(plateWidth, plateHeight) * 0.115;
-  const frameStrokeWidth = Math.max(plateWidth, plateHeight) * 0.013;
-
   return (
     <div className="lg:sticky lg:top-10">
       <p className="mb-3 text-center text-xs uppercase tracking-widest text-muted-foreground lg:text-left">
@@ -188,94 +144,19 @@ export function ProductPreview() {
       <div className="mx-auto w-full max-w-[260px]">
         <div
           ref={plateRef}
-          className="relative flex flex-col items-center justify-center p-7 text-center shadow-[0_20px_35px_rgba(0,0,0,0.35)] transition-all duration-300"
+          className={cn(
+            "relative flex flex-col items-center justify-center border-[6px] p-6 text-center shadow-[0_20px_35px_rgba(0,0,0,0.35)] transition-all duration-300",
+            !color && "bg-secondary"
+          )}
           style={{
             aspectRatio: ratio,
+            backgroundColor: color?.hex,
+            borderColor: "hsl(var(--primary))",
             borderRadius: isOval ? "50%" : "12px",
             color: textColor,
           }}
         >
-          {/* Het "geëmailleerde plaatje" zelf: achtergrond, sierrand en de
-              4 schroefjes, getekend als SVG — zodat het op elke maat en
-              vorm (rechthoekig of ovaal) er als een echt bordje uitziet,
-              in plaats van als een gekleurd vlak met een dikke rand. */}
-          <svg
-            className="absolute inset-0 h-full w-full"
-            viewBox={`0 0 ${plateWidth} ${plateHeight}`}
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            {isOval ? (
-              <ellipse
-                cx={plateWidth / 2}
-                cy={plateHeight / 2}
-                rx={plateWidth / 2}
-                ry={plateHeight / 2}
-                fill={plateFill}
-              />
-            ) : (
-              <rect
-                x={0}
-                y={0}
-                width={plateWidth}
-                height={plateHeight}
-                rx={plateWidth * 0.04}
-                fill={plateFill}
-              />
-            )}
-
-            {isOval ? (
-              <ellipse
-                cx={plateWidth / 2}
-                cy={plateHeight / 2}
-                rx={plateWidth / 2 - frameInset}
-                ry={plateHeight / 2 - frameInset}
-                fill="none"
-                stroke={frameColor}
-                strokeWidth={frameStrokeWidth}
-              />
-            ) : (
-              <rect
-                x={frameInset}
-                y={frameInset}
-                width={plateWidth - frameInset * 2}
-                height={plateHeight - frameInset * 2}
-                rx={plateWidth * 0.045}
-                fill="none"
-                stroke={frameColor}
-                strokeWidth={frameStrokeWidth}
-              />
-            )}
-
-            {screwPositions.map(([xr, yr], index) => {
-              const cx = plateWidth * xr;
-              const cy = plateHeight * yr;
-              return (
-                <g key={index}>
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={screwRadius}
-                    fill="#8f8f8f"
-                    stroke="#4d4d4d"
-                    strokeWidth={screwRadius * 0.14}
-                  />
-                  <circle cx={cx} cy={cy} r={screwRadius * 0.55} fill="#c9c9c9" />
-                  <line
-                    x1={cx - screwRadius * 0.4}
-                    y1={cy}
-                    x2={cx + screwRadius * 0.4}
-                    y2={cy}
-                    stroke="#4d4d4d"
-                    strokeWidth={screwRadius * 0.18}
-                    transform={`rotate(${(index * 37) % 90} ${cx} ${cy})`}
-                  />
-                </g>
-              );
-            })}
-          </svg>
-
-          <div ref={textRef} className="relative z-10 flex w-full flex-col items-center">
+          <div ref={textRef} className="flex w-full flex-col items-center">
             {nodesWithSpacing.map(({ node, marginTop }) => (
               <div key={node.key} style={{ marginTop: `${marginTop}px` }}>
                 {node}
@@ -285,7 +166,7 @@ export function ProductPreview() {
 
           {isCurved && (
             <div
-              className="pointer-events-none absolute inset-0 z-10"
+              className="pointer-events-none absolute inset-0"
               style={{
                 borderRadius: isOval ? "50%" : "12px",
                 background: "linear-gradient(135deg, rgba(255,255,255,0.35), transparent 45%)",
