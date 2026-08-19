@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Menu as MenuIcon } from "lucide-react";
 
 export function Header({
@@ -24,6 +24,24 @@ export function Header({
       menuRef.current.open = false;
     }
   }
+
+  // Sluit het menu ook als je ergens anders op de pagina klikt (niet op het
+  // menu zelf). Een native <details>-element doet dat standaard niet — die
+  // blijft openstaan tot je nogmaals op het hamburgericoon klikt of op een
+  // link erin (gemeld door Christiaan, 19-8-2026).
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const menu = menuRef.current;
+      if (menu && menu.open && !menu.contains(event.target as Node)) {
+        menu.open = false;
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <header className="absolute inset-x-0 top-0 z-20">
