@@ -10,37 +10,17 @@ import {
 } from "@/config/product-options";
 import { computeAutoFit } from "@/lib/configuration/text-fit";
 import { calculatePrice, formatPriceCents } from "@/lib/configuration/pricing";
-
-function getContrastTextColor(hex: string): string {
-  const clean = hex.replace("#", "");
-  const r = parseInt(clean.substring(0, 2), 16);
-  const g = parseInt(clean.substring(2, 4), 16);
-  const b = parseInt(clean.substring(4, 6), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.55 ? "#1a1a1a" : "#f7f5f0";
-}
+import {
+  DEFAULT_OVAL_RATIO,
+  DEFAULT_LINE_GAP_RATIO,
+  LINE_GAP_RATIO_BY_FONT,
+  getContrastTextColor,
+  getScrewClearanceMarginsMm,
+  getScrewPositions,
+  getScrewRadiusMm,
+} from "@/lib/configuration/plate-visual";
 
 const PREVIEW_WIDTH_PX = 260;
-
-// Positie van de "schroefjes", als verhouding (0 t/m 1) van de
-// breedte/hoogte van het bordje.
-// - Rechthoekig bordje: 4 schroefjes, één in elke hoek, op SCREW_INSET_RATIO
-//   afstand van de rand.
-// - Ovaal bordje: maar 2 schroefjes, aan de langste uiteinden van de ovaal
-//   (dus op de langste as) — zo besloten door Christiaan op 19-8-2026,
-//   in plaats van 4 schroefjes verspreid over de hele rand.
-//   OVAL_SCREW_AXIS_RATIO bepaalt hoe ver naar de punten toe (0,5 zou
-//   precies op de punt zelf zijn, wat niet kan: daar is de ovaal te smal
-//   om het schroefje nog te laten passen).
-const SCREW_INSET_RATIO = 0.11;
-const OVAL_SCREW_AXIS_RATIO = 0.4;
-
-// Placeholder-verhouding (breedte/hoogte) voor een ovaal bordje zolang er
-// nog geen maat gekozen is — zonder dit zou de preview een perfecte cirkel
-// tonen (breedte = hoogte) in plaats van een ovaal, wat verwarrend is
-// (gemeld door Christiaan, 19-8-2026). 1,4 komt ongeveer overeen met de
-// echte ovalen maten (van 150×105 tot 300×220 mm, allemaal rond de 1,35–1,43).
-const DEFAULT_OVAL_RATIO = 1.4;
 
 export function ProductPreview() {
   const { selection } = useConfigurator();
@@ -90,26 +70,11 @@ export function ProductPreview() {
     // verticaal bij een staande) — op de korte as staan ze in het midden,
     // dus daar is geen extra marge nodig (gemeld door Christiaan, 19-8-2026,
     // n.a.v. "88888" op een ovaal bordje dat de gaatjes overschreef).
-    const screwRadiusMm = Math.min(size.width, size.height) * 0.045;
-    const screwBufferMm = 3;
-    let minMarginXMm = 0;
-    let minMarginYMm = 0;
-    if (isOval) {
-      const longAxisIsWidth = size.width >= size.height;
-      const axisMarginMm =
-        (longAxisIsWidth ? size.width : size.height) *
-          (0.5 - OVAL_SCREW_AXIS_RATIO) +
-        screwRadiusMm +
-        screwBufferMm;
-      if (longAxisIsWidth) {
-        minMarginXMm = axisMarginMm;
-      } else {
-        minMarginYMm = axisMarginMm;
-      }
-    } else {
-      minMarginXMm = size.width * SCREW_INSET_RATIO + screwRadiusMm + screwBufferMm;
-      minMarginYMm = size.height * SCREW_INSET_RATIO + screwRadiusMm + screwBufferMm;
-    }
+    const { minMarginXMm, minMarginYMm } = getScrewClearanceMarginsMm(
+      isOval,
+      size.width,
+      size.height
+    );
 
     const fit = computeAutoFit({
       widthMm: size.width,
@@ -127,13 +92,7 @@ export function ProductPreview() {
     line2FontSize = fit.line2SizeMm ? fit.line2SizeMm * pxPerMm : line2FontSize;
   }
 
-  const lineGapRatioByFont: Record<string, number> = {
-    classic: 0.16,
-    elegant: 0.16,
-    modern: 0.06,
-    industrial: 0.06,
-  };
-  const gapRatio = lineGapRatioByFont[font?.id ?? ""] ?? 0.08;
+  const gapRatio = LINE_GAP_RATIO_BY_FONT[font?.id ?? ""] ?? DEFAULT_LINE_GAP_RATIO;
 
   // fontWeight: 700 (vet) op alle preview-tekst — zo lijkt de preview meer
   // op een echt geëmailleerd bordje, waar het nummer altijd dik/opvallend
@@ -211,27 +170,12 @@ export function ProductPreview() {
     text.style.transform = `translateY(${delta}px)`;
   });
 
-  // Positie (als verhouding 0–1) van de schroefjes. Rechthoekig bordje: 4
-  // schroefjes, één in elke hoek. Ovaal bordje: 2 schroefjes, aan de
-  // langste uiteinden (op de langste as — horizontaal als het bordje
-  // breder is dan hoog, verticaal als het andersom is).
-  const screwPositions = isOval
-    ? plateWidth >= plateHeight
-      ? [
-          [0.5 - OVAL_SCREW_AXIS_RATIO, 0.5],
-          [0.5 + OVAL_SCREW_AXIS_RATIO, 0.5],
-        ]
-      : [
-          [0.5, 0.5 - OVAL_SCREW_AXIS_RATIO],
-          [0.5, 0.5 + OVAL_SCREW_AXIS_RATIO],
-        ]
-    : [
-        [SCREW_INSET_RATIO, SCREW_INSET_RATIO],
-        [1 - SCREW_INSET_RATIO, SCREW_INSET_RATIO],
-        [SCREW_INSET_RATIO, 1 - SCREW_INSET_RATIO],
-        [1 - SCREW_INSET_RATIO, 1 - SCREW_INSET_RATIO],
-      ];
-  const screwRadius = Math.min(plateWidth, plateHeight) * 0.045;
+  // Positie (als verhouding 0–1) en straal van de schroefjes — zie
+  // lib/configuration/plate-visual.ts (ook gebruikt voor de
+  // voorbeeldafbeelding in de bevestigingsmail, zodat beide weergaves altijd
+  // hetzelfde tonen).
+  const screwPositions = getScrewPositions(isOval, plateWidth, plateHeight);
+  const screwRadius = getScrewRadiusMm(plateWidth, plateHeight);
 
   return (
     <div className="lg:sticky lg:top-10">

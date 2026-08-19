@@ -4,6 +4,7 @@ import { contactDetailsSchema } from "@/lib/validation/contact.schema";
 import { createResendClient } from "@/lib/email/resend";
 import { renderConfigurationEmail } from "@/lib/email/templates/configuration-confirmation";
 import { renderCustomerConfirmationEmail } from "@/lib/email/templates/customer-confirmation";
+import { renderPlatePreviewPng } from "@/lib/email/plate-preview-image";
 import { computeAutoFit } from "@/lib/configuration/text-fit";
 import { calculatePrice } from "@/lib/configuration/pricing";
 import { getLivePricingData } from "@/lib/configuration/livePricing";
@@ -194,6 +195,36 @@ export async function POST(request: Request) {
       );
     }
 
+    // Voorbeeldafbeelding van het geconfigureerde bordje, voor in de
+    // bevestigingsmail aan de klant (gevraagd door Christiaan, 19-8-2026:
+    // "zodat de klant weet wat er besteld is"). Bewust NIET verstuurd als
+    // publieke afbeeldings-URL, maar als losse bijlage met een content-id
+    // (cid) — dat werkt betrouwbaar in alle e-mailclients, ook Outlook
+    // (die data-URI-afbeeldingen niet toont). Mislukt het genereren om wat
+    // voor reden dan ook, dan mag dat de bestelbevestiging zelf nooit
+    // blokkeren: de e-mail gaat dan gewoon zonder afbeelding.
+    const PREVIEW_IMAGE_CID = "bordje-voorbeeld";
+    let previewImageBuffer: Buffer | null = null;
+    try {
+      previewImageBuffer = await renderPlatePreviewPng({
+        isOval: shape.id === "ovaal",
+        isCurved: data.finish !== "vlak",
+        widthMm: size.width,
+        heightMm: size.height,
+        colorHex: color.hex,
+        fontId: font.id,
+        numberText: data.customText,
+        line1Text: shape.extraLines >= 1 ? data.extraLine1 : null,
+        line2Text: shape.extraLines >= 2 ? data.extraLine2 : null,
+        numberPosition: data.numberPosition,
+      });
+    } catch (previewError) {
+      console.error(
+        "Genereren van de voorbeeldafbeelding voor de klantmail is mislukt (e-mail wordt wel zonder afbeelding verstuurd):",
+        previewError instanceof Error ? previewError.message : previewError
+      );
+    }
+
     const customerHtml = renderCustomerConfirmationEmail({
       contactName: contact.name,
       shapeName: shape.name,
@@ -206,6 +237,7 @@ export async function POST(request: Request) {
       fontName: font.name,
       quantity: contact.quantity,
       orderLabel,
+      previewImageCid: previewImageBuffer ? PREVIEW_IMAGE_CID : undefined,
       ...priceFields,
     });
 
@@ -214,6 +246,15 @@ export async function POST(request: Request) {
       to: contact.email,
       subject: "Bevestiging van je bestelling — Huisnummerbordjes",
       html: customerHtml,
+      attachments: previewImageBuffer
+        ? [
+            {
+              content: previewImageBuffer,
+              filename: "voorbeeld-bordje.png",
+              contentId: PREVIEW_IMAGE_CID,
+            },
+          ]
+        : undefined,
     });
 
     if (customerError) {

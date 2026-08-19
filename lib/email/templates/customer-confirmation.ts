@@ -12,6 +12,11 @@ interface CustomerConfirmationData {
   fontName: string;
   quantity: string;
   orderLabel?: string;
+  // Content-id van de bijgevoegde voorbeeldafbeelding van het bordje (zie
+  // app/api/send-email/route.ts / lib/email/plate-preview-image.tsx).
+  // Onbekend/leeg (bv. omdat het genereren onverhoopt mislukt is) → geen
+  // afbeelding tonen, de rest van de mail blijft gewoon werken.
+  previewImageCid?: string;
   // Prijs — zie lib/configuration/pricing.ts. priceTotalCents is null
   // wanneer er (nog) geen prijs bekend is voor deze maat/afwerking.
   priceTotalCents?: number | null;
@@ -60,6 +65,22 @@ export function renderCustomerConfirmationEmail(
                   </p>
                 </td>
               </tr>
+              ${
+                data.previewImageCid
+                  ? `
+              <tr>
+                <td style="padding:0 32px 8px;" align="center">
+                  <img
+                    src="cid:${data.previewImageCid}"
+                    alt="Voorbeeld van je geconfigureerde huisnummerbordje"
+                    width="320"
+                    style="display:block;max-width:320px;width:100%;height:auto;border-radius:6px;"
+                  />
+                </td>
+              </tr>
+              `
+                  : ""
+              }
               <tr>
                 <td style="padding:16px 32px 24px;">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
