@@ -14,9 +14,9 @@ const finishLabels: Record<PlateFinish, string> = {
 
 export function FinishSelector() {
   const { selection, dispatch } = useConfigurator();
-  // Voor de pop-up met het voorbeeldfotootje: welke afwerking (vlak/gewelfd)
-  // wordt op dit moment aangewezen/gefocust? null = geen pop-up tonen.
-  const [previewFinish, setPreviewFinish] = useState<PlateFinish | null>(null);
+  // Voor de pop-up met het voorbeeldfotootje: sta je (met muis of
+  // toetsenbord) ergens boven de knoppen óf boven de pop-up zelf?
+  const [showPreview, setShowPreview] = useState(false);
 
   const shape = productShapes.find((s) => s.id === selection.shapeId);
 
@@ -41,7 +41,11 @@ export function FinishSelector() {
   }
 
   return (
-    <div className="relative">
+    <div
+      className="relative inline-block"
+      onMouseEnter={() => setShowPreview(true)}
+      onMouseLeave={() => setShowPreview(false)}
+    >
       <div role="radiogroup" aria-label="Kies een afwerking" className="flex gap-3">
         {shape.availableFinishes.map((finish) => {
           const isSelected = selection.finish === finish;
@@ -53,10 +57,8 @@ export function FinishSelector() {
               role="radio"
               aria-checked={isSelected}
               onClick={() => dispatch({ type: "SET_FINISH", finish })}
-              onMouseEnter={() => setPreviewFinish(finish)}
-              onMouseLeave={() => setPreviewFinish(null)}
-              onFocus={() => setPreviewFinish(finish)}
-              onBlur={() => setPreviewFinish(null)}
+              onFocus={() => setShowPreview(true)}
+              onBlur={() => setShowPreview(false)}
               className={cn(
                 "flex items-center gap-2 rounded-sm border px-5 py-3 text-sm font-medium transition-colors",
                 isSelected
@@ -72,21 +74,28 @@ export function FinishSelector() {
       </div>
 
       {/* Pop-up met een voorbeeldfoto van het verschil tussen vlak en
-          gewelfd emaille, zichtbaar zodra je met je muis over (of met het
-          toetsenbord naar) een van beide knoppen gaat. Dezelfde foto laat
-          meteen beide afwerkingen naast elkaar zien, dus die tonen we bij
-          allebei de knoppen. */}
-      {previewFinish && (
+          gewelfd emaille, rechtsboven de knoppen. Zichtbaar zodra je met je
+          muis ergens boven deze hele blok (knoppen of pop-up) staat, of met
+          het toetsenbord een knop focust — de onMouseEnter/Leave staan
+          daarom op de buitenste, omvattende <div>, en niet los op elke
+          knop: anders "flitste" de pop-up aan en uit zodra je muis tussen
+          de knop en de pop-up in kwam (gemeld door Christiaan, 19-8-2026).
+          De onzichtbare padding (pb-3) hoort ook bij dat omvattende
+          hover-vlak, zodat er geen "dood" tussenstukje overblijft waar de
+          muis per ongeluk de pop-up laat verdwijnen. */}
+      {showPreview && (
         <div
-          className="absolute left-0 top-full z-20 mt-3 w-72 rounded-sm border border-border bg-card p-2 shadow-lg sm:w-96"
+          className="absolute bottom-full right-0 z-20 w-72 pb-3 sm:w-96"
           role="tooltip"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/images/vlak-vs-gewelfd.jpg"
-            alt="Voorbeeld van een huisnummerbordje in vlak emaille naast een huisnummerbordje in gewelfd emaille"
-            className="w-full rounded-sm"
-          />
+          <div className="rounded-sm border border-border bg-card p-2 shadow-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/vlak-vs-gewelfd.jpg"
+              alt="Voorbeeld van een huisnummerbordje in vlak emaille naast een huisnummerbordje in gewelfd emaille"
+              className="w-full rounded-sm"
+            />
+          </div>
         </div>
       )}
     </div>
