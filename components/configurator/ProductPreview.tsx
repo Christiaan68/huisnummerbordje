@@ -22,12 +22,18 @@ function getContrastTextColor(hex: string): string {
 
 const PREVIEW_WIDTH_PX = 260;
 
-// Hoeken waar de 4 "schroefjes" komen te staan, als verhouding (0 t/m 1)
-// van de breedte/hoogte van het bordje. Bij een ovaal bordje trekken we ze
-// iets naar het midden toe (SCREW_OVAL_PULL), anders zouden ze buiten de
-// ovale vorm vallen.
+// Positie van de "schroefjes", als verhouding (0 t/m 1) van de
+// breedte/hoogte van het bordje.
+// - Rechthoekig bordje: 4 schroefjes, één in elke hoek, op SCREW_INSET_RATIO
+//   afstand van de rand.
+// - Ovaal bordje: maar 2 schroefjes, aan de langste uiteinden van de ovaal
+//   (dus op de langste as) — zo besloten door Christiaan op 19-8-2026,
+//   in plaats van 4 schroefjes verspreid over de hele rand.
+//   OVAL_SCREW_AXIS_RATIO bepaalt hoe ver naar de punten toe (0,5 zou
+//   precies op de punt zelf zijn, wat niet kan: daar is de ovaal te smal
+//   om het schroefje nog te laten passen).
 const SCREW_INSET_RATIO = 0.11;
-const SCREW_OVAL_PULL = 0.76;
+const OVAL_SCREW_AXIS_RATIO = 0.4;
 
 export function ProductPreview() {
   const { selection } = useConfigurator();
@@ -163,17 +169,26 @@ export function ProductPreview() {
     text.style.transform = `translateY(${delta}px)`;
   });
 
-  // Positie (als verhouding 0–1) van de 4 schroefjes, voor zowel een
-  // rechthoekig als een ovaal bordje.
-  const screwPositions = [
-    [SCREW_INSET_RATIO, SCREW_INSET_RATIO],
-    [1 - SCREW_INSET_RATIO, SCREW_INSET_RATIO],
-    [SCREW_INSET_RATIO, 1 - SCREW_INSET_RATIO],
-    [1 - SCREW_INSET_RATIO, 1 - SCREW_INSET_RATIO],
-  ].map(([xr, yr]) => [
-    isOval ? 0.5 + (xr - 0.5) * SCREW_OVAL_PULL : xr,
-    isOval ? 0.5 + (yr - 0.5) * SCREW_OVAL_PULL : yr,
-  ]);
+  // Positie (als verhouding 0–1) van de schroefjes. Rechthoekig bordje: 4
+  // schroefjes, één in elke hoek. Ovaal bordje: 2 schroefjes, aan de
+  // langste uiteinden (op de langste as — horizontaal als het bordje
+  // breder is dan hoog, verticaal als het andersom is).
+  const screwPositions = isOval
+    ? plateWidth >= plateHeight
+      ? [
+          [0.5 - OVAL_SCREW_AXIS_RATIO, 0.5],
+          [0.5 + OVAL_SCREW_AXIS_RATIO, 0.5],
+        ]
+      : [
+          [0.5, 0.5 - OVAL_SCREW_AXIS_RATIO],
+          [0.5, 0.5 + OVAL_SCREW_AXIS_RATIO],
+        ]
+    : [
+        [SCREW_INSET_RATIO, SCREW_INSET_RATIO],
+        [1 - SCREW_INSET_RATIO, SCREW_INSET_RATIO],
+        [SCREW_INSET_RATIO, 1 - SCREW_INSET_RATIO],
+        [1 - SCREW_INSET_RATIO, 1 - SCREW_INSET_RATIO],
+      ];
   const screwRadius = Math.min(plateWidth, plateHeight) * 0.045;
 
   return (
