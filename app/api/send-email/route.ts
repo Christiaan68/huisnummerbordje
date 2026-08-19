@@ -7,6 +7,7 @@ import { renderCustomerConfirmationEmail } from "@/lib/email/templates/customer-
 import { computeAutoFit } from "@/lib/configuration/text-fit";
 import { calculatePrice } from "@/lib/configuration/pricing";
 import { getLivePricingData } from "@/lib/configuration/livePricing";
+import { saveOrderToDatabase } from "@/lib/mysql/client";
 import {
   productShapes,
   productColors,
@@ -148,6 +149,48 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Versturen van de e-mail is mislukt." },
         { status: 502 }
+      );
+    }
+
+    // De bestelling is hiermee echt bevestigd (de interne meldingsmail is
+    // gelukt) — vanaf hier bewaren we 'm ook in de MySQL-database, als
+    // aanvulling op de e-mail. Lukt dat onverhoopt niet (bv. de database is
+    // even niet bereikbaar), dan mag dat de bestelling zelf nooit
+    // blokkeren: de klant en Christiaan hebben dan nog steeds gewoon hun
+    // e-mail. We loggen de fout alleen, voor eventueel later handmatig
+    // navragen (zichtbaar in de Vercel-functielogs).
+    try {
+      await saveOrderToDatabase({
+        shapeId: shape.id,
+        shapeName: shape.name,
+        finish: data.finish,
+        colorId: color.id,
+        colorName: color.name,
+        sizeId: size.id,
+        sizeName: size.name,
+        fontId: font.id,
+        fontName: font.name,
+        customText: data.customText,
+        extraLine1: data.extraLine1 || null,
+        extraLine2: data.extraLine2 || null,
+        numberPosition: data.numberPosition,
+        priceTotalCents: priceFields.priceTotalCents,
+        priceColorSurchargeCents: priceFields.priceColorSurchargeCents,
+        priceExtraCharsCents: priceFields.priceExtraCharsCents,
+        priceExtraCharsCount: priceFields.priceExtraCharsCount,
+        priceSource: pricingData.bron,
+        contactName: contact.name,
+        contactAddress: contact.address,
+        contactPostalCode: contact.postalCode,
+        contactCity: contact.city,
+        contactEmail: contact.email,
+        contactPhone: contact.phone || null,
+        quantity: contact.quantity,
+      });
+    } catch (dbError) {
+      console.error(
+        "Opslaan van de bestelling in de database is mislukt (e-mail is wel verstuurd):",
+        dbError instanceof Error ? dbError.message : dbError
       );
     }
 
