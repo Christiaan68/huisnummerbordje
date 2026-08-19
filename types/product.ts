@@ -18,6 +18,10 @@ export interface ProductColor {
   slug: string;
   hex: string;
   productCode?: string;
+  // De officiële RAL-kleurcode (bijv. "RAL 6012"), door Christiaan zelf
+  // opgegeven op 19-8-2026. Wordt getoond onder de kleurnaam in de
+  // configurator (zie components/configurator/ColorSelector.tsx).
+  ralCode?: string;
   active: boolean;
   createdAt: string;
 }

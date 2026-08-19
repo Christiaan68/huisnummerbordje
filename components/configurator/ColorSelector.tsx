@@ -35,16 +35,23 @@ export function ColorSelector() {
               )}
               style={{ backgroundColor: color.hex }}
             />
-            <span className="flex items-center gap-1.5">
-              {isSelected && <Check className="h-3.5 w-3.5 text-primary" />}
-              <span
-                className={cn(
-                  "text-xs font-medium",
-                  isSelected ? "text-foreground" : "text-muted-foreground"
-                )}
-              >
-                {color.name}
+            <span className="flex flex-col items-center gap-0.5">
+              <span className="flex items-center gap-1.5">
+                {isSelected && <Check className="h-3.5 w-3.5 text-primary" />}
+                <span
+                  className={cn(
+                    "text-xs font-medium",
+                    isSelected ? "text-foreground" : "text-muted-foreground"
+                  )}
+                >
+                  {color.name}
+                </span>
               </span>
+              {color.ralCode && (
+                <span className="text-[11px] text-muted-foreground">
+                  ({color.ralCode})
+                </span>
+              )}
             </span>
           </button>
         );
