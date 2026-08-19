@@ -60,8 +60,8 @@ export function ColorSelector() {
               )}
               <span className="text-[11px] text-muted-foreground">
                 {isStandardColor
-                  ? "Standaard"
-                  : `+ ${formatPriceCents(globalPricingOptions.colorSurchargeCents)}`}
+                  ? "Standaardprijs"
+                  : `Meerprijs +${formatPriceCents(globalPricingOptions.colorSurchargeCents)}`}
               </span>
             </span>
           </button>
