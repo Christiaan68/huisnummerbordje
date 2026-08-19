@@ -54,6 +54,20 @@ export function Header({
                 Start configurator
               </Link>
               <Link
+                href="/leveringsvoorwaarden"
+                onClick={closeMenu}
+                className="block px-4 py-2 text-sm text-foreground hover:bg-secondary"
+              >
+                Leveringsvoorwaarden
+              </Link>
+              <Link
+                href="/retourneren-reclameren"
+                onClick={closeMenu}
+                className="block px-4 py-2 text-sm text-foreground hover:bg-secondary"
+              >
+                Retourneren / reclameren
+              </Link>
+              <Link
                 href="/contact"
                 onClick={closeMenu}
                 className="block px-4 py-2 text-sm text-foreground hover:bg-secondary"
