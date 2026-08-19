@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -33,6 +34,7 @@ function fieldClass(hasError: boolean) {
  * bestelling en heeft geen invloed op het bestelproces zelf.
  */
 export function QuestionModal({ onClose }: QuestionModalProps) {
+  const router = useRouter();
   const { selection } = useConfigurator();
   const [status, setStatus] = useState<
     "idle" | "submitting" | "success" | "error"
@@ -47,6 +49,10 @@ export function QuestionModal({ onClose }: QuestionModalProps) {
     resolver: zodResolver(questionDetailsSchema),
     defaultValues: { name: "", email: "", question: "" },
   });
+
+  function handleNaarHome() {
+    router.push("/");
+  }
 
   async function onSubmit(data: QuestionDetails) {
     if (
@@ -127,13 +133,20 @@ export function QuestionModal({ onClose }: QuestionModalProps) {
               configuratie. We nemen zo snel mogelijk contact met je op via
               het e-mailadres dat je hebt ingevuld.
             </p>
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 flex flex-wrap items-center justify-end gap-4">
               <button
                 type="button"
                 onClick={onClose}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Verder configureren
+              </button>
+              <button
+                type="button"
+                onClick={handleNaarHome}
                 className="inline-flex items-center justify-center rounded-sm bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
               >
-                Sluiten
+                Naar home
               </button>
             </div>
           </>
