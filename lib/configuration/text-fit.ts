@@ -61,8 +61,10 @@ export function computeAutoFit(input: AutoFitInput): AutoFitResult {
     fontId,
   } = input;
 
-  const charWidthRatio =
-    (fontId && CHAR_WIDTH_RATIO_BY_FONT[fontId]) ?? DEFAULT_CHAR_WIDTH_RATIO;
+  const charWidthRatio: number =
+    fontId !== undefined && fontId in CHAR_WIDTH_RATIO_BY_FONT
+      ? CHAR_WIDTH_RATIO_BY_FONT[fontId]
+      : DEFAULT_CHAR_WIDTH_RATIO;
 
   const baseMarginMm = Math.max(
     MIN_MARGIN_MM,
