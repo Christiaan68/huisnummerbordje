@@ -1,7 +1,9 @@
+import Link from "next/link";
+
 export function Footer() {
   return (
     <footer className="border-t border-border">
-      <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-muted-foreground">
+      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <p>
           &copy; Emaille Huisnummers is een onderdeel van{" "}
           <a
@@ -14,6 +16,24 @@ export function Footer() {
           </a>
           .
         </p>
+
+        {/* Leveringsvoorwaarden en retourneren/reclameren wijzen (voorlopig)
+            naar een lege pagina met alleen een titel — de inhoud volgt later
+            (gevraagd door Christiaan, 19-8-2026). */}
+        <div className="flex flex-wrap gap-x-4 gap-y-1">
+          <Link
+            href="/leveringsvoorwaarden"
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            Leveringsvoorwaarden
+          </Link>
+          <Link
+            href="/retourneren-reclameren"
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            Retourneren / reclameren
+          </Link>
+        </div>
       </div>
     </footer>
   );
