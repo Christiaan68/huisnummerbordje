@@ -35,6 +35,13 @@ const PREVIEW_WIDTH_PX = 260;
 const SCREW_INSET_RATIO = 0.11;
 const OVAL_SCREW_AXIS_RATIO = 0.4;
 
+// Placeholder-verhouding (breedte/hoogte) voor een ovaal bordje zolang er
+// nog geen maat gekozen is — zonder dit zou de preview een perfecte cirkel
+// tonen (breedte = hoogte) in plaats van een ovaal, wat verwarrend is
+// (gemeld door Christiaan, 19-8-2026). 1,4 komt ongeveer overeen met de
+// echte ovalen maten (van 150×105 tot 300×220 mm, allemaal rond de 1,35–1,43).
+const DEFAULT_OVAL_RATIO = 1.4;
+
 export function ProductPreview() {
   const { selection } = useConfigurator();
   const pricingData = usePricingData();
@@ -48,7 +55,7 @@ export function ProductPreview() {
   const price = calculatePrice(selection, pricingData);
 
   const isOval = shape?.id === "ovaal";
-  const ratio = size ? size.width / size.height : 1;
+  const ratio = size ? size.width / size.height : isOval ? DEFAULT_OVAL_RATIO : 1;
   const textColor = color ? getContrastTextColor(color.hex) : undefined;
   const fontFamily = font?.cssFamily ?? "var(--font-fraunces), Georgia, serif";
 
@@ -57,9 +64,11 @@ export function ProductPreview() {
   const isCurved = selection.finish !== "vlak";
 
   // Afmetingen van het bordje (in mm, zoals gekozen bij "Maat"). Nog geen
-  // maat gekozen? Dan een neutrale placeholder van 100×100, puur om de
-  // preview al iets te laten tonen.
-  const plateWidth = size?.width ?? 100;
+  // maat gekozen? Dan een neutrale placeholder — voor een ovaal bordje al
+  // met de juiste ovale verhouding (zie DEFAULT_OVAL_RATIO hierboven),
+  // voor de andere vormen gewoon 100×100, puur om de preview al iets te
+  // laten tonen.
+  const plateWidth = size?.width ?? (isOval ? 100 * DEFAULT_OVAL_RATIO : 100);
   const plateHeight = size?.height ?? 100;
   const plateFill = color?.hex ?? "hsl(var(--secondary))";
 
