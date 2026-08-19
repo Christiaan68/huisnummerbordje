@@ -2,11 +2,14 @@
 
 import { Check } from "lucide-react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
+import { usePricingData } from "@/lib/configuration/PricingDataContext";
 import { productColors } from "@/config/product-options";
+import { formatPriceCents } from "@/lib/configuration/pricing";
 import { cn } from "@/lib/utils";
 
 export function ColorSelector() {
   const { selection, dispatch } = useConfigurator();
+  const { globalPricingOptions } = usePricingData();
 
   return (
     <div
@@ -16,6 +19,9 @@ export function ColorSelector() {
     >
       {productColors.map((color) => {
         const isSelected = selection.colorId === color.id;
+        const isStandardColor = globalPricingOptions.standardColorIds.includes(
+          color.id
+        );
 
         return (
           <button
@@ -52,6 +58,11 @@ export function ColorSelector() {
                   ({color.ralCode})
                 </span>
               )}
+              <span className="text-[11px] text-muted-foreground">
+                {isStandardColor
+                  ? "Standaard"
+                  : `+ ${formatPriceCents(globalPricingOptions.colorSurchargeCents)}`}
+              </span>
             </span>
           </button>
         );

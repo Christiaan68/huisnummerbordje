@@ -57,8 +57,8 @@ export const productShapes: ProductShape[] = [
 export const productColors: ProductColor[] = [
   { id: "black", name: "Zwart", slug: "black", hex: "#111111", ralCode: "RAL 9005", active: true, createdAt: "" },
   { id: "white", name: "Wit", slug: "white", hex: "#F7F5F0", ralCode: "RAL 9016", active: true, createdAt: "" },
-  { id: "cream", name: "Crème", slug: "cream", hex: "#EFE6D8", ralCode: "RAL 1013", active: true, createdAt: "" },
   { id: "navy", name: "Donkerblauw", slug: "navy", hex: "#1B2A41", ralCode: "RAL 5002", active: true, createdAt: "" },
+  { id: "cream", name: "Crème", slug: "cream", hex: "#EFE6D8", ralCode: "RAL 1013", active: true, createdAt: "" },
   { id: "green", name: "Groen", slug: "green", hex: "#2F4B3C", ralCode: "RAL 6012", active: true, createdAt: "" },
   { id: "red", name: "Rood", slug: "red", hex: "#7A2020", ralCode: "RAL 3004", active: true, createdAt: "" },
 ];

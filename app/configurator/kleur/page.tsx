@@ -9,7 +9,9 @@ export default function KleurPage() {
       </p>
       <h1 className="mt-1 font-serif text-2xl text-primary">Kleur</h1>
       <p className="mt-4 text-muted-foreground">
-        Kies de kleur van jouw huisnummerbordje.
+        Kies de kleur van jouw huisnummerbordje. Zwart, Wit en Donkerblauw
+        zijn de standaardkleuren en zitten bij de prijs inbegrepen. Voor de
+        overige kleuren geldt een meerprijs.
       </p>
 
       <div className="mt-8">
