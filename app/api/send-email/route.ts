@@ -251,7 +251,7 @@ export async function POST(request: Request) {
             {
               content: previewImageBuffer,
               filename: "voorbeeld-bordje.png",
-              contentId: PREVIEW_IMAGE_CID,
+              inlineContentId: PREVIEW_IMAGE_CID,
             },
           ]
         : undefined,
