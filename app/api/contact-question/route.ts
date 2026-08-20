@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createConfigurationSchema } from "@/lib/validation/configuration.schema";
 import { questionDetailsSchema } from "@/lib/validation/question.schema";
 import { createResendClient } from "@/lib/email/resend";
+import { getNotificationEmail } from "@/lib/email/settings";
 import { renderQuestionNotificationEmail } from "@/lib/email/templates/question-notification";
 import { getLivePricingData } from "@/lib/configuration/livePricing";
 import {
@@ -72,14 +73,21 @@ export async function POST(request: Request) {
     );
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (!adminEmail) {
+  const fallbackAdminEmail = process.env.ADMIN_EMAIL;
+  if (!fallbackAdminEmail) {
     console.error("ADMIN_EMAIL ontbreekt in de environment variables.");
     return NextResponse.json(
       { error: "E-mailconfiguratie ontbreekt op de server." },
       { status: 500 }
     );
   }
+  // Adres komt bij voorkeur uit de instelling die via de knop
+  // "E-mailinstellingen" in de prijstool is opgeslagen — anders uit
+  // ADMIN_EMAIL hierboven als terugval.
+  const adminEmail = await getNotificationEmail(
+    "question_notification",
+    fallbackAdminEmail
+  );
 
   const html = renderQuestionNotificationEmail({
     shapeName: shape.name,

@@ -13,7 +13,7 @@ import mysql from "mysql2/promise";
  */
 let pool: mysql.Pool | null = null;
 
-function getPool(): mysql.Pool {
+export function getPool(): mysql.Pool {
   if (pool) return pool;
 
   const host = process.env.TIDB_HOST;

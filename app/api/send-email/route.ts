@@ -9,6 +9,7 @@ import { computeAutoFit } from "@/lib/configuration/text-fit";
 import { calculatePrice } from "@/lib/configuration/pricing";
 import { getLivePricingData } from "@/lib/configuration/livePricing";
 import { saveOrderToDatabase } from "@/lib/mysql/client";
+import { getNotificationEmail } from "@/lib/email/settings";
 import {
   productShapes,
   productColors,
@@ -87,14 +88,21 @@ export async function POST(request: Request) {
     );
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (!adminEmail) {
+  const fallbackAdminEmail = process.env.ADMIN_EMAIL;
+  if (!fallbackAdminEmail) {
     console.error("ADMIN_EMAIL ontbreekt in de environment variables.");
     return NextResponse.json(
       { error: "E-mailconfiguratie ontbreekt op de server." },
       { status: 500 }
     );
   }
+  // Adres komt bij voorkeur uit de instelling die via de knop
+  // "E-mailinstellingen" in de prijstool is opgeslagen — anders uit
+  // ADMIN_EMAIL hierboven als terugval.
+  const adminEmail = await getNotificationEmail(
+    "order_notification",
+    fallbackAdminEmail
+  );
 
   const orderLabel = buildOrderLabel(shape, data.numberPosition);
 
