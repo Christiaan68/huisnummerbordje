@@ -94,7 +94,8 @@ export function FinishSelector() {
       </div>
 
       {/* Pop-up met een voorbeeldfoto van het verschil tussen vlak en
-          gewelfd emaille, rechtsboven de knoppen. Zichtbaar zodra je met je
+          gewelfd emaille, boven de knoppen (zie left-0/translate-x hieronder
+          voor de horizontale positie). Zichtbaar zodra je met je
           muis ergens boven deze hele blok (knoppen of pop-up) staat, of met
           het toetsenbord een knop focust — de onMouseEnter/Leave staan
           daarom op de buitenste, omvattende <div>, en niet los op elke
@@ -105,13 +106,13 @@ export function FinishSelector() {
           muis per ongeluk de pop-up laat verdwijnen. */}
       {showPreview && (
         <div
-          // sm:translate-x-16: op laptop/desktop schuift de foto extra naar
-          // rechts t.o.v. de knoppen (gevraagd door Christiaan, 19-8-2026).
-          // Op mobiel (waar de foto sowieso via een tik verschijnt, zie
-          // supportsHover hierboven) laten we 'm gewoon rechts uitgelijnd
-          // onder right-0 staan, anders loopt de foto op een smal scherm al
-          // snel voorbij de rand.
-          className="absolute bottom-full right-0 z-20 w-72 pb-3 sm:w-96 sm:translate-x-16"
+          // left-0 (i.p.v. right-0): de foto begint bij de linkerkant van de
+          // knoppen en groeit naar rechts. Met right-0 groeide de foto juist
+          // naar links, en viel hij op een telefoon/tablet met een smal
+          // scherm links van het scherm af (gemeld door Christiaan,
+          // 19-8-2026). sm:/lg:translate-x-*: op een groter scherm schuift
+          // de foto bovendien nog verder naar rechts.
+          className="absolute bottom-full left-0 z-20 w-72 pb-3 sm:w-96 sm:translate-x-8 lg:translate-x-16"
           role="tooltip"
         >
           <div className="rounded-sm border border-border bg-card p-2 shadow-lg">
