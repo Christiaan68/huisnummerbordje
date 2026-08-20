@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { productShapes } from "@/config/product-options";
@@ -17,6 +17,21 @@ export function FinishSelector() {
   // Voor de pop-up met het voorbeeldfotootje: sta je (met muis of
   // toetsenbord) ergens boven de knoppen óf boven de pop-up zelf?
   const [showPreview, setShowPreview] = useState(false);
+
+  // Heeft dit apparaat een "echte" muis/trackpad (hover mogelijk), of is
+  // het een telefoon/tablet zonder hover? Op een laptop/desktop blijft de
+  // pop-up gewoon verschijnen/verdwijnen bij hoveren. Op een
+  // telefoon/tablet bestaat "hoveren" niet — daar moet je op "Vlak" of
+  // "Gewelfd" TIKKEN om de foto te zien, en blijft die foto vervolgens
+  // gewoon staan (ook als je daarna ergens anders op het scherm tikt) totdat
+  // je verdergaat naar de volgende stap — dan verdwijnt dit hele blok
+  // sowieso van het scherm (gevraagd door Christiaan, 19-8-2026).
+  const [supportsHover, setSupportsHover] = useState(true);
+
+  useEffect(() => {
+    const query = window.matchMedia("(hover: hover) and (pointer: fine)");
+    setSupportsHover(query.matches);
+  }, []);
 
   const shape = productShapes.find((s) => s.id === selection.shapeId);
 
@@ -43,8 +58,8 @@ export function FinishSelector() {
   return (
     <div
       className="relative inline-block"
-      onMouseEnter={() => setShowPreview(true)}
-      onMouseLeave={() => setShowPreview(false)}
+      onMouseEnter={supportsHover ? () => setShowPreview(true) : undefined}
+      onMouseLeave={supportsHover ? () => setShowPreview(false) : undefined}
     >
       <div role="radiogroup" aria-label="Kies een afwerking" className="flex gap-3">
         {shape.availableFinishes.map((finish) => {
@@ -56,9 +71,14 @@ export function FinishSelector() {
               type="button"
               role="radio"
               aria-checked={isSelected}
-              onClick={() => dispatch({ type: "SET_FINISH", finish })}
-              onFocus={() => setShowPreview(true)}
-              onBlur={() => setShowPreview(false)}
+              onClick={() => {
+                dispatch({ type: "SET_FINISH", finish });
+                // Zonder hover (telefoon/tablet): een tik op de knop toont
+                // de foto meteen, en die blijft daarna gewoon staan.
+                if (!supportsHover) setShowPreview(true);
+              }}
+              onFocus={supportsHover ? () => setShowPreview(true) : undefined}
+              onBlur={supportsHover ? () => setShowPreview(false) : undefined}
               className={cn(
                 "flex items-center gap-2 rounded-sm border px-5 py-3 text-sm font-medium transition-colors",
                 isSelected
@@ -85,7 +105,13 @@ export function FinishSelector() {
           muis per ongeluk de pop-up laat verdwijnen. */}
       {showPreview && (
         <div
-          className="absolute bottom-full right-0 z-20 w-72 pb-3 sm:w-96"
+          // sm:translate-x-16: op laptop/desktop schuift de foto extra naar
+          // rechts t.o.v. de knoppen (gevraagd door Christiaan, 19-8-2026).
+          // Op mobiel (waar de foto sowieso via een tik verschijnt, zie
+          // supportsHover hierboven) laten we 'm gewoon rechts uitgelijnd
+          // onder right-0 staan, anders loopt de foto op een smal scherm al
+          // snel voorbij de rand.
+          className="absolute bottom-full right-0 z-20 w-72 pb-3 sm:w-96 sm:translate-x-16"
           role="tooltip"
         >
           <div className="rounded-sm border border-border bg-card p-2 shadow-lg">
