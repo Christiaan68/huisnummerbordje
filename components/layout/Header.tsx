@@ -71,20 +71,10 @@ export function Header({
               >
                 Start configurator
               </Link>
-              <Link
-                href="/leveringsvoorwaarden"
-                onClick={closeMenu}
-                className="block px-4 py-2 text-sm text-foreground hover:bg-secondary"
-              >
-                Leveringsvoorwaarden
-              </Link>
-              <Link
-                href="/retourneren-reclameren"
-                onClick={closeMenu}
-                className="block px-4 py-2 text-sm text-foreground hover:bg-secondary"
-              >
-                Retourneren
-              </Link>
+              {/* "Leveringsvoorwaarden" en "Retourneren" zijn op verzoek van
+                  Christiaan (25-8-2026) uit dit hamburgermenu gehaald — deze
+                  pagina's blijven wel gewoon bereikbaar via de links
+                  onderaan iedere pagina, zie components/layout/Footer.tsx. */}
               <Link
                 href="/contact"
                 onClick={closeMenu}
