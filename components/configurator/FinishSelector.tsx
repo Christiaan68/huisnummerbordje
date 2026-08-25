@@ -96,9 +96,15 @@ export function FinishSelector() {
             aria-checked={isSelected}
             onClick={() => dispatch({ type: "SET_FINISH", finish: option.id })}
             className={cn(
+              // ring-inset (i.p.v. de gewone, naar buiten uitstekende ring):
+              // anders werd het geselecteerde vakje net iets groter dan het
+              // niet-geselecteerde, waardoor de twee vakjes leken te
+              // "verspringen" bij het wisselen van keuze (gemeld door
+              // Christiaan, 20-8-2026). Met ring-inset blijft de buitenmaat
+              // van beide vakjes altijd exact gelijk.
               "flex flex-col overflow-hidden rounded-sm border bg-card text-left transition-colors",
               isSelected
-                ? "border-primary ring-1 ring-primary"
+                ? "border-primary ring-1 ring-inset ring-primary"
                 : "border-border hover:border-primary/50"
             )}
           >
