@@ -96,28 +96,34 @@ export function getScrewClearanceMarginsMm(
 }
 
 // Sierrand ("kader") — optionele extra op het bordje (toegevoegd 25-8-2026,
-// n.a.v. voorbeeldfoto van Christiaan). Een dunne lijn, vlak langs de rand
-// van het bordje, die bij elke hoek een kwartcirkel om het schroefje heen
-// buigt — precies rakend aan het schroefje, zoals op de voorbeeldfoto (het
-// kader gaat dus ROND elk schroefje heen, niet er dwars doorheen).
-// Alleen voor rechthoekige vormen (niet "ovaal" — besloten door Christiaan,
-// 25-8-2026).
+// n.a.v. voorbeeldfoto van Christiaan). Een dunne, verder rechte lijn die
+// vlak langs de rand van het bordje loopt, en die alleen vlak bij elk
+// schroefje een klein stukje naar binnen (richting het midden van het
+// bordje) buigt in een kwartcirkel — precies rakend aan de binnenkant van
+// het schroefje. Het schroefje zelf blijft dus grotendeels BUITEN het
+// kader staan (in de hoek, tussen kaderlijn en bordjesrand), zoals op de
+// voorbeeldfoto. Alleen voor rechthoekige vormen (niet "ovaal" — besloten
+// door Christiaan, 25-8-2026).
 //
 // Update 25-8-2026 (later): de eerste versie van dit pad gebruikte een
-// rechte, afgeschuinde hoek ("chamfer") bij elke hoek. Bij nader onderzoek
-// (pixel-voor-pixel vergelijking met Christiaans voorbeeldfoto) bleek die
-// rechte lijn dwars door het schroefje heen te lopen in plaats van eromheen
-// — de afstand van het schroefje tot die lijn was kleiner dan de straal van
-// het schroefje zelf. Vervangen door een boog (kwartcirkel) exact rond elk
-// schroefje, wat ook precies overeenkomt met hoe het er op de foto uitziet.
+// rechte, afgeschuinde hoek ("chamfer") bij elke hoek, die (rekenkundig
+// vastgesteld) dwars door het schroefje heen liep in plaats van eromheen.
+// Vervangen door een boog exact rond elk schroefje — maar die tweede versie
+// liet de boog nog aan de VERKEERDE (buiten)kant van elk schroefje lopen,
+// waardoor het schroefje binnen het kader kwam te staan i.p.v. erbuiten.
+// Nu gecorrigeerd: de boog buigt om de kant van het schroefje die richting
+// het midden van het bordje wijst, zodat het schroefje aan de buitenkant
+// (in de hoek) blijft staan, zoals op de foto — geverifieerd door de
+// daadwerkelijke SVG in een browser te renderen en te vergelijken.
 export const FRAME_STROKE_WIDTH_RATIO = 0.014; // lijndikte, t.o.v. min(breedte, hoogte)
 
 /**
  * Bouwt het SVG-pad voor de kaderlijn, in dezelfde mm-coördinaten als de
- * rest van de bordjestekening. De lijn loopt vlak langs de rand en buigt bij
- * elke hoek in een kwartcirkel (straal = schroefstraal + halve lijndikte)
- * om het schroefje heen, zodat de lijn het schroefje precies raakt zonder
- * eroverheen te lopen. Wordt gebruikt door zowel de live preview
+ * rest van de bordjestekening. De lijn loopt vlak langs de rand en buigt
+ * vlak bij elke hoek een klein stukje naar binnen, in een kwartcirkel
+ * (straal = schroefstraal + halve lijndikte) om de binnenkant van het
+ * schroefje heen, zodat het schroefje aan de buitenkant van het kader in de
+ * hoek blijft staan. Wordt gebruikt door zowel de live preview
  * (ProductPreview.tsx) als de voorbeeldafbeelding in de bevestigingsmail
  * (plate-preview-image.tsx) — zie de toelichting bovenaan dit bestand over
  * waarom dit soort logica op één plek hoort te staan.
@@ -135,14 +141,17 @@ export function getFrameBorderPath(widthMm: number, heightMm: number): string {
   const screwY1 = heightMm * SCREW_INSET_RATIO; // bovenste schroefjes
   const screwY2 = heightMm * (1 - SCREW_INSET_RATIO); // onderste schroefjes
 
-  const topY = screwY1 - r;
-  const bottomY = screwY2 + r;
-  const leftX = screwX1 - r;
-  const rightX = screwX2 + r;
+  // De rechte lijnstukken lopen aan de MIDDEN-kant van elk schroefje (dus
+  // verder van de bordjesrand af dan het schroefje) — het schroefje blijft
+  // zo in de hoek staan, buiten het kader.
+  const topY = screwY1 + r;
+  const bottomY = screwY2 - r;
+  const leftX = screwX1 + r;
+  const rightX = screwX2 - r;
 
   // Elke "A"-boog is een kwartcirkel (straal r) die rakend aansluit op de
-  // rechte lijnstukken ervoor en erna — zo ontstaat een vloeiende lijn die
-  // precies om elk schroefje heen loopt.
+  // rechte lijnstukken ervoor en erna, en buigt om de kant van het
+  // schroefje die richting het midden van het bordje wijst.
   return [
     `M ${screwX1} ${topY}`,
     `L ${screwX2} ${topY}`,
