@@ -10,7 +10,7 @@ export default function OptiesPage() {
       <h1 className="mt-1 font-serif text-2xl text-primary">Opties</h1>
       <p className="mt-4 text-muted-foreground">
         Voeg eventueel een sierlijke kaderrand toe langs de rand van je
-        bordje. Deze stap is optioneel — je kunt 'm ook gewoon overslaan.
+        bordje. Deze stap is optioneel — je kunt hem ook gewoon overslaan.
       </p>
 
       <div className="mt-8">
