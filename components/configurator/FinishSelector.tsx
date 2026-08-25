@@ -103,6 +103,13 @@ export function FinishSelector() {
               // Christiaan, 20-8-2026). Met ring-inset blijft de buitenmaat
               // van beide vakjes altijd exact gelijk.
               "flex flex-col overflow-hidden rounded-sm border bg-card text-left transition-colors",
+              // De min-h-[2rem] hieronder op de omschrijving (zie verderop)
+              // hoort ook bij deze fix: de omschrijving van "Gewelfd" is
+              // langer dan die van "Vlak" en wikkelde daardoor naar 2 regels
+              // i.p.v. 1, waardoor het vakje van "Vlak" lager/kleiner leek
+              // (gemeld door Christiaan, 25-8-2026). Door altijd ruimte voor
+              // 2 regels te reserveren, blijven beide vakjes ook bij
+              // toekomstige tekstwijzigingen even hoog.
               isSelected
                 ? "border-primary ring-1 ring-inset ring-primary"
                 : "border-border hover:border-primary/50"
@@ -126,7 +133,7 @@ export function FinishSelector() {
                 >
                   {option.label}
                 </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 min-h-[2rem] text-xs text-muted-foreground">
                   {option.description}
                 </p>
               </div>
