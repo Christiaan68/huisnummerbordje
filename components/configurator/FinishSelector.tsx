@@ -64,7 +64,7 @@ export function FinishSelector() {
         </p>
         <div className="overflow-hidden rounded-sm border border-border bg-card">
           <div
-            className="h-28 w-full bg-secondary bg-contain bg-center bg-no-repeat sm:h-32"
+            className="aspect-square w-full bg-secondary bg-contain bg-center bg-no-repeat"
             style={{ backgroundImage: `url("${encodeURI(only.imageSrc)}")` }}
             aria-hidden="true"
           />
@@ -116,7 +116,7 @@ export function FinishSelector() {
             )}
           >
             <div
-              className="h-28 w-full bg-secondary bg-contain bg-center bg-no-repeat sm:h-32"
+              className="aspect-square w-full bg-secondary bg-contain bg-center bg-no-repeat"
               style={{ backgroundImage: `url("${encodeURI(option.imageSrc)}")` }}
               aria-hidden="true"
             />
