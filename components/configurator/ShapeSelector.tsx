@@ -32,9 +32,14 @@ export function ShapeSelector() {
           >
             {/* Productfoto — door de eigenaar aan te leveren op het pad
                 hieronder. Zonder foto blijft dit vlak leeg/transparant,
-                de kaart blijft dan gewoon bruikbaar. */}
+                de kaart blijft dan gewoon bruikbaar.
+                bg-contain (i.p.v. bg-cover) zodat het hele voorbeeldbordje
+                op de foto altijd volledig te zien is, in plaats van dat de
+                randen worden bijgesneden (gemeld door Christiaan, 25-8-2026,
+                zelfde aanpak als bij de afwerkingsfoto's in
+                FinishSelector.tsx). */}
             <div
-              className="h-24 w-full rounded-sm bg-secondary bg-cover bg-center sm:h-28"
+              className="h-24 w-full rounded-sm bg-secondary bg-contain bg-center bg-no-repeat sm:h-28"
               style={{
                 backgroundImage: `url("${encodeURI(shape.imageSrc)}")`,
               }}
