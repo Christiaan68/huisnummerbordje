@@ -96,75 +96,91 @@ export function getScrewClearanceMarginsMm(
 }
 
 // Sierrand ("kader") — optionele extra op het bordje (toegevoegd 25-8-2026,
-// n.a.v. voorbeeldfoto van Christiaan). Een dunne, verder rechte lijn die
-// vlak langs de rand van het bordje loopt, en die bij elk schroefje een
-// ruime kwartcirkel naar binnen buigt (richting het midden van het bordje)
-// en er weer uit — om de kant van het schroefje die naar het midden wijst.
-// Het schroefje zelf blijft dus BUITEN het kader staan (in de hoek, tussen
-// kaderlijn en bordjesrand), zoals op de voorbeeldfoto. Alleen voor
-// rechthoekige vormen (niet "ovaal" — besloten door Christiaan, 25-8-2026).
+// n.a.v. voorbeeldfoto van Christiaan). Alleen voor rechthoekige vormen
+// (niet "ovaal" — besloten door Christiaan, 25-8-2026).
 //
-// Update 25-8-2026 (later): de eerste versie van dit pad gebruikte een
-// rechte, afgeschuinde hoek ("chamfer") bij elke hoek, die (rekenkundig
-// vastgesteld) dwars door het schroefje heen liep in plaats van eromheen.
-// Vervangen door een boog exact rond elk schroefje — maar die tweede versie
-// liet de boog nog aan de VERKEERDE (buiten)kant van elk schroefje lopen,
-// waardoor het schroefje binnen het kader kwam te staan i.p.v. erbuiten.
-// Daarna gecorrigeerd naar de kant van het schroefje die richting het
-// midden van het bordje wijst — maar toen bleek de boog (rakend, straal
-// nauwelijks groter dan het schroefje zelf) te krap: Christiaan stuurde een
-// duidelijke close-up foto van een echt bordje waarop te zien is dat de
-// boog een flink stuk ruimer is dan het schroefje. Op basis van die foto
-// (pixelmatig opgemeten: boogradius ≈ 1,5x de straal van het schroefje) is
-// de straal vergroot naar 1,5x de schroefstraal, zodat de lijn duidelijk
-// zichtbaar naar binnen buigt en weer naar buiten, zoals op de foto.
+// Dit pad is 4x herzien op basis van Christiaans feedback en foto's van een
+// echt bordje, voordat de vorm klopte:
+//   1) Een rechte, afgeschuinde hoek ("chamfer") per hoek — liep dwars door
+//      het schroefje heen.
+//   2) Een boog exact rond het schroefje — maar aan de verkeerde (buiten)kant,
+//      waardoor het schroefje BINNEN het kader kwam te staan i.p.v. erbuiten.
+//   3) Dezelfde boog, nu aan de juiste kant, maar met de rechte stukken vlak
+//      langs het schroefje (i.p.v. langs de bordjesrand) en een boogstraal
+//      die maar nauwelijks groter was dan het schroefje zelf — Christiaan gaf
+//      aan dat de rechte stukken al goed liepen tot aan het schroefje, maar
+//      dat het kader daar te krap om het schroefje boog i.p.v. er ruim
+//      omheen.
+//   4) (huidige versie) Op basis van twee scherpe close-up foto's van een
+//      echt schroefje bleek het kader helemaal geen boog te zijn die om het
+//      schroefje "getekend" is: het is een gewone, sierlijke afgeronde hoek
+//      (zoals een rounded rectangle) die vlak langs de bordjesrand loopt —
+//      dus duidelijk BUITEN (dichter bij de rand dan) de schroefjes — en pas
+//      bij de hoek zelf een ruime boog maakt. Omdat die hoek ruimer is dan de
+//      afstand van de kaderlijn tot het schroefje, komt het schroefje
+//      vanzelf in het hoekige "zakje" tussen kaderboog en bordjeshoek te
+//      staan — precies zoals Christiaan beschreef ("het kader zit buiten de
+//      schroefjes, behalve bij de schroefjes, daar gaat die in dezelfde
+//      ronding binnen om weer naar de buitenste kaderlijn").
 export const FRAME_STROKE_WIDTH_RATIO = 0.014; // lijndikte, t.o.v. min(breedte, hoogte)
 
-// Straal van de boog om elk schroefje, als veelvoud van de schroefstraal —
-// opgemeten aan Christiaans foto van een echt bordje (25-8-2026).
-const FRAME_CORNER_RADIUS_TO_SCREW_RATIO = 1.5;
+// Afstand van de rechte kaderlijn tot de bordjesrand, t.o.v. min(breedte,
+// hoogte) — bewust klein, want de kaderlijn moet duidelijk dichter bij de
+// rand lopen dan de schroefjes (die op 11% van de rand zitten).
+const FRAME_EDGE_INSET_RATIO = 0.025;
+
+// Hoe ruim de hoekboog is, als veelvoud van de afstand tussen de kaderlijn
+// en het schroefje. >1 zorgt ervoor dat de boog voorbij het schroefje reikt
+// (zodat die duidelijk zichtbaar naar binnen buigt), zonder het schroefje te
+// raken — geverifieerd voor alle bordjesmaten uit config/product-options.ts,
+// inclusief de "platste" (210×105mm) en "hoogste" (200×250mm) varianten.
+const FRAME_CORNER_RADIUS_FACTOR = 1.3;
+
+// Veiligheidsmarge (mm) zodat de hoekboog nooit groter wordt dan de helft
+// van een zijde (anders zouden twee hoekbogen elkaar overlappen).
+const FRAME_CORNER_RADIUS_SAFETY_MARGIN_MM = 1;
 
 /**
  * Bouwt het SVG-pad voor de kaderlijn, in dezelfde mm-coördinaten als de
- * rest van de bordjestekening. De lijn loopt vlak langs de rand en buigt
- * bij elke hoek ruim naar binnen (richting het midden van het bordje) in
- * een kwartcirkel om de binnenkant van het schroefje heen, en weer terug
- * naar buiten — zodat het schroefje zelf buiten het kader, in de hoek,
- * blijft staan. Wordt gebruikt door zowel de live preview
- * (ProductPreview.tsx) als de voorbeeldafbeelding in de bevestigingsmail
- * (plate-preview-image.tsx) — zie de toelichting bovenaan dit bestand over
- * waarom dit soort logica op één plek hoort te staan.
+ * rest van de bordjestekening. De lijn loopt vlak langs de rand van het
+ * bordje (dus buiten de schroefjes) en maakt bij elke hoek één ruime,
+ * sierlijke boog naar binnen en weer terug — groot genoeg om het schroefje
+ * in die hoek vrij te laten, zoals op Christiaans foto's van een echt
+ * bordje. Wordt gebruikt door zowel de live preview (ProductPreview.tsx) als
+ * de voorbeeldafbeelding in de bevestigingsmail (plate-preview-image.tsx) —
+ * zie de toelichting bovenaan dit bestand over waarom dit soort logica op
+ * één plek hoort te staan.
  */
 export function getFrameBorderPath(widthMm: number, heightMm: number): string {
-  const screwRadius = getScrewRadiusMm(widthMm, heightMm);
-  const r = screwRadius * FRAME_CORNER_RADIUS_TO_SCREW_RATIO;
+  const minDim = Math.min(widthMm, heightMm);
+  const frameInset = minDim * FRAME_EDGE_INSET_RATIO;
 
-  const screwX1 = widthMm * SCREW_INSET_RATIO; // linker schroefjes
-  const screwX2 = widthMm * (1 - SCREW_INSET_RATIO); // rechter schroefjes
-  const screwY1 = heightMm * SCREW_INSET_RATIO; // bovenste schroefjes
-  const screwY2 = heightMm * (1 - SCREW_INSET_RATIO); // onderste schroefjes
+  // Door de symmetrische plaatsing van de schroefjes (zie getScrewPositions)
+  // is de afstand tussen kaderlijn en schroefje voor alle 4 hoeken gelijk —
+  // dus ook de hoekboog is voor alle 4 hoeken even groot.
+  const gapX = widthMm * SCREW_INSET_RATIO - frameInset;
+  const gapY = heightMm * SCREW_INSET_RATIO - frameInset;
 
-  // De rechte lijnstukken lopen aan de MIDDEN-kant van elk schroefje (dus
-  // verder van de bordjesrand af dan het schroefje) — het schroefje blijft
-  // zo in de hoek staan, buiten het kader.
-  const topY = screwY1 + r;
-  const bottomY = screwY2 - r;
-  const leftX = screwX1 + r;
-  const rightX = screwX2 - r;
+  const rx = Math.min(
+    gapX * FRAME_CORNER_RADIUS_FACTOR,
+    widthMm / 2 - frameInset - FRAME_CORNER_RADIUS_SAFETY_MARGIN_MM
+  );
+  const ry = Math.min(
+    gapY * FRAME_CORNER_RADIUS_FACTOR,
+    heightMm / 2 - frameInset - FRAME_CORNER_RADIUS_SAFETY_MARGIN_MM
+  );
 
-  // Elke "A"-boog is een kwartcirkel (straal r) die rakend aansluit op de
-  // rechte lijnstukken ervoor en erna, en buigt om de kant van het
-  // schroefje die richting het midden van het bordje wijst.
+  const fi = frameInset;
   return [
-    `M ${screwX1} ${topY}`,
-    `L ${screwX2} ${topY}`,
-    `A ${r} ${r} 0 0 1 ${rightX} ${screwY1}`,
-    `L ${rightX} ${screwY2}`,
-    `A ${r} ${r} 0 0 1 ${screwX2} ${bottomY}`,
-    `L ${screwX1} ${bottomY}`,
-    `A ${r} ${r} 0 0 1 ${leftX} ${screwY2}`,
-    `L ${leftX} ${screwY1}`,
-    `A ${r} ${r} 0 0 1 ${screwX1} ${topY}`,
+    `M ${fi + rx} ${fi}`,
+    `L ${widthMm - fi - rx} ${fi}`,
+    `A ${rx} ${ry} 0 0 1 ${widthMm - fi} ${fi + ry}`,
+    `L ${widthMm - fi} ${heightMm - fi - ry}`,
+    `A ${rx} ${ry} 0 0 1 ${widthMm - fi - rx} ${heightMm - fi}`,
+    `L ${fi + rx} ${heightMm - fi}`,
+    `A ${rx} ${ry} 0 0 1 ${fi} ${heightMm - fi - ry}`,
+    `L ${fi} ${fi + ry}`,
+    `A ${rx} ${ry} 0 0 1 ${fi + rx} ${fi}`,
     `Z`,
   ].join(" ");
 }
