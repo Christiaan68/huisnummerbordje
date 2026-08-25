@@ -23,16 +23,22 @@ import {
 // Display) en "Industrieel" (Bebas Neue) zijn zelf al Google Fonts en worden
 // dus 1-op-1 hetzelfde lettertype als op de site (ze worden daar ook al via
 // next/font/google geladen, zie app/layout.tsx).
+// `next/og` (Satori) accepts alleen deze specifieke lettergewichten voor
+// `fonts[].weight` — een gewoon "number" is daar net te breed voor
+// (TypeScript strict mode accepteert dat niet), vandaar deze letterlijke
+// unie in plaats van `number`.
+type SatoriFontWeight = 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900;
+
 const FONT_CONFIG_BY_ID: Record<
   string,
-  { googleFamily: string; weight: number }
+  { googleFamily: string; weight: SatoriFontWeight }
 > = {
   classic: { googleFamily: "Gelasio", weight: 700 },
   elegant: { googleFamily: "Playfair Display", weight: 700 },
   modern: { googleFamily: "Arimo", weight: 700 },
   industrial: { googleFamily: "Bebas Neue", weight: 400 },
 };
-const FALLBACK_FONT_WEIGHT = 700;
+const FALLBACK_FONT_WEIGHT: SatoriFontWeight = 700;
 
 export interface PlatePreviewImageInput {
   isOval: boolean;
@@ -158,8 +164,13 @@ export async function renderPlatePreviewPng(
   // van de renderer — zie de toelichting bovenaan dit bestand.
   const fontConfig = FONT_CONFIG_BY_ID[fontId];
   let fontFamily: string | undefined;
-  let fontWeight = FALLBACK_FONT_WEIGHT;
-  let fonts: { name: string; data: ArrayBuffer; weight: number; style: "normal" }[] = [];
+  let fontWeight: SatoriFontWeight = FALLBACK_FONT_WEIGHT;
+  let fonts: {
+    name: string;
+    data: ArrayBuffer;
+    weight: SatoriFontWeight;
+    style: "normal";
+  }[] = [];
 
   if (fontConfig) {
     try {
