@@ -97,13 +97,12 @@ export function getScrewClearanceMarginsMm(
 
 // Sierrand ("kader") — optionele extra op het bordje (toegevoegd 25-8-2026,
 // n.a.v. voorbeeldfoto van Christiaan). Een dunne, verder rechte lijn die
-// vlak langs de rand van het bordje loopt, en die alleen vlak bij elk
-// schroefje een klein stukje naar binnen (richting het midden van het
-// bordje) buigt in een kwartcirkel — precies rakend aan de binnenkant van
-// het schroefje. Het schroefje zelf blijft dus grotendeels BUITEN het
-// kader staan (in de hoek, tussen kaderlijn en bordjesrand), zoals op de
-// voorbeeldfoto. Alleen voor rechthoekige vormen (niet "ovaal" — besloten
-// door Christiaan, 25-8-2026).
+// vlak langs de rand van het bordje loopt, en die bij elk schroefje een
+// ruime kwartcirkel naar binnen buigt (richting het midden van het bordje)
+// en er weer uit — om de kant van het schroefje die naar het midden wijst.
+// Het schroefje zelf blijft dus BUITEN het kader staan (in de hoek, tussen
+// kaderlijn en bordjesrand), zoals op de voorbeeldfoto. Alleen voor
+// rechthoekige vormen (niet "ovaal" — besloten door Christiaan, 25-8-2026).
 //
 // Update 25-8-2026 (later): de eerste versie van dit pad gebruikte een
 // rechte, afgeschuinde hoek ("chamfer") bij elke hoek, die (rekenkundig
@@ -111,30 +110,34 @@ export function getScrewClearanceMarginsMm(
 // Vervangen door een boog exact rond elk schroefje — maar die tweede versie
 // liet de boog nog aan de VERKEERDE (buiten)kant van elk schroefje lopen,
 // waardoor het schroefje binnen het kader kwam te staan i.p.v. erbuiten.
-// Nu gecorrigeerd: de boog buigt om de kant van het schroefje die richting
-// het midden van het bordje wijst, zodat het schroefje aan de buitenkant
-// (in de hoek) blijft staan, zoals op de foto — geverifieerd door de
-// daadwerkelijke SVG in een browser te renderen en te vergelijken.
+// Daarna gecorrigeerd naar de kant van het schroefje die richting het
+// midden van het bordje wijst — maar toen bleek de boog (rakend, straal
+// nauwelijks groter dan het schroefje zelf) te krap: Christiaan stuurde een
+// duidelijke close-up foto van een echt bordje waarop te zien is dat de
+// boog een flink stuk ruimer is dan het schroefje. Op basis van die foto
+// (pixelmatig opgemeten: boogradius ≈ 1,5x de straal van het schroefje) is
+// de straal vergroot naar 1,5x de schroefstraal, zodat de lijn duidelijk
+// zichtbaar naar binnen buigt en weer naar buiten, zoals op de foto.
 export const FRAME_STROKE_WIDTH_RATIO = 0.014; // lijndikte, t.o.v. min(breedte, hoogte)
+
+// Straal van de boog om elk schroefje, als veelvoud van de schroefstraal —
+// opgemeten aan Christiaans foto van een echt bordje (25-8-2026).
+const FRAME_CORNER_RADIUS_TO_SCREW_RATIO = 1.5;
 
 /**
  * Bouwt het SVG-pad voor de kaderlijn, in dezelfde mm-coördinaten als de
  * rest van de bordjestekening. De lijn loopt vlak langs de rand en buigt
- * vlak bij elke hoek een klein stukje naar binnen, in een kwartcirkel
- * (straal = schroefstraal + halve lijndikte) om de binnenkant van het
- * schroefje heen, zodat het schroefje aan de buitenkant van het kader in de
- * hoek blijft staan. Wordt gebruikt door zowel de live preview
+ * bij elke hoek ruim naar binnen (richting het midden van het bordje) in
+ * een kwartcirkel om de binnenkant van het schroefje heen, en weer terug
+ * naar buiten — zodat het schroefje zelf buiten het kader, in de hoek,
+ * blijft staan. Wordt gebruikt door zowel de live preview
  * (ProductPreview.tsx) als de voorbeeldafbeelding in de bevestigingsmail
  * (plate-preview-image.tsx) — zie de toelichting bovenaan dit bestand over
  * waarom dit soort logica op één plek hoort te staan.
  */
 export function getFrameBorderPath(widthMm: number, heightMm: number): string {
   const screwRadius = getScrewRadiusMm(widthMm, heightMm);
-  const strokeWidth = Math.min(widthMm, heightMm) * FRAME_STROKE_WIDTH_RATIO;
-  // Straal van de boog om elk schroefje: zo groot dat de kaderlijn het
-  // schroefje precies raakt (rakend, niet erdoorheen) — de lijn zelf heeft
-  // ook dikte, dus de boog moet een halve lijndikte extra ruimte houden.
-  const r = screwRadius + strokeWidth / 2;
+  const r = screwRadius * FRAME_CORNER_RADIUS_TO_SCREW_RATIO;
 
   const screwX1 = widthMm * SCREW_INSET_RATIO; // linker schroefjes
   const screwX2 = widthMm * (1 - SCREW_INSET_RATIO); // rechter schroefjes
