@@ -13,7 +13,13 @@ export const configuratorSteps: ConfiguratorStep[] = [
     id: "vorm",
     path: "/configurator/vorm",
     label: "Vorm",
-    isComplete: (s) => Boolean(s.shapeId) && Boolean(s.finish),
+    isComplete: (s) => Boolean(s.shapeId),
+  },
+  {
+    id: "afwerking",
+    path: "/configurator/afwerking",
+    label: "Afwerking",
+    isComplete: (s) => Boolean(s.finish),
   },
   {
     id: "kleur",
