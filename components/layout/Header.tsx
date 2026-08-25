@@ -83,7 +83,7 @@ export function Header({
                 onClick={closeMenu}
                 className="block px-4 py-2 text-sm text-foreground hover:bg-secondary"
               >
-                Retourneren / reclameren
+                Retourneren
               </Link>
               <Link
                 href="/contact"

@@ -17,9 +17,11 @@ export function Footer() {
           .
         </p>
 
-        {/* Leveringsvoorwaarden en retourneren/reclameren wijzen (voorlopig)
-            naar een lege pagina met alleen een titel — de inhoud volgt later
-            (gevraagd door Christiaan, 19-8-2026). */}
+        {/* Leveringsvoorwaarden (25-8-2026) en Retourneren (25-8-2026) —
+            beide met volledige tekst, aangeleverd door Christiaan. De
+            pagina/route heet nog "retourneren-reclameren" (ongewijzigd
+            gelaten om de URL niet te breken), maar de zichtbare titel/link
+            is op verzoek van Christiaan ingekort tot "Retourneren". */}
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           <Link
             href="/leveringsvoorwaarden"
@@ -31,7 +33,7 @@ export function Footer() {
             href="/retourneren-reclameren"
             className="underline underline-offset-4 hover:text-foreground"
           >
-            Retourneren / reclameren
+            Retourneren
           </Link>
         </div>
       </div>
