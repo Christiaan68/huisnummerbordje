@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { computeAutoFit } from "@/lib/configuration/text-fit";
+import { loadGoogleFont } from "@/lib/email/google-fonts";
 import {
   DEFAULT_LINE_GAP_RATIO,
   LINE_GAP_RATIO_BY_FONT,
@@ -8,6 +9,30 @@ import {
   getScrewPositions,
   getScrewRadiusMm,
 } from "@/lib/configuration/plate-visual";
+
+// Welk (vrij te gebruiken) Google Font er voor elk lettertype-optie in de
+// e-mailafbeelding gebruikt wordt, en met welk gewicht (zie ProductPreview:
+// alle preview-tekst is altijd vet/700).
+//
+// "Klassiek" en "Modern" zijn op de site zelf systeemlettertypes (Georgia,
+// respectievelijk Helvetica Neue/Arial) — die zijn niet los als bestand
+// beschikbaar/herverspreidbaar. Gelasio en Arimo zijn door Google gemaakte,
+// vrij licentieerbare lettertypes die bewust "metric compatible" zijn met
+// Georgia resp. Arial (zelfde letterbreedtes, vrijwel identiek ontwerp) —
+// zie lib/email/google-fonts.ts voor de toelichting. "Elegant" (Playfair
+// Display) en "Industrieel" (Bebas Neue) zijn zelf al Google Fonts en worden
+// dus 1-op-1 hetzelfde lettertype als op de site (ze worden daar ook al via
+// next/font/google geladen, zie app/layout.tsx).
+const FONT_CONFIG_BY_ID: Record<
+  string,
+  { googleFamily: string; weight: number }
+> = {
+  classic: { googleFamily: "Gelasio", weight: 700 },
+  elegant: { googleFamily: "Playfair Display", weight: 700 },
+  modern: { googleFamily: "Arimo", weight: 700 },
+  industrial: { googleFamily: "Bebas Neue", weight: 400 },
+};
+const FALLBACK_FONT_WEIGHT = 700;
 
 export interface PlatePreviewImageInput {
   isOval: boolean;
@@ -40,13 +65,14 @@ const CANVAS_BG = "#f4f1ea";
  * zodat de klant in de e-mail exact ziet wat hij/zij in de configurator
  * heeft samengesteld.
  *
- * Let op: dit is een vereenvoudigde weergave t.o.v. de live preview. Voor
- * e-mailafbeeldingen kan geen willekeurig lettertype gebruikt worden (het
- * moet als losse fontdata meegegeven worden, en de site gebruikt hiervoor
- * o.a. Georgia — een systeemfont dat niet los meegeleverd kan worden); deze
- * afbeelding gebruikt daarom het standaardlettertype van de renderer, niet
- * het door de klant gekozen lettertype. Vorm, kleur, tekst, tekstgrootte en
- * schroefposities kloppen wel exact.
+ * Het lettertype wordt bij elke aanroep live bij Google Fonts opgehaald
+ * (zie lib/email/google-fonts.ts) — dat vereist dat de server (Vercel)
+ * internettoegang heeft, wat in productie het geval is. Lukt het ophalen
+ * onverwacht niet (bv. Google Fonts tijdelijk onbereikbaar), dan valt de
+ * afbeelding terug op het standaardlettertype van de renderer in plaats van
+ * de hele afbeelding te laten mislukken — vorm, kleur, tekst, tekstgrootte
+ * en schroefposities blijven dan alsnog kloppen, alleen het lettertype
+ * wijkt in dat uitzonderingsgeval af.
  */
 export async function renderPlatePreviewPng(
   input: PlatePreviewImageInput
@@ -127,6 +153,35 @@ export async function renderPlatePreviewPng(
   const canvasWidth = plateWidthPx + CANVAS_PAD_PX * 2;
   const canvasHeight = plateHeightPx + CANVAS_PAD_PX * 2;
 
+  // Lettertype ophalen bij Google Fonts (zie FONT_CONFIG_BY_ID hierboven).
+  // Lukt dit niet, dan renderen we gewoon door met het standaardlettertype
+  // van de renderer — zie de toelichting bovenaan dit bestand.
+  const fontConfig = FONT_CONFIG_BY_ID[fontId];
+  let fontFamily: string | undefined;
+  let fontWeight = FALLBACK_FONT_WEIGHT;
+  let fonts: { name: string; data: ArrayBuffer; weight: number; style: "normal" }[] = [];
+
+  if (fontConfig) {
+    try {
+      const data = await loadGoogleFont(fontConfig.googleFamily, fontConfig.weight);
+      fontFamily = fontConfig.googleFamily;
+      fontWeight = fontConfig.weight;
+      fonts = [
+        {
+          name: fontConfig.googleFamily,
+          data,
+          weight: fontConfig.weight,
+          style: "normal",
+        },
+      ];
+    } catch (fontError) {
+      console.error(
+        `Ophalen van lettertype "${fontConfig.googleFamily}" voor de e-mailafbeelding is mislukt, val terug op het standaardlettertype:`,
+        fontError instanceof Error ? fontError.message : fontError
+      );
+    }
+  }
+
   const response = new ImageResponse(
     (
       <div
@@ -195,7 +250,8 @@ export async function renderPlatePreviewPng(
                   marginTop:
                     index === 0 ? 0 : orderedLines[index - 1].sizePx * gapRatio,
                   fontSize: line.sizePx,
-                  fontWeight: 700,
+                  fontFamily,
+                  fontWeight,
                   lineHeight: 1,
                   color: textColor,
                 }}
@@ -226,6 +282,7 @@ export async function renderPlatePreviewPng(
     {
       width: canvasWidth,
       height: canvasHeight,
+      fonts,
     }
   );
 
