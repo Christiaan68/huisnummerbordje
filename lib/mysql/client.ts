@@ -67,10 +67,12 @@ export interface NewOrderRow {
   extraLine1: string | null;
   extraLine2: string | null;
   numberPosition: "start" | "middle" | "end";
+  hasFrame: boolean;
   priceTotalCents: number | null;
   priceColorSurchargeCents: number;
   priceExtraCharsCents: number;
   priceExtraCharsCount: number;
+  priceFrameSurchargeCents: number;
   priceSource: "prijstool" | "reservekopie";
   contactName: string;
   contactAddress: string;
@@ -95,11 +97,12 @@ export async function saveOrderToDatabase(order: NewOrderRow): Promise<void> {
     `INSERT INTO configurations (
       shape_id, shape_name, finish, color_id, color_name, size_id, size_name,
       font_id, font_name, custom_text, extra_line_1, extra_line_2, number_position,
+      has_frame,
       price_total_cents, price_color_surcharge_cents, price_extra_chars_cents,
-      price_extra_chars_count, price_source,
+      price_extra_chars_count, price_frame_surcharge_cents, price_source,
       contact_name, contact_address, contact_postal_code, contact_city,
       contact_email, contact_phone, quantity
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       order.shapeId,
       order.shapeName,
@@ -114,10 +117,12 @@ export async function saveOrderToDatabase(order: NewOrderRow): Promise<void> {
       order.extraLine1,
       order.extraLine2,
       order.numberPosition,
+      order.hasFrame,
       order.priceTotalCents,
       order.priceColorSurchargeCents,
       order.priceExtraCharsCents,
       order.priceExtraCharsCount,
+      order.priceFrameSurchargeCents,
       order.priceSource,
       order.contactName,
       order.contactAddress,

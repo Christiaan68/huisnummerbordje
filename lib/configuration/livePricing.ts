@@ -67,6 +67,10 @@ interface PrijstoolResponse {
   globalOptions: {
     extraCharPrice: number;
     colorPrice: number;
+    // Meerprijs kaderrand — hergebruikt het bestaande "specialCharPrice"
+    // ("Meerprijs speciale tekens") van de prijstool, zie de toelichting bij
+    // globalPricingOptions in config/product-options.ts.
+    specialCharPrice: number;
   };
 }
 
@@ -78,6 +82,7 @@ function isValidPrijstoolResponse(data: unknown): data is PrijstoolResponse {
   const go = d.globalOptions as Record<string, unknown>;
   if (typeof go.extraCharPrice !== "number") return false;
   if (typeof go.colorPrice !== "number") return false;
+  if (typeof go.specialCharPrice !== "number") return false;
   return true;
 }
 
@@ -172,6 +177,7 @@ export async function getLivePricingData(): Promise<LivePricingData> {
         ...staticGlobalPricingOptions,
         extraCharPriceCents: Math.round(data.globalOptions.extraCharPrice * 100),
         colorSurchargeCents: Math.round(data.globalOptions.colorPrice * 100),
+        frameSurchargeCents: Math.round(data.globalOptions.specialCharPrice * 100),
       },
       bron: "prijstool",
     };

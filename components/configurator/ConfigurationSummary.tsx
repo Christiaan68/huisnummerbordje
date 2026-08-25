@@ -48,6 +48,7 @@ export function ConfigurationSummary() {
         <Row label="Tekstregel 2" value={selection.extraLine2 || "—"} />
       )}
       <Row label="Lettertype" value={font?.name ?? "—"} />
+      {selection.hasFrame && <Row label="Kader" value="Ja" />}
       {price && price.colorSurchargeCents > 0 && (
         <Row
           label="Meerprijs kleur"
@@ -58,6 +59,12 @@ export function ConfigurationSummary() {
         <Row
           label={`Meerprijs extra tekens (${price.extraCharsCount}×)`}
           value={formatPriceCents(price.extraCharsCents)}
+        />
+      )}
+      {price && price.frameSurchargeCents > 0 && (
+        <Row
+          label="Meerprijs kader"
+          value={formatPriceCents(price.frameSurchargeCents)}
         />
       )}
       <Row

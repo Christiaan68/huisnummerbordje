@@ -20,6 +20,10 @@ export interface ConfiguratorSelection {
   extraLine1: string;
   extraLine2: string;
   numberPosition: "start" | "middle" | "end";
+  // Optionele sierrand ("kader") rond het bordje — toegevoegd 25-8-2026.
+  // Alleen beschikbaar voor niet-ovale vormen; wordt bij het kiezen van
+  // "ovaal" automatisch teruggezet naar false (zie ConfiguratorContext.tsx).
+  hasFrame: boolean;
 }
 
 export const emptyConfiguratorSelection: ConfiguratorSelection = {
@@ -32,6 +36,7 @@ export const emptyConfiguratorSelection: ConfiguratorSelection = {
   extraLine1: "",
   extraLine2: "",
   numberPosition: "start",
+  hasFrame: false,
 };
 
 export interface ConfiguratorSelectionResolved {
@@ -76,6 +81,7 @@ export interface CreateConfigurationInput {
   extraLine1?: string;
   extraLine2?: string;
   numberPosition: "start" | "middle" | "end";
+  hasFrame?: boolean;
 }
 
 export interface SendConfigurationEmailInput {

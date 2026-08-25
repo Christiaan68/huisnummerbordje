@@ -13,8 +13,10 @@ import { calculatePrice, formatPriceCents } from "@/lib/configuration/pricing";
 import {
   DEFAULT_OVAL_RATIO,
   DEFAULT_LINE_GAP_RATIO,
+  FRAME_STROKE_WIDTH_RATIO,
   LINE_GAP_RATIO_BY_FONT,
   getContrastTextColor,
+  getFrameBorderPath,
   getScrewClearanceMarginsMm,
   getScrewPositions,
   getScrewRadiusMm,
@@ -195,9 +197,13 @@ export function ProductPreview() {
         >
           {/* Het "geëmailleerde plaatje" zelf: achtergrond en de 4
               schroefjes, getekend als SVG — zodat het op elke maat en vorm
-              (rechthoekig of ovaal) er als een echt bordje uitziet.
-              Bewust GEEN sierrand/kaderlijn (op verzoek van Christiaan,
-              19-8-2026) — alleen de achtergrond en de schroefjes. */}
+              (rechthoekig of ovaal) er als een echt bordje uitziet. Een
+              sierrand/kaderlijn wordt alleen getekend als de klant de
+              kaderoptie heeft aangevinkt (zie "opties"-stap,
+              components/configurator/OptionsSelector.tsx) — tot 25-8-2026
+              stond hier bewust nooit een kaderlijn (op eerder verzoek van
+              Christiaan, 19-8-2026), maar dat is met deze nieuwe, optionele
+              keuze achterhaald. */}
           <svg
             className="absolute inset-0 h-full w-full"
             viewBox={`0 0 ${plateWidth} ${plateHeight}`}
@@ -249,6 +255,17 @@ export function ProductPreview() {
                 </g>
               );
             })}
+
+            {selection.hasFrame && !isOval && (
+              <path
+                d={getFrameBorderPath(plateWidth, plateHeight)}
+                fill="none"
+                stroke={textColor}
+                strokeWidth={
+                  Math.min(plateWidth, plateHeight) * FRAME_STROKE_WIDTH_RATIO
+                }
+              />
+            )}
           </svg>
 
           <div ref={textRef} className="relative z-10 flex w-full flex-col items-center">
@@ -292,6 +309,12 @@ export function ProductPreview() {
             <dt className="text-muted-foreground">Lettertype</dt>
             <dd className="text-foreground">{font?.name ?? "—"}</dd>
           </div>
+          {selection.hasFrame && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Kader</dt>
+              <dd className="text-foreground">Ja</dd>
+            </div>
+          )}
         </dl>
 
         <div className="mt-4 flex items-center justify-between rounded-sm border border-border/60 bg-card px-4 py-3">

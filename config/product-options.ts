@@ -122,13 +122,16 @@ export const productFonts: ProductFont[] = [
  * extra. Beslist door Christiaan op 2026-08-15: zwart, wit en donkerblauw
  * zijn de standaardkleuren.
  *
- * De meerprijs voor "speciaal teken" (specialCharPrice in de
- * prijsbeheeromgeving) is HIER BEWUST NOG NIET verwerkt — er bestaat nog
- * geen manier voor de klant om aan te geven dat zijn tekst een speciaal
- * teken bevat. Dit is een bewuste, tijdelijke keuze van Christiaan.
+ * frameSurchargeCents: de meerprijs voor de optionele kaderrand rond het
+ * bordje (toegevoegd 25-8-2026). Dit hergebruikt bewust het bestaande veld
+ * "specialCharPrice" ("Meerprijs speciale tekens") uit de
+ * prijsbeheeromgeving — op verzoek van Christiaan, in plaats van daar een
+ * nieuw prijsveld voor aan te maken. Wijzig je dat bedrag in de prijstool,
+ * dan verandert dus meteen ook de meerprijs van het kader hier.
  */
 export const globalPricingOptions = {
   extraCharPriceCents: 636,
   colorSurchargeCents: 1505,
+  frameSurchargeCents: 1000,
   standardColorIds: ["black", "white", "navy"] as string[],
 };

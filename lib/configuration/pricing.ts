@@ -12,7 +12,6 @@ import type { PricingData } from "@/lib/configuration/livePricing";
  * lukt. Dat gebeurt hier niet meer — deze functie is een pure rekenfunctie.
  *
  * Nog niet meegenomen in deze berekening:
- * - de meerprijs voor "speciaal teken" (bewust nog niet gebouwd);
  * - de meerprijs voor extra karakters geldt alleen voor het huisnummer
  *   zelf, niet voor de optionele extra tekstregels (zo besloten door
  *   Christiaan op 2026-08-15).
@@ -22,6 +21,7 @@ export interface PriceBreakdown {
   colorSurchargeCents: number;
   extraCharsCount: number;
   extraCharsCents: number;
+  frameSurchargeCents: number;
   totalCents: number;
 }
 
@@ -53,13 +53,19 @@ export function calculatePrice(
   );
   const extraCharsCents = extraCharsCount * globalPricingOptions.extraCharPriceCents;
 
-  const totalCents = basePriceCents + colorSurchargeCents + extraCharsCents;
+  const frameSurchargeCents = selection.hasFrame
+    ? globalPricingOptions.frameSurchargeCents
+    : 0;
+
+  const totalCents =
+    basePriceCents + colorSurchargeCents + extraCharsCents + frameSurchargeCents;
 
   return {
     basePriceCents,
     colorSurchargeCents,
     extraCharsCount,
     extraCharsCents,
+    frameSurchargeCents,
     totalCents,
   };
 }

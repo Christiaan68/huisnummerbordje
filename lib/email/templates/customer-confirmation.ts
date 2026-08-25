@@ -10,6 +10,7 @@ interface CustomerConfirmationData {
   extraLine1?: string;
   extraLine2?: string;
   fontName: string;
+  hasFrame?: boolean;
   quantity: string;
   orderLabel?: string;
   // Content-id van de bijgevoegde voorbeeldafbeelding van het bordje (zie
@@ -23,6 +24,7 @@ interface CustomerConfirmationData {
   priceColorSurchargeCents?: number;
   priceExtraCharsCents?: number;
   priceExtraCharsCount?: number;
+  priceFrameSurchargeCents?: number;
 }
 
 /**
@@ -93,6 +95,7 @@ export function renderCustomerConfirmationEmail(
                     ${data.extraLine2 ? row("Tekstregel 2", data.extraLine2) : ""}
                     ${data.orderLabel ? row("Volgorde", data.orderLabel) : ""}
                     ${row("Lettertype", data.fontName)}
+                    ${data.hasFrame ? row("Kader", "Ja") : ""}
                     ${row("Aantal", data.quantity)}
                     ${
                       data.priceColorSurchargeCents
@@ -105,6 +108,11 @@ export function renderCustomerConfirmationEmail(
                             `Meerprijs extra tekens (${data.priceExtraCharsCount}×)`,
                             formatPriceCents(data.priceExtraCharsCents)
                           )
+                        : ""
+                    }
+                    ${
+                      data.priceFrameSurchargeCents
+                        ? row("Meerprijs kader", formatPriceCents(data.priceFrameSurchargeCents))
                         : ""
                     }
                     ${row(

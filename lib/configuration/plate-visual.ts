@@ -95,6 +95,55 @@ export function getScrewClearanceMarginsMm(
   };
 }
 
+// Sierrand ("kader") — optionele extra op het bordje (toegevoegd 25-8-2026,
+// n.a.v. voorbeeldfoto van Christiaan). Een dunne lijn, ingesprongen vanaf de
+// rand van het bordje, met een afgeschuinde ("chamfered") hoek op elke hoek
+// zodat de lijn nooit over een schroefje heen loopt — het schroefje komt
+// precies in die afgeschuinde hoek te staan, zoals op de voorbeeldfoto.
+// Alleen voor rechthoekige vormen (niet "ovaal" — besloten door Christiaan,
+// 25-8-2026).
+const FRAME_INSET_RATIO = 0.05; // afstand van de kaderlijn tot de bordjesrand
+export const FRAME_STROKE_WIDTH_RATIO = 0.014; // lijndikte, t.o.v. min(breedte, hoogte)
+
+/**
+ * Bouwt het SVG-pad (een rechthoek met afgeschuinde hoeken) voor de
+ * kaderlijn, in dezelfde mm-coördinaten als de rest van de bordjestekening.
+ * Wordt gebruikt door zowel de live preview (ProductPreview.tsx) als de
+ * voorbeeldafbeelding in de bevestigingsmail (plate-preview-image.tsx) — zie
+ * de toelichting bovenaan dit bestand over waarom dit soort logica op één
+ * plek hoort te staan.
+ */
+export function getFrameBorderPath(widthMm: number, heightMm: number): string {
+  const insetX = widthMm * FRAME_INSET_RATIO;
+  const insetY = heightMm * FRAME_INSET_RATIO;
+  const x = insetX;
+  const y = insetY;
+  const w = widthMm - insetX * 2;
+  const h = heightMm - insetY * 2;
+
+  // De afgeschuinde hoek moet groot genoeg zijn om het schroefje in die hoek
+  // te ontwijken — gebaseerd op de werkelijke schroefpositie/-straal
+  // (SCREW_INSET_RATIO/getScrewRadiusMm hierboven), zodat het kader nooit
+  // over een schroefje heen loopt, op elke maat.
+  const screwRadius = getScrewRadiusMm(widthMm, heightMm);
+  const chamferX = Math.max(0, widthMm * SCREW_INSET_RATIO - insetX) + screwRadius * 1.6;
+  const chamferY = Math.max(0, heightMm * SCREW_INSET_RATIO - insetY) + screwRadius * 1.6;
+  const cx = Math.min(chamferX, w / 2 - 1);
+  const cy = Math.min(chamferY, h / 2 - 1);
+
+  return [
+    `M ${x + cx} ${y}`,
+    `L ${x + w - cx} ${y}`,
+    `L ${x + w} ${y + cy}`,
+    `L ${x + w} ${y + h - cy}`,
+    `L ${x + w - cx} ${y + h}`,
+    `L ${x + cx} ${y + h}`,
+    `L ${x} ${y + h - cy}`,
+    `L ${x} ${y + cy}`,
+    `Z`,
+  ].join(" ");
+}
+
 // Verhouding tussen de regelafstand (marge boven een regel) en de
 // fontgrootte van de regel erboven — verschilt per lettertype omdat het
 // "leeg oogverticaal ruimte"-gevoel van een schreefletter (Klassiek/Elegant)

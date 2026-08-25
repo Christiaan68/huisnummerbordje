@@ -18,6 +18,9 @@ export const createConfigurationSchema = z
       .enum(["start", "middle", "end"])
       .optional()
       .default("start"),
+    // Optionele kaderrand — zie types/configuration.ts. Alleen beschikbaar
+    // voor niet-ovale vormen, gecontroleerd hieronder in superRefine.
+    hasFrame: z.boolean().optional().default(false),
   })
   .superRefine((data, ctx) => {
     const shape = productShapes.find((s) => s.id === data.shapeId);
@@ -35,6 +38,14 @@ export const createConfigurationSchema = z
         code: z.ZodIssueCode.custom,
         message: `Afwerking "${data.finish}" is niet beschikbaar voor deze vorm.`,
         path: ["finish"],
+      });
+    }
+
+    if (data.hasFrame && shape.id === "ovaal") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Een kaderrand is niet beschikbaar voor een ovaal bordje.",
+        path: ["hasFrame"],
       });
     }
 

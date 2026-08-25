@@ -53,6 +53,14 @@ export const configuratorSteps: ConfiguratorStep[] = [
     },
   },
   {
+    id: "opties",
+    path: "/configurator/opties",
+    label: "Opties",
+    // Optioneel (het kader is een keuze, geen verplichte stap) — daarom
+    // altijd "compleet", net als de laatste stap "controle".
+    isComplete: () => true,
+  },
+  {
     id: "lettertype",
     path: "/configurator/lettertype",
     label: "Lettertype",

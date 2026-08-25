@@ -123,6 +123,7 @@ export async function POST(request: Request) {
     priceColorSurchargeCents: price?.colorSurchargeCents ?? 0,
     priceExtraCharsCents: price?.extraCharsCents ?? 0,
     priceExtraCharsCount: price?.extraCharsCount ?? 0,
+    priceFrameSurchargeCents: price?.frameSurchargeCents ?? 0,
   };
 
   const html = renderConfigurationEmail({
@@ -137,6 +138,7 @@ export async function POST(request: Request) {
     line1SizeMm: autoFit.line1SizeMm ?? undefined,
     line2SizeMm: autoFit.line2SizeMm ?? undefined,
     fontName: font.name,
+    hasFrame: data.hasFrame,
     contact,
     orderLabel,
     ...priceFields,
@@ -183,10 +185,12 @@ export async function POST(request: Request) {
         extraLine1: data.extraLine1 || null,
         extraLine2: data.extraLine2 || null,
         numberPosition: data.numberPosition,
+        hasFrame: data.hasFrame,
         priceTotalCents: priceFields.priceTotalCents,
         priceColorSurchargeCents: priceFields.priceColorSurchargeCents,
         priceExtraCharsCents: priceFields.priceExtraCharsCents,
         priceExtraCharsCount: priceFields.priceExtraCharsCount,
+        priceFrameSurchargeCents: priceFields.priceFrameSurchargeCents,
         priceSource: pricingData.bron,
         contactName: contact.name,
         contactAddress: contact.address,
@@ -217,6 +221,7 @@ export async function POST(request: Request) {
       previewImageBuffer = await renderPlatePreviewPng({
         isOval: shape.id === "ovaal",
         isCurved: data.finish !== "vlak",
+        isFramed: Boolean(data.hasFrame),
         widthMm: size.width,
         heightMm: size.height,
         colorHex: color.hex,
@@ -243,6 +248,7 @@ export async function POST(request: Request) {
       extraLine1: data.extraLine1,
       extraLine2: data.extraLine2,
       fontName: font.name,
+      hasFrame: data.hasFrame,
       quantity: contact.quantity,
       orderLabel,
       previewImageCid: previewImageBuffer ? PREVIEW_IMAGE_CID : undefined,

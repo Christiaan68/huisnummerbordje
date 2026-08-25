@@ -12,6 +12,7 @@ interface ConfigurationEmailData {
   line1SizeMm?: number;
   line2SizeMm?: number;
   fontName: string;
+  hasFrame?: boolean;
   contact: {
     name: string;
     address: string;
@@ -28,6 +29,7 @@ interface ConfigurationEmailData {
   priceColorSurchargeCents?: number;
   priceExtraCharsCents?: number;
   priceExtraCharsCount?: number;
+  priceFrameSurchargeCents?: number;
 }
 
 /**
@@ -99,6 +101,7 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
                     ${data.extraLine2 ? row("Tekstregel 2", data.extraLine2) : ""}
                     ${data.orderLabel ? row("Volgorde", data.orderLabel) : ""}
                     ${row("Lettertype", data.fontName)}
+                    ${data.hasFrame ? row("Kader", "Ja") : ""}
                     ${row("Datum", date)}
                     ${
                       data.priceColorSurchargeCents
@@ -111,6 +114,11 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
                             `Meerprijs extra tekens (${data.priceExtraCharsCount}×)`,
                             formatPriceCents(data.priceExtraCharsCents)
                           )
+                        : ""
+                    }
+                    ${
+                      data.priceFrameSurchargeCents
+                        ? row("Meerprijs kader", formatPriceCents(data.priceFrameSurchargeCents))
                         : ""
                     }
                     ${row(

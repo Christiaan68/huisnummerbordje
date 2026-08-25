@@ -20,6 +20,7 @@ type Action =
   | { type: "SET_EXTRA_LINE_2"; value: string }
   | { type: "SET_FONT"; fontId: string }
   | { type: "SET_NUMBER_POSITION"; position: NumberPosition }
+  | { type: "SET_HAS_FRAME"; hasFrame: boolean }
   | { type: "RESET" };
 
 function reducer(
@@ -34,12 +35,19 @@ function reducer(
           ? shape.availableFinishes[0]
           : null;
 
+      // De kaderoptie bestaat alleen voor niet-ovale vormen (besloten door
+      // Christiaan, 25-8-2026) — bij het kiezen van "ovaal" wordt een
+      // eerder aangevinkt kader dus automatisch weer uitgezet, net zoals
+      // hierboven al met "finish" en "sizeId" gebeurt.
+      const hasFrame = action.shapeId === "ovaal" ? false : state.hasFrame;
+
       return {
         ...state,
         shapeId: action.shapeId,
         finish,
         sizeId: null,
         numberPosition: "start",
+        hasFrame,
       };
     }
     case "SET_FINISH":
@@ -58,6 +66,8 @@ function reducer(
       return { ...state, fontId: action.fontId };
     case "SET_NUMBER_POSITION":
       return { ...state, numberPosition: action.position };
+    case "SET_HAS_FRAME":
+      return { ...state, hasFrame: action.hasFrame };
     case "RESET":
       return emptyConfiguratorSelection;
     default:

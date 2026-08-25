@@ -38,6 +38,10 @@ CREATE TABLE IF NOT EXISTS configurations (
   extra_line_2 VARCHAR(50) NULL,
   number_position ENUM('start', 'middle', 'end') NOT NULL DEFAULT 'start',
 
+  -- Optionele kaderrand rond het bordje (toegevoegd 25-8-2026). Alleen
+  -- beschikbaar voor niet-ovale vormen.
+  has_frame BOOLEAN NOT NULL DEFAULT FALSE,
+
   -- Prijs op het moment van bestellen, in centen (zelfde eenheid als de
   -- rest van de code, zie lib/configuration/pricing.ts). price_source geeft
   -- aan of dit de live prijs van de prijstool was, of de vaste
@@ -47,6 +51,7 @@ CREATE TABLE IF NOT EXISTS configurations (
   price_color_surcharge_cents INT NOT NULL DEFAULT 0,
   price_extra_chars_cents INT NOT NULL DEFAULT 0,
   price_extra_chars_count INT NOT NULL DEFAULT 0,
+  price_frame_surcharge_cents INT NOT NULL DEFAULT 0,
   price_source ENUM('prijstool', 'reservekopie') NOT NULL,
 
   -- Klantgegevens (zelfde velden als het contactformulier)
@@ -67,3 +72,13 @@ CREATE TABLE IF NOT EXISTS configurations (
   INDEX idx_created_at (created_at),
   INDEX idx_contact_email (contact_email)
 );
+
+-- MIGRATIE 25-8-2026: de tabel "configurations" hierboven bestond al in
+-- productie (TiDB Cloud) vóórdat de kaderoptie werd toegevoegd —
+-- "CREATE TABLE IF NOT EXISTS" voegt bij een al bestaande tabel GEEN nieuwe
+-- kolommen toe. Voer daarom onderstaande twee regels ÉÉNMALIG uit in het
+-- SQL-scherm van je TiDB Cloud-cluster (zelfde scherm als waar dit hele
+-- bestand ooit is uitgevoerd) om de bestaande tabel bij te werken:
+
+ALTER TABLE configurations ADD COLUMN has_frame BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE configurations ADD COLUMN price_frame_surcharge_cents INT NOT NULL DEFAULT 0;

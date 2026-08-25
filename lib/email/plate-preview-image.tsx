@@ -3,8 +3,10 @@ import { computeAutoFit } from "@/lib/configuration/text-fit";
 import { loadGoogleFont } from "@/lib/email/google-fonts";
 import {
   DEFAULT_LINE_GAP_RATIO,
+  FRAME_STROKE_WIDTH_RATIO,
   LINE_GAP_RATIO_BY_FONT,
   getContrastTextColor,
+  getFrameBorderPath,
   getScrewClearanceMarginsMm,
   getScrewPositions,
   getScrewRadiusMm,
@@ -43,6 +45,7 @@ const FALLBACK_FONT_WEIGHT: SatoriFontWeight = 700;
 export interface PlatePreviewImageInput {
   isOval: boolean;
   isCurved: boolean;
+  isFramed: boolean;
   widthMm: number;
   heightMm: number;
   colorHex: string;
@@ -86,6 +89,7 @@ export async function renderPlatePreviewPng(
   const {
     isOval,
     isCurved,
+    isFramed,
     widthMm,
     heightMm,
     colorHex,
@@ -244,6 +248,26 @@ export async function renderPlatePreviewPng(
               />
             </div>
           ))}
+
+          {isFramed && !isOval && (
+            <svg
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: plateWidthPx,
+                height: plateHeightPx,
+              }}
+              viewBox={`0 0 ${widthMm} ${heightMm}`}
+            >
+              <path
+                d={getFrameBorderPath(widthMm, heightMm)}
+                fill="none"
+                stroke={textColor}
+                strokeWidth={Math.min(widthMm, heightMm) * FRAME_STROKE_WIDTH_RATIO}
+              />
+            </svg>
+          )}
 
           <div
             style={{
