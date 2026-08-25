@@ -96,50 +96,63 @@ export function getScrewClearanceMarginsMm(
 }
 
 // Sierrand ("kader") — optionele extra op het bordje (toegevoegd 25-8-2026,
-// n.a.v. voorbeeldfoto van Christiaan). Een dunne lijn, ingesprongen vanaf de
-// rand van het bordje, met een afgeschuinde ("chamfered") hoek op elke hoek
-// zodat de lijn nooit over een schroefje heen loopt — het schroefje komt
-// precies in die afgeschuinde hoek te staan, zoals op de voorbeeldfoto.
+// n.a.v. voorbeeldfoto van Christiaan). Een dunne lijn, vlak langs de rand
+// van het bordje, die bij elke hoek een kwartcirkel om het schroefje heen
+// buigt — precies rakend aan het schroefje, zoals op de voorbeeldfoto (het
+// kader gaat dus ROND elk schroefje heen, niet er dwars doorheen).
 // Alleen voor rechthoekige vormen (niet "ovaal" — besloten door Christiaan,
 // 25-8-2026).
-const FRAME_INSET_RATIO = 0.05; // afstand van de kaderlijn tot de bordjesrand
+//
+// Update 25-8-2026 (later): de eerste versie van dit pad gebruikte een
+// rechte, afgeschuinde hoek ("chamfer") bij elke hoek. Bij nader onderzoek
+// (pixel-voor-pixel vergelijking met Christiaans voorbeeldfoto) bleek die
+// rechte lijn dwars door het schroefje heen te lopen in plaats van eromheen
+// — de afstand van het schroefje tot die lijn was kleiner dan de straal van
+// het schroefje zelf. Vervangen door een boog (kwartcirkel) exact rond elk
+// schroefje, wat ook precies overeenkomt met hoe het er op de foto uitziet.
 export const FRAME_STROKE_WIDTH_RATIO = 0.014; // lijndikte, t.o.v. min(breedte, hoogte)
 
 /**
- * Bouwt het SVG-pad (een rechthoek met afgeschuinde hoeken) voor de
- * kaderlijn, in dezelfde mm-coördinaten als de rest van de bordjestekening.
- * Wordt gebruikt door zowel de live preview (ProductPreview.tsx) als de
- * voorbeeldafbeelding in de bevestigingsmail (plate-preview-image.tsx) — zie
- * de toelichting bovenaan dit bestand over waarom dit soort logica op één
- * plek hoort te staan.
+ * Bouwt het SVG-pad voor de kaderlijn, in dezelfde mm-coördinaten als de
+ * rest van de bordjestekening. De lijn loopt vlak langs de rand en buigt bij
+ * elke hoek in een kwartcirkel (straal = schroefstraal + halve lijndikte)
+ * om het schroefje heen, zodat de lijn het schroefje precies raakt zonder
+ * eroverheen te lopen. Wordt gebruikt door zowel de live preview
+ * (ProductPreview.tsx) als de voorbeeldafbeelding in de bevestigingsmail
+ * (plate-preview-image.tsx) — zie de toelichting bovenaan dit bestand over
+ * waarom dit soort logica op één plek hoort te staan.
  */
 export function getFrameBorderPath(widthMm: number, heightMm: number): string {
-  const insetX = widthMm * FRAME_INSET_RATIO;
-  const insetY = heightMm * FRAME_INSET_RATIO;
-  const x = insetX;
-  const y = insetY;
-  const w = widthMm - insetX * 2;
-  const h = heightMm - insetY * 2;
-
-  // De afgeschuinde hoek moet groot genoeg zijn om het schroefje in die hoek
-  // te ontwijken — gebaseerd op de werkelijke schroefpositie/-straal
-  // (SCREW_INSET_RATIO/getScrewRadiusMm hierboven), zodat het kader nooit
-  // over een schroefje heen loopt, op elke maat.
   const screwRadius = getScrewRadiusMm(widthMm, heightMm);
-  const chamferX = Math.max(0, widthMm * SCREW_INSET_RATIO - insetX) + screwRadius * 1.6;
-  const chamferY = Math.max(0, heightMm * SCREW_INSET_RATIO - insetY) + screwRadius * 1.6;
-  const cx = Math.min(chamferX, w / 2 - 1);
-  const cy = Math.min(chamferY, h / 2 - 1);
+  const strokeWidth = Math.min(widthMm, heightMm) * FRAME_STROKE_WIDTH_RATIO;
+  // Straal van de boog om elk schroefje: zo groot dat de kaderlijn het
+  // schroefje precies raakt (rakend, niet erdoorheen) — de lijn zelf heeft
+  // ook dikte, dus de boog moet een halve lijndikte extra ruimte houden.
+  const r = screwRadius + strokeWidth / 2;
 
+  const screwX1 = widthMm * SCREW_INSET_RATIO; // linker schroefjes
+  const screwX2 = widthMm * (1 - SCREW_INSET_RATIO); // rechter schroefjes
+  const screwY1 = heightMm * SCREW_INSET_RATIO; // bovenste schroefjes
+  const screwY2 = heightMm * (1 - SCREW_INSET_RATIO); // onderste schroefjes
+
+  const topY = screwY1 - r;
+  const bottomY = screwY2 + r;
+  const leftX = screwX1 - r;
+  const rightX = screwX2 + r;
+
+  // Elke "A"-boog is een kwartcirkel (straal r) die rakend aansluit op de
+  // rechte lijnstukken ervoor en erna — zo ontstaat een vloeiende lijn die
+  // precies om elk schroefje heen loopt.
   return [
-    `M ${x + cx} ${y}`,
-    `L ${x + w - cx} ${y}`,
-    `L ${x + w} ${y + cy}`,
-    `L ${x + w} ${y + h - cy}`,
-    `L ${x + w - cx} ${y + h}`,
-    `L ${x + cx} ${y + h}`,
-    `L ${x} ${y + h - cy}`,
-    `L ${x} ${y + cy}`,
+    `M ${screwX1} ${topY}`,
+    `L ${screwX2} ${topY}`,
+    `A ${r} ${r} 0 0 1 ${rightX} ${screwY1}`,
+    `L ${rightX} ${screwY2}`,
+    `A ${r} ${r} 0 0 1 ${screwX2} ${bottomY}`,
+    `L ${screwX1} ${bottomY}`,
+    `A ${r} ${r} 0 0 1 ${leftX} ${screwY2}`,
+    `L ${leftX} ${screwY1}`,
+    `A ${r} ${r} 0 0 1 ${screwX1} ${topY}`,
     `Z`,
   ].join(" ");
 }
