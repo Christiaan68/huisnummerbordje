@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LangcatTransitionLink } from "@/components/layout/LangcatTransitionLink";
+import { CookieSettingsButton } from "@/components/consent/CookieSettingsButton";
 
 export function Footer() {
   return (
@@ -36,6 +37,17 @@ export function Footer() {
           >
             Retourbeleid
           </Link>
+          {/* Cookiebeleid-pagina en het heropenen van het
+              cookie-voorkeurenscherm, toegevoegd 27-8-2026 in het kader
+              van de AVG/cookie-aanpassing (zie
+              claude/project-tijdlijn.md). */}
+          <Link
+            href="/cookiebeleid"
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            Cookiebeleid
+          </Link>
+          <CookieSettingsButton className="underline underline-offset-4 hover:text-foreground" />
         </div>
       </div>
     </footer>
