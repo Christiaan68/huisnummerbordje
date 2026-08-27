@@ -17,11 +17,12 @@ export function Footer() {
           .
         </p>
 
-        {/* Leveringsvoorwaarden (25-8-2026) en Retourneren (25-8-2026) —
-            beide met volledige tekst, aangeleverd door Christiaan. De
-            pagina/route heet nog "retourneren-reclameren" (ongewijzigd
-            gelaten om de URL niet te breken), maar de zichtbare titel/link
-            is op verzoek van Christiaan ingekort tot "Retourneren". */}
+        {/* Leveringsvoorwaarden (25-8-2026) en Retourbeleid (25-8-2026,
+            linktekst op 27-8-2026 gewijzigd van "Retourneren" naar
+            "Retourbeleid") — beide met volledige tekst, aangeleverd door
+            Christiaan. De pagina/route heet nog "retourneren-reclameren"
+            (ongewijzigd gelaten om de URL niet te breken), alleen de
+            zichtbare linktekst is aangepast. */}
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           <Link
             href="/leveringsvoorwaarden"
@@ -33,7 +34,7 @@ export function Footer() {
             href="/retourneren-reclameren"
             className="underline underline-offset-4 hover:text-foreground"
           >
-            Retourneren
+            Retourbeleid
           </Link>
         </div>
       </div>
