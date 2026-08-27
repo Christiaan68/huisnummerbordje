@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { BackToTopButton } from "@/components/layout/BackToTopButton";
 import { companyInfo, siteContent } from "@/config/site-content";
 
 export const metadata: Metadata = {
@@ -278,6 +279,7 @@ export default function RetournerenReclamerenPage() {
       </main>
 
       <Footer />
+      <BackToTopButton />
     </div>
   );
 }
