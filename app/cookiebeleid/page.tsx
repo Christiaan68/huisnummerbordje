@@ -150,6 +150,16 @@ export default function CookiebeleidPage() {
             </table>
           </div>
           <p className="mt-4 text-sm leading-relaxed text-foreground">
+            Naast de cookies zelf (hierboven) heeft Google Analytics 4 ook
+            een eigen, aparte bewaartermijn voor de gegevens die het
+            intern verzamelt: gebeurtenisgegevens (zoals losse
+            paginabezoeken) worden maximaal <strong>2 maanden</strong>
+            bewaard, en gegevens waarmee een bezoeker herkend kan worden
+            maximaal <strong>14 maanden</strong>. Dit zijn Google&apos;s
+            eigen, privacyvriendelijke standaardinstellingen, die we
+            bewust ongewijzigd hebben gelaten.
+          </p>
+          <p className="mt-4 text-sm leading-relaxed text-foreground">
             Google Analytics 4 wordt aangeboden door Google Ireland
             Limited (onderdeel van Google LLC). Gegevens kunnen door
             Google verwerkt worden op servers buiten de Europese

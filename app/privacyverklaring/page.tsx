@@ -235,8 +235,10 @@ export default function PrivacyverklaringPage() {
             wettelijke (fiscale) bewaarplicht voor administratieve gegevens
             dat vereist — in Nederland doorgaans 7 jaar. Gegevens uit
             contactverzoeken bewaren we zolang nodig is om je vraag af te
-            handelen. Voor de bewaartermijnen van analytische cookies, zie
-            ons{" "}
+            handelen. Gegevens die Google Analytics 4 verzamelt (uitsluitend
+            ná jouw toestemming) worden maximaal 14 maanden bewaard. Voor het
+            volledige overzicht, inclusief de bewaartermijn van de
+            afzonderlijke cookies, zie ons{" "}
             <Link
               href="/cookiebeleid"
               className="underline decoration-border underline-offset-2 hover:text-primary"
