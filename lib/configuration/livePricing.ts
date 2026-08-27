@@ -67,10 +67,16 @@ interface PrijstoolResponse {
   globalOptions: {
     extraCharPrice: number;
     colorPrice: number;
-    // Meerprijs kaderrand — hergebruikt het bestaande "specialCharPrice"
-    // ("Meerprijs speciale tekens") van de prijstool, zie de toelichting bij
-    // globalPricingOptions in config/product-options.ts.
+    // Nog steeds nodig als terugval hieronder (zie framePrice), voor het
+    // geval de prijstool nog een oudere versie draait zonder framePrice.
     specialCharPrice: number;
+    // Meerprijs kaderrand — sinds 27-8-2026 een eigen, apart winkelbreed
+    // prijsveld in de prijstool ("Meerprijs kader"), niet meer gekoppeld
+    // aan "Meerprijs speciale tekens". Optioneel gemaakt (niet verplicht in
+    // isValidPrijstoolResponse) zodat een oudere versie van de prijstool
+    // die dit veld nog niet teruggeeft de webshop niet laat crashen — zie
+    // de terugval op specialCharPrice hieronder.
+    framePrice?: number;
   };
 }
 
@@ -83,6 +89,7 @@ function isValidPrijstoolResponse(data: unknown): data is PrijstoolResponse {
   if (typeof go.extraCharPrice !== "number") return false;
   if (typeof go.colorPrice !== "number") return false;
   if (typeof go.specialCharPrice !== "number") return false;
+  if (go.framePrice !== undefined && typeof go.framePrice !== "number") return false;
   return true;
 }
 
@@ -177,7 +184,14 @@ export async function getLivePricingData(): Promise<LivePricingData> {
         ...staticGlobalPricingOptions,
         extraCharPriceCents: Math.round(data.globalOptions.extraCharPrice * 100),
         colorSurchargeCents: Math.round(data.globalOptions.colorPrice * 100),
-        frameSurchargeCents: Math.round(data.globalOptions.specialCharPrice * 100),
+        // Sinds 27-8-2026 het eigen "framePrice"-veld ("Meerprijs kader") uit
+        // de prijstool. Draait de prijstool nog een oudere versie zonder dat
+        // veld, dan valt dit terug op specialCharPrice — exact het oude
+        // gedrag — zodat de kaderprijs nooit ineens op 0 of kapot komt te
+        // staan tussen het deployen van de prijstool en de webshop in.
+        frameSurchargeCents: Math.round(
+          (data.globalOptions.framePrice ?? data.globalOptions.specialCharPrice) * 100
+        ),
       },
       bron: "prijstool",
     };

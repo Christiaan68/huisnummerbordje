@@ -123,11 +123,12 @@ export const productFonts: ProductFont[] = [
  * zijn de standaardkleuren.
  *
  * frameSurchargeCents: de meerprijs voor de optionele kaderrand rond het
- * bordje (toegevoegd 25-8-2026). Dit hergebruikt bewust het bestaande veld
- * "specialCharPrice" ("Meerprijs speciale tekens") uit de
- * prijsbeheeromgeving — op verzoek van Christiaan, in plaats van daar een
- * nieuw prijsveld voor aan te maken. Wijzig je dat bedrag in de prijstool,
- * dan verandert dus meteen ook de meerprijs van het kader hier.
+ * bordje (toegevoegd 25-8-2026). Kwam eerst uit het veld "specialCharPrice"
+ * ("Meerprijs speciale tekens") van de prijsbeheeromgeving; heeft sinds
+ * 27-8-2026 een eigen, apart veld daar ("Meerprijs kader" / framePrice) —
+ * zie lib/configuration/livePricing.ts. De waarde hieronder is alleen nog
+ * de vaste reservekopie voor als het live ophalen bij de prijstool niet
+ * lukt.
  */
 export const globalPricingOptions = {
   extraCharPriceCents: 636,
