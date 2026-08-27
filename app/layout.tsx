@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Fraunces, Bebas_Neue, Playfair_Display } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -44,6 +45,12 @@ export default function RootLayout({
       className={`${inter.variable} ${fraunces.variable} ${bebasNeue.variable} ${playfairDisplay.variable}`}
     >
       <body className="min-h-screen font-sans antialiased">{children}</body>
+      {/* Google Analytics (GA4), toegevoegd 27-8-2026. Meet-ID hoort bij
+          het GA4-account/de property die Christiaan zelf heeft aangemaakt
+          (stream-URL https://huisnummerbordje.vercel.app). Gebruikt de
+          door Next.js officieel aanbevolen manier (@next/third-parties),
+          in plaats van een los <script>-tag. */}
+      <GoogleAnalytics gaId="G-2NLDPWQQ92" />
     </html>
   );
 }
