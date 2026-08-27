@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { LangcatTransitionLink } from "@/components/layout/LangcatTransitionLink";
 import { companyInfo, siteContent } from "@/config/site-content";
 
 export const metadata: Metadata = {
@@ -34,20 +35,18 @@ export default function ContactPage() {
         </p>
 
         {/* Logo van Langcat, de fabrikant/het bedrijf achter Emaille
-            Huisnummers — linkt door naar hun eigen website. */}
-        <a
-          href="https://www.langcat.nl/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-8 inline-block"
-        >
+            Huisnummers — linkt door naar hun eigen website. Gebruikt
+            LangcatTransitionLink (27-8-2026) voor een zachte overgang
+            vóórdat het nieuwe tabblad opent — zie de toelichting in dat
+            bestand voor hoe dit simpel terug te draaien is. */}
+        <LangcatTransitionLink className="mt-8 inline-block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/images/langcat-logo.jpg"
             alt="Langcat Emaille"
             className="h-auto w-40 rounded-sm"
           />
-        </a>
+        </LangcatTransitionLink>
 
         <div className="mt-6 space-y-1 text-left text-sm leading-relaxed text-foreground">
           <p className="font-medium">{companyInfo.name}</p>

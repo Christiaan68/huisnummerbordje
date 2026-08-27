@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LangcatTransitionLink } from "@/components/layout/LangcatTransitionLink";
 
 export function Footer() {
   return (
@@ -6,14 +7,13 @@ export function Footer() {
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <p>
           &copy; Emaille Huisnummers is een onderdeel van{" "}
-          <a
-            href="https://www.langcat.nl"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline underline-offset-4 hover:text-foreground"
-          >
+          {/* Gebruikt LangcatTransitionLink (27-8-2026) voor een zachte
+              overgang vóórdat het nieuwe tabblad opent — zie de
+              toelichting in dat bestand voor hoe dit simpel terug te
+              draaien is. */}
+          <LangcatTransitionLink className="underline underline-offset-4 hover:text-foreground">
             Langcat Emaille
-          </a>
+          </LangcatTransitionLink>
           .
         </p>
 
