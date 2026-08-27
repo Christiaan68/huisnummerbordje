@@ -144,7 +144,6 @@ export function ContactDetailsForm({
           type="text"
           inputMode="numeric"
           maxLength={2}
-          placeholder="1"
           {...register("quantity")}
           className={cn(fieldClass(!!errors.quantity), "w-24")}
         />
