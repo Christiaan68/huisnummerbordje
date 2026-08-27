@@ -26,7 +26,13 @@ const LANGCAT_LOGO_SRC = "/images/langcat-logo.jpg";
 const SHOP_BACKGROUND = "hsl(165 14% 9%)";
 const LANGCAT_YELLOW = "#FFCC00";
 
-const DIM_MS = 500; // pagina dimt naar de eigen (donkere) achtergrondkleur
+// DIM_MS bewust ruim gehouden (n.a.v. Christiaans melding dat op de
+// iPhone geen enkele overgang te zien was, alleen meteen geel): het openen
+// van een gloednieuw tabblad kost een browser zelf ook al even tijd (denk
+// aan het animatietje van de tabbladwissel) — was deze waarde te kort, dan
+// kon het gebeuren dat de browser de donkere beginstand nooit echt op het
+// scherm liet zien voordat het al naar geel overging.
+const DIM_MS = 900; // pagina dimt naar de eigen (donkere) achtergrondkleur
 const RISE_MS = 1300; // kleurt door naar Langcat-geel, logo komt op
 const HOLD_MS = 500; // even blijven staan in Langcat-sfeer
 const FADE_BACK_MS = 600; // terug naar normaal (nieuw tabblad is dan al open)
@@ -118,10 +124,19 @@ export function LangcatTransitionLink({
 <body>
   <div id="ov"><img id="logo" src="${window.location.origin}${LANGCAT_LOGO_SRC}" alt=""></div>
   <script>
-    setTimeout(function () {
-      document.getElementById("ov").style.backgroundColor = "${LANGCAT_YELLOW}";
-      document.getElementById("logo").style.opacity = "1";
-    }, ${DIM_MS});
+    // Dubbele requestAnimationFrame: wacht tot de browser de donkere
+    // beginstand minstens 1x echt heeft getekend, vóórdat we naar geel
+    // laten overgaan. Zonder dit kon het (vooral op iPhone) gebeuren dat
+    // er nog niets getekend was op het moment dat we al naar geel
+    // overschakelden, waardoor er niets van de overgang te zien was.
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        setTimeout(function () {
+          document.getElementById("ov").style.backgroundColor = "${LANGCAT_YELLOW}";
+          document.getElementById("logo").style.opacity = "1";
+        }, ${DIM_MS});
+      });
+    });
     setTimeout(function () {
       window.location.href = "${LANGCAT_URL}";
     }, ${DIM_MS + RISE_MS + HOLD_MS});
