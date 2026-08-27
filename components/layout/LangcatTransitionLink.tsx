@@ -79,13 +79,58 @@ export function LangcatTransitionLink({
     }
 
     event.preventDefault();
+
+    // BELANGRIJK (fix 27-8-2026, n.a.v. Christiaans melding dat dit op
+    // tablet/telefoon niet goed werkte): telefoons/tablets (vooral Safari
+    // op iPhone/iPad) blokkeren een `window.open()` die pas ná een korte
+    // vertraging (hier: na de animatie) wordt aangeroepen — dat wordt dan
+    // gezien als een "pop-up" die niet direct het gevolg is van een tik,
+    // en dus stilletjes tegengehouden. Op een computer viel dat vaak niet
+    // op omdat browsers daar soepeler zijn, maar op mobiel gebeurde er dan
+    // dus niets (of er verscheen geen nieuw tabblad).
+    //
+    // De oplossing: het nieuwe (voorlopig nog lege) tabblad DIRECT bij de
+    // tik al openen — dat telt nog wel als "direct gevolg van een klik" —
+    // en pas ná de animatie de echte langcat.nl-pagina daarin laden. Zo
+    // ziet de bezoeker ook direct een nieuw tabblad verschijnen (fijne
+    // bevestiging dat de tik is aangekomen), terwijl de animatie op deze
+    // pagina gewoon doorloopt.
+    let newTab: Window | null = null;
+    try {
+      newTab = window.open("", "_blank");
+      if (newTab) {
+        // Ontkoppelt het nieuwe tabblad van deze pagina (hetzelfde doel als
+        // rel="noopener" bij een gewone link) — alleen kan dat hier niet
+        // via het `rel`-attribuut, omdat we de referentie (newTab) juist
+        // zelf nog even nodig hebben om er straks de echte pagina in te
+        // laden.
+        newTab.opener = null;
+        newTab.document.write(
+          `<!doctype html><title>Langcat Emaille</title><style>html,body{margin:0;height:100%;background:${LANGCAT_YELLOW};display:flex;align-items:center;justify-content:center;font-family:sans-serif}img{width:200px;border-radius:4px;box-shadow:0 10px 25px rgba(0,0,0,.35)}</style><body><img src="${window.location.origin}${LANGCAT_LOGO_SRC}" alt=""></body>`
+        );
+        newTab.document.close();
+      }
+    } catch {
+      // Kon om wat voor reden dan ook geen alvast-leeg tabblad openen —
+      // dan hieronder bij het echt doorschakelen alsnog een gewone poging
+      // wagen.
+      newTab = null;
+    }
+
     setPhase("dimming");
 
     timers.current.push(
       window.setTimeout(() => setPhase("rising"), DIM_MS),
       window.setTimeout(() => setPhase("hold"), DIM_MS + RISE_MS),
       window.setTimeout(() => {
-        window.open(LANGCAT_URL, "_blank", "noopener,noreferrer");
+        if (newTab && !newTab.closed) {
+          newTab.location.href = LANGCAT_URL;
+        } else {
+          // Zeldzaam noodgeval: het alvast-openen hierboven is niet gelukt
+          // (of de bezoeker heeft dat tabblad intussen zelf gesloten) —
+          // dan hier alsnog een gewone poging wagen.
+          window.open(LANGCAT_URL, "_blank", "noopener,noreferrer");
+        }
         setPhase("fading");
       }, DIM_MS + RISE_MS + HOLD_MS),
       window.setTimeout(
