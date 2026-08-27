@@ -80,59 +80,71 @@ export function LangcatTransitionLink({
 
     event.preventDefault();
 
-    // BELANGRIJK (fix 27-8-2026, n.a.v. Christiaans melding dat dit op
-    // tablet/telefoon niet goed werkte): telefoons/tablets (vooral Safari
-    // op iPhone/iPad) blokkeren een `window.open()` die pas ná een korte
-    // vertraging (hier: na de animatie) wordt aangeroepen — dat wordt dan
-    // gezien als een "pop-up" die niet direct het gevolg is van een tik,
-    // en dus stilletjes tegengehouden. Op een computer viel dat vaak niet
-    // op omdat browsers daar soepeler zijn, maar op mobiel gebeurde er dan
-    // dus niets (of er verscheen geen nieuw tabblad).
+    // BELANGRIJK (fix 27-8-2026, n.a.v. Christiaans meldingen over
+    // tablet/telefoon): een `window.open()` die pas ná de animatie wordt
+    // aangeroepen, wordt door telefoons/tablets vaak stilletjes
+    // tegengehouden (niet gezien als direct gevolg van een tik) — dus
+    // wordt het nieuwe tabblad direct bij de tik al geopend (dat telt nog
+    // wel als "direct gevolg van een tik").
     //
-    // De oplossing: het nieuwe (voorlopig nog lege) tabblad DIRECT bij de
-    // tik al openen — dat telt nog wel als "direct gevolg van een klik" —
-    // en pas ná de animatie de echte langcat.nl-pagina daarin laden. Zo
-    // ziet de bezoeker ook direct een nieuw tabblad verschijnen (fijne
-    // bevestiging dat de tik is aangekomen), terwijl de animatie op deze
-    // pagina gewoon doorloopt.
-    let newTab: Window | null = null;
+    // Tweede probleem (n.a.v. Christiaans test op laptop/tablet): zodra dat
+    // nieuwe tabblad opent, springen sommige browsers er meteen naartoe —
+    // deze shop-pagina komt dan op de achtergrond te staan. Op met name
+    // tablets kan een pagina op de achtergrond zo ver "bevroren" worden
+    // door de browser dat een wachttijdje (setTimeout) daar simpelweg nooit
+    // meer afgaat — waardoor het nieuwe tabblad dan voor altijd op het
+    // gele wachtscherm bleef staan in plaats van door te schakelen naar de
+    // echte langcat.nl. Daarom laat het nieuwe tabblad zichzelf nu de
+    // sfeerovergang tonen én zichzelf na afloop doorschakelen — dat werkt
+    // altijd, ongeacht of deze shop-pagina op de voor- of achtergrond komt
+    // te staan. Deze shop-pagina zelf speelt de overgang ook nog af (voor
+    // het geval de browser 'm niet meteen wegklikt), maar is daarna verder
+    // nergens meer verantwoordelijk voor.
     try {
-      newTab = window.open("", "_blank");
+      const newTab = window.open("", "_blank");
       if (newTab) {
         // Ontkoppelt het nieuwe tabblad van deze pagina (hetzelfde doel als
-        // rel="noopener" bij een gewone link) — alleen kan dat hier niet
-        // via het `rel`-attribuut, omdat we de referentie (newTab) juist
-        // zelf nog even nodig hebben om er straks de echte pagina in te
-        // laden.
+        // rel="noopener" bij een gewone link, alleen kan dat hier niet via
+        // het `rel`-attribuut omdat we newTab hierboven nog even nodig
+        // hebben).
         newTab.opener = null;
-        newTab.document.write(
-          `<!doctype html><title>Langcat Emaille</title><style>html,body{margin:0;height:100%;background:${LANGCAT_YELLOW};display:flex;align-items:center;justify-content:center;font-family:sans-serif}img{width:200px;border-radius:4px;box-shadow:0 10px 25px rgba(0,0,0,.35)}</style><body><img src="${window.location.origin}${LANGCAT_LOGO_SRC}" alt=""></body>`
-        );
+        newTab.document.write(`<!doctype html>
+<html><head><meta charset="utf-8"><title>Langcat Emaille</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden}
+  #ov{position:fixed;inset:0;background:${SHOP_BACKGROUND};display:flex;align-items:center;justify-content:center;transition:background-color ${RISE_MS}ms ease-in-out}
+  img{width:200px;border-radius:4px;box-shadow:0 10px 25px rgba(0,0,0,.35);opacity:0;transition:opacity ${RISE_MS}ms ease-in-out}
+</style></head>
+<body>
+  <div id="ov"><img id="logo" src="${window.location.origin}${LANGCAT_LOGO_SRC}" alt=""></div>
+  <script>
+    setTimeout(function () {
+      document.getElementById("ov").style.backgroundColor = "${LANGCAT_YELLOW}";
+      document.getElementById("logo").style.opacity = "1";
+    }, ${DIM_MS});
+    setTimeout(function () {
+      window.location.href = "${LANGCAT_URL}";
+    }, ${DIM_MS + RISE_MS + HOLD_MS});
+  <\/script>
+</body></html>`);
         newTab.document.close();
+      } else {
+        // Zeldzaam noodgeval: kon niet eens een leeg tabblad openen — dan
+        // toch een gewone (mogelijk tegengehouden) poging wagen.
+        window.open(LANGCAT_URL, "_blank", "noopener,noreferrer");
       }
     } catch {
-      // Kon om wat voor reden dan ook geen alvast-leeg tabblad openen —
-      // dan hieronder bij het echt doorschakelen alsnog een gewone poging
-      // wagen.
-      newTab = null;
+      window.open(LANGCAT_URL, "_blank", "noopener,noreferrer");
     }
 
+    // Vanaf hier alleen nog de (puur decoratieve) overgang op déze pagina —
+    // zie toelichting hierboven.
     setPhase("dimming");
 
     timers.current.push(
       window.setTimeout(() => setPhase("rising"), DIM_MS),
       window.setTimeout(() => setPhase("hold"), DIM_MS + RISE_MS),
-      window.setTimeout(() => {
-        if (newTab && !newTab.closed) {
-          newTab.location.href = LANGCAT_URL;
-        } else {
-          // Zeldzaam noodgeval: het alvast-openen hierboven is niet gelukt
-          // (of de bezoeker heeft dat tabblad intussen zelf gesloten) —
-          // dan hier alsnog een gewone poging wagen.
-          window.open(LANGCAT_URL, "_blank", "noopener,noreferrer");
-        }
-        setPhase("fading");
-      }, DIM_MS + RISE_MS + HOLD_MS),
+      window.setTimeout(() => setPhase("fading"), DIM_MS + RISE_MS + HOLD_MS),
       window.setTimeout(
         () => setPhase("idle"),
         DIM_MS + RISE_MS + HOLD_MS + FADE_BACK_MS
