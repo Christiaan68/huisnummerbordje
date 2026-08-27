@@ -36,10 +36,21 @@ export function ProductPreview() {
   const font = productFonts.find((f) => f.id === selection.fontId);
   const price = calculatePrice(selection, pricingData);
 
+  // Zolang er nog geen lettertype gekozen is (dat gebeurt pas bij stap 7,
+  // "Lettertype"), toont de preview op de eerdere stappen vast één van de
+  // vier echte keuzeopties in plaats van een neutraal placeholder-
+  // lettertype — Christiaan koos hiervoor "Modern" (27-8-2026). Dit is
+  // puur een preview-fallback: de daadwerkelijke keuze (selection.fontId)
+  // blijft leeg totdat de klant echt bij stap 7 kiest, dus het label
+  // "Lettertype" hieronder blijft terecht "—" tonen tot dat moment.
+  const previewFallbackFont = productFonts.find((f) => f.id === "modern");
+  const effectiveFont = font ?? previewFallbackFont;
+
   const isOval = shape?.id === "ovaal";
   const ratio = size ? size.width / size.height : isOval ? DEFAULT_OVAL_RATIO : 1;
   const textColor = color ? getContrastTextColor(color.hex) : undefined;
-  const fontFamily = font?.cssFamily ?? "var(--font-fraunces), Georgia, serif";
+  const fontFamily =
+    effectiveFont?.cssFamily ?? "var(--font-fraunces), Georgia, serif";
 
   const hasLine1 = (shape?.extraLines ?? 0) >= 1;
   const hasLine2 = (shape?.extraLines ?? 0) >= 2;
@@ -86,7 +97,7 @@ export function ProductPreview() {
       line2Chars: hasLine2 ? line2Text.length : null,
       minMarginXMm,
       minMarginYMm,
-      fontId: font?.id,
+      fontId: effectiveFont?.id,
     });
     const pxPerMm = PREVIEW_WIDTH_PX / size.width;
     numberFontSize = fit.numberSizeMm * pxPerMm;
@@ -94,7 +105,8 @@ export function ProductPreview() {
     line2FontSize = fit.line2SizeMm ? fit.line2SizeMm * pxPerMm : line2FontSize;
   }
 
-  const gapRatio = LINE_GAP_RATIO_BY_FONT[font?.id ?? ""] ?? DEFAULT_LINE_GAP_RATIO;
+  const gapRatio =
+    LINE_GAP_RATIO_BY_FONT[effectiveFont?.id ?? ""] ?? DEFAULT_LINE_GAP_RATIO;
 
   // fontWeight: 700 (vet) op alle preview-tekst — zo lijkt de preview meer
   // op een echt geëmailleerd bordje, waar het nummer altijd dik/opvallend
