@@ -34,12 +34,20 @@ export default function ContactPage() {
         </p>
 
         {/* Logo van Langcat, de fabrikant/het bedrijf achter Emaille
-            Huisnummers — linkt door naar hun eigen website. */}
+            Huisnummers — linkt door naar hun eigen website. Het logo staat
+            in eigen felgele huisstijlkleuren, wat een harde overgang gaf op
+            de verder donkere achtergrond van deze site — daarom nu op een
+            eigen warme "plaquette" (dezelfde kleur die elders de emaille
+            bordjes zelf voorstelt, zie --plate in globals.css) met dezelfde
+            zachte schaduw als de bordjes-preview in de configurator
+            (ProductPreview.tsx), zodat het als bewust geplaatst object
+            oogt in plaats van een los blokje (aangepast 27-8-2026, n.a.v.
+            Christiaans opmerking over het contrast bij deze link). */}
         <a
           href="https://www.langcat.nl/"
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-8 inline-block"
+          className="mt-8 inline-flex rounded-sm bg-plate p-4 shadow-[0_10px_25px_rgba(0,0,0,0.35)] transition-transform hover:-translate-y-0.5"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
