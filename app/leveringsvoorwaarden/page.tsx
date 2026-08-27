@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { companyInfo, siteContent } from "@/config/site-content";
@@ -533,7 +534,14 @@ export default function LeveringsvoorwaardenPage() {
           <p className="mt-3 text-sm leading-relaxed text-foreground">
             Voor de verwerking van persoonsgegevens in verband met
             bestellingen, betalingen, verzending en klantenservice geldt
-            de privacyverklaring van verkoper.
+            de{" "}
+            <Link
+              href="/privacyverklaring"
+              className="underline decoration-border underline-offset-2 hover:text-primary"
+            >
+              privacyverklaring
+            </Link>{" "}
+            van verkoper.
           </p>
         </section>
 

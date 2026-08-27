@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { companyInfo, siteContent } from "@/config/site-content";
@@ -199,9 +200,15 @@ export default function CookiebeleidPage() {
             5. Meer weten
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-foreground">
-            Deze webshop heeft op dit moment geen aparte privacyverklaring
-            gepubliceerd. Heb je vragen over hoe we met je gegevens omgaan,
-            neem dan gerust contact op via onderstaande gegevens.
+            Voor meer informatie over hoe we in bredere zin met je
+            persoonsgegevens omgaan, zie onze{" "}
+            <Link
+              href="/privacyverklaring"
+              className="underline decoration-border underline-offset-2 hover:text-primary"
+            >
+              privacyverklaring
+            </Link>
+            .
           </p>
         </section>
 

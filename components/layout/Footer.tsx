@@ -37,10 +37,16 @@ export function Footer() {
           >
             Retourbeleid
           </Link>
-          {/* Cookiebeleid-pagina en het heropenen van het
+          {/* Privacyverklaring, Cookiebeleid en het heropenen van het
               cookie-voorkeurenscherm, toegevoegd 27-8-2026 in het kader
               van de AVG/cookie-aanpassing (zie
               claude/project-tijdlijn.md). */}
+          <Link
+            href="/privacyverklaring"
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            Privacyverklaring
+          </Link>
           <Link
             href="/cookiebeleid"
             className="underline underline-offset-4 hover:text-foreground"
