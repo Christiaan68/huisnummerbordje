@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { contactDetailsSchema, type ContactDetails } from "@/lib/validation/contact.schema";
@@ -40,8 +42,24 @@ export function ContactDetailsForm({
     },
   });
 
+  // Akkoord met leveringsvoorwaarden/retourbeleid — bewust géén onderdeel
+  // van contactDetailsSchema/ContactDetails: dat type wordt ook gebruikt
+  // als payload naar /api/send-email, en dit is puur een blokkade in de
+  // browser vóór het versturen, geen gegeven dat opgeslagen/gemaild hoeft
+  // te worden.
+  const [agreed, setAgreed] = useState(false);
+  const [agreedError, setAgreedError] = useState(false);
+
+  function handleValidSubmit(data: ContactDetails) {
+    if (!agreed) {
+      setAgreedError(true);
+      return;
+    }
+    onSubmit(data);
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="max-w-sm space-y-5">
+    <form onSubmit={handleSubmit(handleValidSubmit)} className="max-w-sm space-y-5">
       <div>
         <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-foreground">
           Naam
@@ -149,6 +167,49 @@ export function ContactDetailsForm({
         />
         {errors.quantity && (
           <p className="mt-1 text-sm text-destructive">{errors.quantity.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor="agreesToTerms" className="flex items-start gap-3">
+          <input
+            id="agreesToTerms"
+            type="checkbox"
+            checked={agreed}
+            onChange={(event) => {
+              setAgreed(event.target.checked);
+              if (event.target.checked) setAgreedError(false);
+            }}
+            aria-describedby={agreedError ? "agreesToTerms-error" : undefined}
+            aria-invalid={agreedError}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded-sm border-border text-primary accent-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          />
+          <span className="text-sm text-muted-foreground">
+            Ik ga akkoord met de{" "}
+            <Link
+              href="/leveringsvoorwaarden"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-foreground underline underline-offset-4 hover:text-primary"
+            >
+              leveringsvoorwaarden
+            </Link>{" "}
+            en het{" "}
+            <Link
+              href="/retourneren-reclameren"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-foreground underline underline-offset-4 hover:text-primary"
+            >
+              retourbeleid
+            </Link>{" "}
+            en heb deze kunnen inzien.
+          </span>
+        </label>
+        {agreedError && (
+          <p id="agreesToTerms-error" role="alert" className="mt-1.5 pl-7 text-sm text-destructive">
+            Vink dit aan om je bestelling te kunnen plaatsen.
+          </p>
         )}
       </div>
 
