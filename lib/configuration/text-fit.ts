@@ -1,3 +1,5 @@
+import { LINE_GAP_RATIO_BY_FONT, DEFAULT_LINE_GAP_RATIO } from "./plate-visual";
+
 export interface AutoFitInput {
   widthMm: number;
   heightMm: number;
@@ -41,12 +43,28 @@ const CHAR_WIDTH_RATIO_BY_FONT: Record<string, number> = {
   industrial: 0.5, // Bebas Neue — smal/condensed lettertype
 };
 const DEFAULT_CHAR_WIDTH_RATIO = 0.62;
-const LINE_HEIGHT_RATIO = 1.15;
+// De regelhoogte in de echte preview is exact gelijk aan de fontgrootte
+// (Tailwind's "leading-none", line-height:1) — niet 1.15 zoals deze
+// berekening lang aannam. Die oude aanname reserveerde 15% meer hoogte dan
+// er in werkelijkheid nodig is, waardoor het nummer op bordjes waar de
+// hoogte (niet de breedte) de beperkende factor is — bijvoorbeeld brede,
+// lage bordjes, of bordjes met 1 of 2 extra tekstregels — onnodig klein
+// werd berekend. Deze waarde nu op 1 gezet zodat de berekening precies
+// overeenkomt met wat er echt getekend wordt; dit maakt de tekst nergens
+// kleiner, alleen (waar hoogte de beperking was) groter.
+const LINE_HEIGHT_RATIO = 1;
 const LINE1_TO_NUMBER_RATIO = 0.2;
 const LINE2_TO_NUMBER_RATIO = 0.12;
-const GAP_RATIO = 0.18;
-const MARGIN_RATIO = 0.12;
-const MIN_MARGIN_MM = 6;
+// Marge rond de tekst — bewust klein gehouden. Bij rechthoekige bordjes
+// wordt deze toch altijd overstemd door de (grotere) marge die nodig is om
+// de schroefjes vrij te houden (zie getScrewClearanceMarginsMm hieronder),
+// dus deze waarde heeft daar geen effect. Bij ovale bordjes geldt op de
+// korte as géén schroefjes-marge (de schroefjes zitten bij een ovaal bordje
+// alleen aan de lange as) — daar bepaalt deze waarde dus wel de ruimte, en
+// is verkleind (was 0.12 / 6mm) om ook op ovale bordjes iets meer ruimte
+// voor de tekst vrij te maken.
+const MARGIN_RATIO = 0.09;
+const MIN_MARGIN_MM = 5;
 const MIN_NUMBER_SIZE_MM = 15;
 
 export function computeAutoFit(input: AutoFitInput): AutoFitResult {
@@ -65,6 +83,17 @@ export function computeAutoFit(input: AutoFitInput): AutoFitResult {
     fontId !== undefined && fontId in CHAR_WIDTH_RATIO_BY_FONT
       ? CHAR_WIDTH_RATIO_BY_FONT[fontId]
       : DEFAULT_CHAR_WIDTH_RATIO;
+
+  // Dezelfde regelafstand-verhouding per lettertype die ook echt getekend
+  // wordt (zie LINE_GAP_RATIO_BY_FONT in plate-visual.ts) — voorheen gebruikte
+  // deze berekening altijd 0.18, terwijl Modern/Industrieel in werkelijkheid
+  // maar 0.06 regelafstand tekenen. Daardoor werd bij bordjes met een extra
+  // tekstregel onnodig veel hoogte gereserveerd voor de tussenruimte, vooral
+  // bij Modern en Industrieel.
+  const gapRatio: number =
+    fontId !== undefined && fontId in LINE_GAP_RATIO_BY_FONT
+      ? LINE_GAP_RATIO_BY_FONT[fontId]
+      : DEFAULT_LINE_GAP_RATIO;
 
   const baseMarginMm = Math.max(
     MIN_MARGIN_MM,
@@ -102,7 +131,7 @@ export function computeAutoFit(input: AutoFitInput): AutoFitResult {
       (1 +
         (hasLine1 ? LINE1_TO_NUMBER_RATIO : 0) +
         (hasLine2 ? LINE2_TO_NUMBER_RATIO : 0)) +
-    GAP_RATIO * (lineCount - 1);
+    gapRatio * (lineCount - 1);
   const numberSizeFromHeight = availableHeight / heightFactor;
 
   const numberSizeMm = Math.max(
