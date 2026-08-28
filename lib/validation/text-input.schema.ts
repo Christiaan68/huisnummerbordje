@@ -15,7 +15,7 @@ export const houseNumberSchema = z
 
 /**
  * Validatie voor een extra tekstregel (max. 20 tekens), gebruikt bij de
- * vormen "Huisnummer + 1 regel" en "Huisnummer + 2 regels".
+ * vormen "Huisnummer vierhoek + 1 regel" en "Huisnummer vierhoek + 2 regels".
  *
  * Toegestaan: letters (incl. accenten zoals ë, ï, é), cijfers, spaties en
  * gangbare leestekens (. , ' " - & ! ? : ;). Bewust UITGESLOTEN blijven

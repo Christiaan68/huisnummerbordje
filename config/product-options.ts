@@ -8,7 +8,7 @@ import type {
 export const productShapes: ProductShape[] = [
   {
     id: "nummer",
-    name: "Huisnummer",
+    name: "Huisnummer vierhoek",
     slug: "nummer",
     description: "Huisnummer, maximaal 5 tekens (letters en cijfers).",
     extraLines: 0,
@@ -19,7 +19,7 @@ export const productShapes: ProductShape[] = [
   },
   {
     id: "nummer-1regel",
-    name: "Huisnummer + 1 regel",
+    name: "Huisnummer vierhoek + 1 regel",
     slug: "nummer-1regel",
     description:
       "Huisnummer (max. 5 tekens) met 1 extra tekstregel (max. 20 tekens).",
@@ -31,7 +31,7 @@ export const productShapes: ProductShape[] = [
   },
   {
     id: "nummer-2regels",
-    name: "Huisnummer + 2 regels",
+    name: "Huisnummer vierhoek + 2 regels",
     slug: "nummer-2regels",
     description:
       "Huisnummer (max. 5 tekens) met 2 extra tekstregels (elk max. 20 tekens).",
