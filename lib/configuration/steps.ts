@@ -37,29 +37,39 @@ export const configuratorSteps: ConfiguratorStep[] = [
     id: "tekst",
     path: "/configurator/tekst",
     label: "Tekst",
-    // Sinds 28-8-2026 kiest de klant hier meteen ook het lettertype per
-    // tekstveld (de losse stap "Lettertype" is vervallen, op verzoek van
-    // Christiaan) — dus deze stap is pas compleet als voor elk aanwezig
-    // tekstveld zowel de tekst zelf als het lettertype zijn ingevuld.
+    // Alleen de tekstvelden zelf — het lettertype per tekstveld is sinds
+    // 28-8-2026 (nog dezelfde dag) weer een losse stap, zie "lettertype"
+    // hieronder.
     isComplete: (s) => {
       if (s.customText.trim().length === 0) return false;
+
+      const shape = productShapes.find((shape) => shape.id === s.shapeId);
+      if (!shape) return false;
+
+      if (shape.extraLines >= 1 && s.extraLine1.trim().length === 0) {
+        return false;
+      }
+      if (shape.extraLines >= 2 && s.extraLine2.trim().length === 0) {
+        return false;
+      }
+      return true;
+    },
+  },
+  {
+    id: "lettertype",
+    path: "/configurator/lettertype",
+    label: "Lettertype",
+    // Per tekstveld een eigen lettertype (sinds 28-8-2026) — deze stap is
+    // pas compleet als voor elk aanwezig tekstveld een lettertype gekozen
+    // is.
+    isComplete: (s) => {
       if (!s.numberFontId) return false;
 
       const shape = productShapes.find((shape) => shape.id === s.shapeId);
       if (!shape) return false;
 
-      if (
-        shape.extraLines >= 1 &&
-        (s.extraLine1.trim().length === 0 || !s.line1FontId)
-      ) {
-        return false;
-      }
-      if (
-        shape.extraLines >= 2 &&
-        (s.extraLine2.trim().length === 0 || !s.line2FontId)
-      ) {
-        return false;
-      }
+      if (shape.extraLines >= 1 && !s.line1FontId) return false;
+      if (shape.extraLines >= 2 && !s.line2FontId) return false;
       return true;
     },
   },
