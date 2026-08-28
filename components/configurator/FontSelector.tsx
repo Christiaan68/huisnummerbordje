@@ -39,7 +39,7 @@ export function FontSelector() {
                 {font.name}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                bv. 12 — {font.name.toLowerCase()}
+                {font.name.toLowerCase()}
               </p>
             </div>
             {isSelected && <Check className="h-5 w-5 shrink-0 text-primary" />}
