@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { LangcatTransitionLink } from "@/components/layout/LangcatTransitionLink";
@@ -62,6 +64,19 @@ export default function ContactPage() {
           </p>
           <p className="text-muted-foreground">BTW {companyInfo.vatNumber}</p>
         </div>
+
+        {/* Link naar het algemene contactformulier (/contact/vraag) —
+            los van de "vraag stellen"-pop-up in de configurator zelf
+            (components/configurator/QuestionModal.tsx), die altijd een
+            configuratie in uitvoering nodig heeft. Deze link is voor een
+            vraag zonder dat vereiste. */}
+        <Link
+          href="/contact/vraag"
+          className="mt-8 inline-flex items-center gap-1.5 rounded-sm bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          Stel een vraag
+          <ChevronRight className="h-4 w-4" />
+        </Link>
       </main>
 
       <Footer />
