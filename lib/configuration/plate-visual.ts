@@ -11,16 +11,19 @@
 // aanpassing maar op één plek was doorgevoerd en de twee weergaves weer uit
 // elkaar waren gaan lopen.
 
-// Rechthoekige vormen: op verzoek van Christiaan op 28-8-2026 verder naar
-// de hoek verschoven (was 0.11). Er is diezelfde dag nog een stap verder
-// geprobeerd ("precies halverwege kader en hoek", 0,0239) — dat bleek bij
-// langwerpige maten als 105×210 het schroefgaatje over de korte
-// bordjesrand heen te duwen, en is op Christiaans verzoek weer
-// teruggedraaid naar deze waarde. De kaderlijn-hoekboog
-// (getFrameBorderPath, rechthoekig) past zich hoe dan ook automatisch aan
-// de daadwerkelijke schroefpositie aan en blijft er dus altijd omheen
-// lopen, bij elke waarde van deze verhouding.
-export const SCREW_INSET_RATIO = 0.085;
+// Rechthoekige vormen: positie van de schroefgaatjes, meermaals bijgesteld
+// op verzoek van Christiaan op 28-8-2026 (was oorspronkelijk 0.11, toen
+// 0.085; een tussentijdse poging om "precies halverwege kader en hoek" te
+// zitten (0,0239) duwde het gaatje bij langwerpige maten als 105×210 over
+// de korte bordjesrand heen en is teruggedraaid). Deze verhouding stuurt
+// ALLEEN de schroefpositie zelf (en de tekst-veiligheidsmarge eromheen,
+// zie getScrewClearanceMarginsMm) — sinds de laatste aanpassing NIET meer
+// de kaderlijn: die gebruikt hieronder een eigen, vaste verhouding
+// (FRAME_CORNER_ANCHOR_RATIO) zodat het kader onveranderd blijft staan,
+// ook als de schroefpositie hierna weer verschuift. Bij deze waarde blijft
+// er dus automatisch nóg meer ruimte tot het kader over dan voorheen (het
+// gaatje komt dichter bij de hoek, het kader blijft op zijn plek).
+export const SCREW_INSET_RATIO = 0.065;
 
 // Ovale vorm: schroefpositie als fractie vanaf het midden op de lange as
 // (zie getScrewPositions) — los van de rechthoekige logica hierboven, want
@@ -146,6 +149,18 @@ const FRAME_EDGE_INSET_RATIO = 0.03;
 // hoekboog minimaal moet vrijhouden, bovenop de schroefstraal zelf.
 const FRAME_CORNER_MARGIN_TO_SCREW_RATIO = 0.5;
 
+// Vaste referentie-verhouding voor de kaderlijn-hoekboog (rechthoekig) —
+// bewust LOS van SCREW_INSET_RATIO gehouden sinds 28-8-2026, op verzoek
+// van Christiaan ("de gaatjes moeten iets verder de hoek in, maar het
+// kader moet ongewijzigd blijven"). Dit is dezelfde waarde als de vorige
+// SCREW_INSET_RATIO (0,085): de kaderlijn ziet er dus nog exact zo uit als
+// daarvoor, ook al zit het schroefgaatje er nu dichter bij de hoek. Omdat
+// deze afstand groter is dan de daadwerkelijke (nieuwe) schroefafstand tot
+// de hoek, blijft de boog het schroefje sowieso ruim vrijlaten — het kader
+// hoeft dus niet "mee te bewegen" met de schroefpositie om veilig te
+// blijven.
+const FRAME_CORNER_ANCHOR_RATIO = 0.085;
+
 /**
  * Bouwt het SVG-pad voor de kaderlijn, in dezelfde mm-coördinaten als de
  * rest van de bordjestekening. De lijn loopt vlak langs de rand van het
@@ -162,12 +177,15 @@ export function getFrameBorderPath(widthMm: number, heightMm: number): string {
   const fi = minDim * FRAME_EDGE_INSET_RATIO;
   const screwRadius = getScrewRadiusMm(widthMm, heightMm);
 
-  // Straal van de hoekboog, gemeten vanaf de bordjeshoek zelf: minimaal de
-  // afstand tot het schroefje plus zijn straal plus een marge, zodat het
-  // schroefje ruim binnen de boog (dus buiten het kader) blijft staan. Door
-  // de symmetrische plaatsing van de schroefjes (zie getScrewPositions) is
-  // die afstand voor alle 4 hoeken gelijk.
-  const cornerToScrewDist = SCREW_INSET_RATIO * Math.hypot(widthMm, heightMm);
+  // Straal van de hoekboog, gemeten vanaf de bordjeshoek zelf. Gebruikt
+  // bewust FRAME_CORNER_ANCHOR_RATIO in plaats van de (huidige)
+  // SCREW_INSET_RATIO, zodat het kader een vaste vorm houdt onafhankelijk
+  // van waar het schroefgaatje precies staat — zie de toelichting bij
+  // FRAME_CORNER_ANCHOR_RATIO hierboven. Deze afstand is ruim genoeg om
+  // het daadwerkelijke (dichter bij de hoek geplaatste) schroefje sowieso
+  // vrij te laten.
+  const cornerToScrewDist =
+    FRAME_CORNER_ANCHOR_RATIO * Math.hypot(widthMm, heightMm);
   let r =
     cornerToScrewDist +
     screwRadius +
