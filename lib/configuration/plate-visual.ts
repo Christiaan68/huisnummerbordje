@@ -11,20 +11,16 @@
 // aanpassing maar op één plek was doorgevoerd en de twee weergaves weer uit
 // elkaar waren gaan lopen.
 
-// Rechthoekige vormen: op uitdrukkelijk verzoek van Christiaan (28-8-2026,
-// na een eerdere kleinere verschuiving diezelfde dag) staat het
-// schroefgaatje zo dicht mogelijk bij "precies halverwege de bordjeshoek
-// en de kaderlijn" — dat is wiskundig alleen voor de vierkante maten
-// (105×105, 148×148, 210×210) EXACT te halen met één vaste verhouding
-// (was geprobeerd met een verhouding die uitgaat van de rechte afstand
-// tot de hoek, maar dat duwde het gaatje bij langwerpige maten als
-// 105×210 letterlijk over de korte rand heen — dus weer teruggedraaid).
-// Deze waarde is berekend voor het vierkante geval (waar hij exact klopt)
-// en is voor de langwerpige maten nog steeds heel dicht in de buurt
-// (rekenkundig gecontroleerd: nooit verder dan iets voorbij het midden,
-// richting het kader) — en, belangrijker, voor GEEN van de bestaande
-// maten komt het gaatje over de bordjesrand of het kader heen.
-export const SCREW_INSET_RATIO = 0.0239;
+// Rechthoekige vormen: op verzoek van Christiaan op 28-8-2026 verder naar
+// de hoek verschoven (was 0.11). Er is diezelfde dag nog een stap verder
+// geprobeerd ("precies halverwege kader en hoek", 0,0239) — dat bleek bij
+// langwerpige maten als 105×210 het schroefgaatje over de korte
+// bordjesrand heen te duwen, en is op Christiaans verzoek weer
+// teruggedraaid naar deze waarde. De kaderlijn-hoekboog
+// (getFrameBorderPath, rechthoekig) past zich hoe dan ook automatisch aan
+// de daadwerkelijke schroefpositie aan en blijft er dus altijd omheen
+// lopen, bij elke waarde van deze verhouding.
+export const SCREW_INSET_RATIO = 0.085;
 
 // Ovale vorm: schroefpositie als fractie vanaf het midden op de lange as
 // (zie getScrewPositions) — los van de rechthoekige logica hierboven, want
