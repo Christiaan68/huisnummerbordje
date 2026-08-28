@@ -27,29 +27,24 @@ export interface AutoFitResult {
 
 // Gemiddelde breedte van een cijfer, als verhouding van de fontgrootte
 // (breedte/fontsize), per lettertype — bij fontWeight 700 (vet), zoals de
-// preview die altijd gebruikt.
-// "Klassiek" (Georgia) en "Elegant" (Playfair Display) zijn schreefletters
-// met van huis uit brede, ruime cijfers — vooral in het vet nog breder.
-// Doordat de oude, ene CHAR_WIDTH_RATIO (0.62) die extra breedte niet
-// meenam, werd de tekst bij "Klassiek" te groot berekend en liep hij bij
-// vijf tekens op een ovaal bordje (bv. "88888") over de schroefgaatjes heen
-// — bij de andere (smallere) lettertypes gebeurde dat niet, omdat daar
-// dezelfde 0.62 juist een (toevallige) overschatting was, wat extra
-// speling gaf (gemeld door Christiaan, 19-8-2026).
+// preview die altijd gebruikt. Dit voorkomt dat de tekst bij een breed
+// lettertype te groot berekend wordt en over de schroefgaatjes heen loopt
+// (oorspronkelijk ontdekt bij het inmiddels verwijderde lettertype
+// "Klassiek"/Georgia, 19-8-2026 — vandaar dat dit per lettertype apart
+// wordt bijgehouden in plaats van één algemene waarde).
+//
+// De 5 waarden hieronder (huidige volledige lettertypelijst, zie
+// config/product-options.ts) zijn een eerste, beredeneerde inschatting —
+// net als de LINE_GAP_RATIO_BY_FONT-waarden voor dezelfde lettertypes in
+// plate-visual.ts — nog niet visueel gecontroleerd. Bijstellen hier als het
+// nummer in de preview bij een van deze lettertypes duidelijk te groot/
+// klein oogt.
 const CHAR_WIDTH_RATIO_BY_FONT: Record<string, number> = {
-  classic: 0.72, // Georgia (vet) — opvallend brede cijfers
-  elegant: 0.68, // Playfair Display (vet) — brede schreefcijfers
-  modern: 0.62, // Helvetica Neue/Arial (vet)
-  industrial: 0.5, // Bebas Neue — smal/condensed lettertype
-  // De 4 waarden hieronder (toegevoegd 28-8-2026) zijn — net als de
-  // LINE_GAP_RATIO_BY_FONT-waarden voor dezelfde 4 lettertypes in
-  // plate-visual.ts — een eerste, beredeneerde inschatting, nog niet
-  // visueel gecontroleerd. Bijstellen hier als het nummer in de preview bij
-  // een van deze lettertypes duidelijk te groot/klein oogt.
   "fette-fraktur": 0.7, // UnifrakturCook — sierlijke gotische druletter, relatief brede vormen
   bodoni: 0.66, // Bodoni Moda — hoog-contrast schreefletter, vergelijkbaar met Playfair Display
   colonel: 0.55, // Saira Stencil One — geometrisch, vrij smal/condensed stencil-lettertype
   times: 0.58, // Tinos (Times-vervanger) — van oudsher een compacte, smalle schreefletter
+  "schwitserland-schmal": 0.52, // Roboto Condensed — smal/condensed lettertype
 };
 const DEFAULT_CHAR_WIDTH_RATIO = 0.62;
 // De regelhoogte in de echte preview is exact gelijk aan de fontgrootte

@@ -44,12 +44,10 @@ export interface ProductSize {
   createdAt: string;
 }
 
-export type FontSlug = "classic" | "modern" | "industrial" | "elegant";
-
 export interface ProductFont {
   id: string;
   name: string;
-  slug: FontSlug | string;
+  slug: string;
   cssFamily: string;
   active: boolean;
   createdAt: string;

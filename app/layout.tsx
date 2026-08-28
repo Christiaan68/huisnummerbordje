@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import {
   Inter,
   Fraunces,
-  Bebas_Neue,
-  Playfair_Display,
   UnifrakturCook,
   Bodoni_Moda,
   Saira_Stencil_One,
   Tinos,
+  Roboto_Condensed,
 } from "next/font/google";
 import Script from "next/script";
 import { cookies } from "next/headers";
@@ -29,24 +28,15 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
-const bebasNeue = Bebas_Neue({
-  subsets: ["latin"],
-  weight: "400",
-  variable: "--font-bebas",
-  display: "swap",
-});
-
-const playfairDisplay = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
-  display: "swap",
-});
-
-// De volgende 4 lettertypes zijn op 28-8-2026 toegevoegd op verzoek van
-// Christiaan. Voor 3 ervan was het gevraagde lettertype zelf niet
-// (gratis) beschikbaar; in dat geval wordt hieronder een gratis
-// Google Font gebruikt die er in stijl dicht bij komt — de klant ziet in
-// de configurator gewoon de gevraagde naam (zie config/product-options.ts),
+// De 5 lettertypes hieronder zijn de volledige huidige lijst uit
+// config/product-options.ts (`productFonts`) — op 28-8-2026 toegevoegd op
+// verzoek van Christiaan, ter vervanging van de oorspronkelijke 4
+// systeemlettertypes ("Klassiek"/Georgia, "Modern"/Helvetica,
+// "Industrieel"/Bebas Neue, "Elegant"/Playfair Display), die dezelfde dag
+// weer verwijderd zijn. Voor 3 ervan was het gevraagde lettertype zelf niet
+// (gratis) beschikbaar; in dat geval wordt hieronder een gratis Google Font
+// gebruikt die er in stijl dicht bij komt — de klant ziet in de
+// configurator gewoon de gevraagde naam (zie config/product-options.ts),
 // niet de naam van het vervangende lettertype:
 // - "Fette Fraktur" (Duitse gotische druletter) → UnifrakturCook, enige
 //   vetgedrukte ("fette") blackletter-google font.
@@ -57,15 +47,18 @@ const playfairDisplay = Playfair_Display({
 //   over Colonel's betaalde 205TF-licentie) als gratis vervanger met een
 //   vergelijkbare strakke, geometrische stencil-uitstraling.
 // - "Times" → Tinos, Google's gratis, metrisch compatibele vervanger voor
-//   Times New Roman (zelfde soort vervanger-aanpak als Gelasio↔Georgia en
-//   Arimo↔Arial hierboven/elders in het project).
+//   Times New Roman.
+// - "Schwitserland Schmal" → Roboto Condensed, als gratis vervanger voor
+//   een smal/condensed "Zwitsers" schriftbeeld (vergelijkbaar met het
+//   type letter dat eerder "Industrieel"/Bebas Neue invulde, maar dan
+//   condensed in plaats van extra-condensed/all-caps).
 //
-// Anders dan bij "Klassiek"/"Modern" (die op de site zelf systeemlettertypes
-// gebruiken, zie config/product-options.ts) worden deze 4 lettertypes HIER
-// al zelf gehost via next/font/google — dezelfde fontbestanden worden dus
-// zowel in de live preview als in de e-mailafbeelding gebruikt (zie
-// lib/email/plate-preview-image.tsx), in tegenstelling tot Klassiek/Modern
-// waar de e-mailafbeelding een apart vervangend lettertype nodig heeft.
+// Al deze 5 lettertypes worden HIER zelf gehost via next/font/google —
+// dezelfde fontbestanden worden dus zowel in de live preview als in de
+// e-mailafbeelding gebruikt (zie lib/email/plate-preview-image.tsx), in
+// tegenstelling tot de oude "Klassiek"/"Modern" waar de e-mailafbeelding
+// nog een apart vervangend lettertype nodig had omdat die twee zelf
+// systeemlettertypes waren.
 const unifrakturCook = UnifrakturCook({
   subsets: ["latin"],
   weight: "700",
@@ -93,6 +86,13 @@ const tinos = Tinos({
   display: "swap",
 });
 
+const robotoCondensed = Roboto_Condensed({
+  subsets: ["latin"],
+  weight: "700",
+  variable: "--font-roboto-condensed",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Geëmailleerde Huisnummerbordjes | Duurzaam. Opvallend. Authentiek.",
   description:
@@ -114,7 +114,7 @@ export default function RootLayout({
   return (
     <html
       lang="nl"
-      className={`${inter.variable} ${fraunces.variable} ${bebasNeue.variable} ${playfairDisplay.variable} ${unifrakturCook.variable} ${bodoniModa.variable} ${sairaStencilOne.variable} ${tinos.variable}`}
+      className={`${inter.variable} ${fraunces.variable} ${unifrakturCook.variable} ${bodoniModa.variable} ${sairaStencilOne.variable} ${tinos.variable} ${robotoCondensed.variable}`}
     >
       <body className="min-h-screen font-sans antialiased">
         {/* Google Consent Mode — standaardstatus, toegevoegd 27-8-2026 in

@@ -17,23 +17,16 @@ import {
 // e-mailafbeelding gebruikt wordt, en met welk gewicht (zie ProductPreview:
 // alle preview-tekst is altijd vet/700).
 //
-// "Klassiek" en "Modern" zijn op de site zelf systeemlettertypes (Georgia,
-// respectievelijk Helvetica Neue/Arial) — die zijn niet los als bestand
-// beschikbaar/herverspreidbaar. Gelasio en Arimo zijn door Google gemaakte,
-// vrij licentieerbare lettertypes die bewust "metric compatible" zijn met
-// Georgia resp. Arial (zelfde letterbreedtes, vrijwel identiek ontwerp) —
-// zie lib/email/google-fonts.ts voor de toelichting. "Elegant" (Playfair
-// Display) en "Industrieel" (Bebas Neue) zijn zelf al Google Fonts en worden
-// dus 1-op-1 hetzelfde lettertype als op de site (ze worden daar ook al via
-// next/font/google geladen, zie app/layout.tsx).
-//
-// "Fette Fraktur", "Bodoni", "Colonel" en "Times" (toegevoegd 28-8-2026)
-// werken op dezelfde manier als "Elegant"/"Industrieel": ook dit zijn al
-// Google Fonts (UnifrakturCook, Bodoni Moda, Saira Stencil One resp. Tinos —
-// zie app/layout.tsx voor waarom dit precies deze 4 zijn, o.a. als gratis
-// vervanger voor het betaalde Colonel/205TF en het niet-vrij-herverspreid-
-// bare Times New Roman), dus geen apart vervangend lettertype nodig voor de
-// e-mailafbeelding: dezelfde fontbestanden als in de live preview.
+// Alle 5 huidige lettertype-opties ("Fette Fraktur", "Bodoni", "Colonel",
+// "Times", "Schwitserland Schmal" — zie config/product-options.ts) zijn
+// zelf al Google Fonts, en worden ook al op de site zelf via
+// next/font/google geladen (zie app/layout.tsx voor de precieze koppeling
+// en de toelichting waarom dit — voor 3 van de 5 — vervangende lettertypes
+// zijn, o.a. voor het betaalde Colonel/205TF). Daardoor is hier geen aparte
+// substitutie nodig zoals vroeger bij de inmiddels verwijderde "Klassiek"/
+// "Modern" (systeemlettertypes Georgia/Helvetica, niet los als bestand
+// herverspreidbaar — zie lib/email/google-fonts.ts): dezelfde fontbestanden
+// als in de live preview worden hier gewoon opnieuw opgehaald.
 // `next/og` (Satori) accepts alleen deze specifieke lettergewichten voor
 // `fonts[].weight` — een gewoon "number" is daar net te breed voor
 // (TypeScript strict mode accepteert dat niet), vandaar deze letterlijke
@@ -44,14 +37,11 @@ const FONT_CONFIG_BY_ID: Record<
   string,
   { googleFamily: string; weight: SatoriFontWeight }
 > = {
-  classic: { googleFamily: "Gelasio", weight: 700 },
-  elegant: { googleFamily: "Playfair Display", weight: 700 },
-  modern: { googleFamily: "Arimo", weight: 700 },
-  industrial: { googleFamily: "Bebas Neue", weight: 400 },
   "fette-fraktur": { googleFamily: "UnifrakturCook", weight: 700 },
   bodoni: { googleFamily: "Bodoni Moda", weight: 700 },
   colonel: { googleFamily: "Saira Stencil One", weight: 400 },
   times: { googleFamily: "Tinos", weight: 700 },
+  "schwitserland-schmal": { googleFamily: "Roboto Condensed", weight: 700 },
 };
 const FALLBACK_FONT_WEIGHT: SatoriFontWeight = 700;
 

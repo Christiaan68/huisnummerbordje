@@ -39,12 +39,15 @@ export function ProductPreview() {
 
   // Zolang er nog geen lettertype gekozen is (dat gebeurt pas bij stap 7,
   // "Lettertype"), toont de preview op de eerdere stappen vast één van de
-  // vier echte keuzeopties in plaats van een neutraal placeholder-
-  // lettertype — Christiaan koos hiervoor "Modern" (27-8-2026). Dit is
-  // puur een preview-fallback: de daadwerkelijke keuze (selection.fontId)
-  // blijft leeg totdat de klant echt bij stap 7 kiest, dus het label
-  // "Lettertype" hieronder blijft terecht "—" tonen tot dat moment.
-  const previewFallbackFont = productFonts.find((f) => f.id === "modern");
+  // echte keuzeopties in plaats van een neutraal placeholder-lettertype —
+  // Christiaan koos hiervoor oorspronkelijk "Modern" (27-8-2026); dat
+  // lettertype bestaat sinds 28-8-2026 niet meer (zie
+  // config/product-options.ts), vervangen door "Times" als nieuwe,
+  // vergelijkbaar neutrale fallback. Dit is puur een preview-fallback: de
+  // daadwerkelijke keuze (selection.fontId) blijft leeg totdat de klant
+  // echt bij stap 7 kiest, dus het label "Lettertype" hieronder blijft
+  // terecht "—" tonen tot dat moment.
+  const previewFallbackFont = productFonts.find((f) => f.id === "times");
   const effectiveFont = font ?? previewFallbackFont;
 
   const isOval = shape?.id === "ovaal";

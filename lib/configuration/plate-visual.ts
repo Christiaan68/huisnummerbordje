@@ -261,25 +261,22 @@ export function getOvalFrameBorderPath(
 
 // Verhouding tussen de regelafstand (marge boven een regel) en de
 // fontgrootte van de regel erboven — verschilt per lettertype omdat het
-// "leeg oogverticaal ruimte"-gevoel van een schreefletter (Klassiek/Elegant)
-// anders is dan bij een strak, condensed lettertype (Modern/Industrieel).
+// "leeg oogverticaal ruimte"-gevoel van een schreefletter anders is dan bij
+// een strak, condensed lettertype.
 //
-// De 4 waarden voor fette-fraktur/bodoni/colonel/times (toegevoegd
-// 28-8-2026) zijn een eerste, beredeneerde inschatting naar analogie van de
-// bestaande lettertypes hierboven (blackletter/hoog-contrast-schreefletter
-// → ruim, zoals classic/elegant; geometrische stencil-letter → krap, zoals
-// modern/industrial) — nog NIET visueel gecontroleerd in de configurator.
-// Zie de "wat moet ik nu doen"-lijst bij deze wijziging: dit is de eerste
-// plek om bij te stellen als de regelafstand bij een van deze 4 in de
-// praktijk niet goed oogt.
+// Deze 5 waarden (huidige volledige lettertypelijst, zie
+// config/product-options.ts) zijn een eerste, beredeneerde inschatting —
+// blackletter/hoog-contrast-schreefletter → ruim, geometrische stencil-/
+// condensed letter → krap — nog NIET visueel gecontroleerd in de
+// configurator. Dit is de eerste plek om bij te stellen als de
+// regelafstand bij één van deze in de praktijk niet goed oogt. (De 4
+// eerdere waarden voor de op 28-8-2026 wéér verwijderde lettertypes
+// classic/elegant/modern/industrial zijn met die lettertypes meeverwijderd.)
 export const LINE_GAP_RATIO_BY_FONT: Record<string, number> = {
-  classic: 0.16,
-  elegant: 0.16,
-  modern: 0.06,
-  industrial: 0.06,
   "fette-fraktur": 0.2,
   bodoni: 0.16,
   colonel: 0.06,
   times: 0.1,
+  "schwitserland-schmal": 0.06,
 };
 export const DEFAULT_LINE_GAP_RATIO = 0.08;

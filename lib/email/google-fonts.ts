@@ -11,16 +11,16 @@
 // zelf een .ttf-link terug in plaats van .woff2 — een bekende, veelgebruikte
 // omweg hiervoor.
 //
-// Voor "Klassiek" en "Modern" gebruiken we bewust NIET de daadwerkelijke
-// Georgia/Helvetica-lettertypes: dat zijn systeemlettertypes van
-// Microsoft/Apple die niet los als bestand meegeleverd mogen worden. In
-// plaats daarvan gebruiken we Gelasio en Arimo — dit zijn door Google zelf
-// gemaakte, vrij te gebruiken lettertypes die bewust "metric compatible"
-// zijn met Georgia respectievelijk Arial: exact dezelfde letterbreedtes en
-// vrijwel identiek ontwerp, dus zichtbaar (en voor de tekstgrootte-
-// berekening ook functioneel) hetzelfde resultaat, zonder licentieprobleem.
-// Zie config/product-options.ts / plate-preview-image.tsx voor de koppeling
-// per lettertype-optie.
+// Deze functie is generiek (naam + gewicht in, fontdata terug) en werkt
+// voor elk Google Font. Tot 28-8-2026 loste dit ook een licentieprobleem
+// op: de toen bestaande "Klassiek"/"Modern"-opties gebruikten op de site
+// zelf de systeemlettertypes Georgia/Helvetica (niet los als bestand
+// herverspreidbaar), en werden hier in de e-mailafbeelding vervangen door
+// de metrisch compatibele Google Fonts Gelasio resp. Arimo. Die 2 opties
+// zijn inmiddels verwijderd (zie config/product-options.ts), maar de
+// functie hieronder blijft algemeen bruikbaar voor alle huidige (en
+// toekomstige) lettertype-opties — zie plate-preview-image.tsx voor de
+// huidige koppeling per lettertype-optie.
 
 const FONT_CACHE = new Map<string, ArrayBuffer>();
 
