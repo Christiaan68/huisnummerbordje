@@ -3,7 +3,13 @@
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { productShapes } from "@/config/product-options";
 import { houseNumberSchema, extraLineSchema } from "@/lib/validation/text-input.schema";
+import { InlineFontPicker } from "@/components/configurator/InlineFontPicker";
 import { cn } from "@/lib/utils";
+
+// Voorbeeldtekst voor het lettertype-kiezertje onder een veld zolang de
+// klant daar zelf nog niets heeft getypt — zie InlineFontPicker.tsx.
+const NUMBER_PLACEHOLDER_PREVIEW = "12";
+const LINE_PLACEHOLDER_PREVIEW = "Voorbeeldtekst";
 
 function fieldClass(hasError: boolean) {
   return cn(
@@ -62,6 +68,12 @@ export function TextInput() {
             {numberCheck.error.issues[0]?.message}
           </p>
         )}
+        <InlineFontPicker
+          label="Kies een lettertype voor het huisnummer"
+          selectedFontId={selection.numberFontId}
+          onSelect={(fontId) => dispatch({ type: "SET_NUMBER_FONT", fontId })}
+          previewText={selection.customText || NUMBER_PLACEHOLDER_PREVIEW}
+        />
       </div>
 
       {shape.extraLines >= 1 && (
@@ -86,6 +98,12 @@ export function TextInput() {
               {line1Check.error.issues[0]?.message}
             </p>
           )}
+          <InlineFontPicker
+            label="Kies een lettertype voor tekstregel 1"
+            selectedFontId={selection.line1FontId}
+            onSelect={(fontId) => dispatch({ type: "SET_LINE1_FONT", fontId })}
+            previewText={selection.extraLine1 || LINE_PLACEHOLDER_PREVIEW}
+          />
         </div>
       )}
 
@@ -111,6 +129,12 @@ export function TextInput() {
               {line2Check.error.issues[0]?.message}
             </p>
           )}
+          <InlineFontPicker
+            label="Kies een lettertype voor tekstregel 2"
+            selectedFontId={selection.line2FontId}
+            onSelect={(fontId) => dispatch({ type: "SET_LINE2_FONT", fontId })}
+            previewText={selection.extraLine2 || LINE_PLACEHOLDER_PREVIEW}
+          />
         </div>
       )}
     </div>

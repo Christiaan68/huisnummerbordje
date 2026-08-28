@@ -52,7 +52,12 @@ export interface PlatePreviewImageInput {
   widthMm: number;
   heightMm: number;
   colorHex: string;
-  fontId: string;
+  // Sinds 28-8-2026 heeft elk tekstveld zijn eigen lettertype (zie
+  // lib/configuration/text-fit.ts / ProductPreview.tsx) — dus 3 losse
+  // velden in plaats van 1 fontId voor het hele bordje.
+  numberFontId: string;
+  line1FontId?: string | null;
+  line2FontId?: string | null;
   numberText: string;
   line1Text?: string | null;
   line2Text?: string | null;
@@ -96,7 +101,9 @@ export async function renderPlatePreviewPng(
     widthMm,
     heightMm,
     colorHex,
-    fontId,
+    numberFontId,
+    line1FontId,
+    line2FontId,
     numberText,
     line1Text,
     line2Text,
@@ -128,21 +135,108 @@ export async function renderPlatePreviewPng(
     line2Chars: hasLine2 ? (line2Text as string).length : null,
     minMarginXMm,
     minMarginYMm,
-    fontId,
+    numberFontId,
+    line1FontId,
+    line2FontId,
   });
 
   const numberSizePx = fit.numberSizeMm * pxPerMm;
   const line1SizePx = fit.line1SizeMm ? fit.line1SizeMm * pxPerMm : 0;
   const line2SizePx = fit.line2SizeMm ? fit.line2SizeMm * pxPerMm : 0;
-  const gapRatio = LINE_GAP_RATIO_BY_FONT[fontId] ?? DEFAULT_LINE_GAP_RATIO;
 
-  type Line = { text: string; sizePx: number };
-  const numberLine: Line = { text: numberText, sizePx: numberSizePx };
+  // Lettertypes ophalen bij Google Fonts (zie FONT_CONFIG_BY_ID hierboven)
+  // — 1 keer per UNIEK lettertype-id, ook als bv. huisnummer en tekstregel
+  // 1 hetzelfde lettertype hebben. Lukt het ophalen voor een lettertype
+  // niet, dan valt ALLEEN dat tekstveld terug op het standaardlettertype
+  // van de renderer, de rest van de afbeelding blijft gewoon kloppen — zie
+  // de toelichting bovenaan dit bestand.
+  const uniqueFontIds = Array.from(
+    new Set(
+      [numberFontId, hasLine1 ? line1FontId : null, hasLine2 ? line2FontId : null].filter(
+        (id): id is string => Boolean(id)
+      )
+    )
+  );
+
+  const fonts: {
+    name: string;
+    data: ArrayBuffer;
+    weight: SatoriFontWeight;
+    style: "normal";
+  }[] = [];
+  const resolvedByFontId = new Map<
+    string,
+    { fontFamily: string; fontWeight: SatoriFontWeight }
+  >();
+
+  for (const id of uniqueFontIds) {
+    const fontConfig = FONT_CONFIG_BY_ID[id];
+    if (!fontConfig) continue;
+    try {
+      const data = await loadGoogleFont(fontConfig.googleFamily, fontConfig.weight);
+      fonts.push({
+        name: fontConfig.googleFamily,
+        data,
+        weight: fontConfig.weight,
+        style: "normal",
+      });
+      resolvedByFontId.set(id, {
+        fontFamily: fontConfig.googleFamily,
+        fontWeight: fontConfig.weight,
+      });
+    } catch (fontError) {
+      console.error(
+        `Ophalen van lettertype "${fontConfig.googleFamily}" voor de e-mailafbeelding is mislukt, dat tekstveld valt terug op het standaardlettertype:`,
+        fontError instanceof Error ? fontError.message : fontError
+      );
+    }
+  }
+
+  function resolveFont(id: string | null | undefined) {
+    if (!id) return { fontFamily: undefined, fontWeight: FALLBACK_FONT_WEIGHT };
+    const resolved = resolvedByFontId.get(id);
+    return resolved
+      ? { fontFamily: resolved.fontFamily, fontWeight: resolved.fontWeight }
+      : { fontFamily: undefined, fontWeight: FALLBACK_FONT_WEIGHT };
+  }
+
+  function gapRatioFor(id: string | null | undefined): number {
+    return id != null && id in LINE_GAP_RATIO_BY_FONT
+      ? LINE_GAP_RATIO_BY_FONT[id]
+      : DEFAULT_LINE_GAP_RATIO;
+  }
+
+  type Line = {
+    text: string;
+    sizePx: number;
+    fontFamily: string | undefined;
+    fontWeight: SatoriFontWeight;
+    // Regelafstand BOVEN deze regel — hoort bij het lettertype van de
+    // regel ERBOVEN, zie de toelichting bij dezelfde aanpak in
+    // ProductPreview.tsx.
+    gapRatio: number;
+  };
+  const numberLine: Line = {
+    text: numberText,
+    sizePx: numberSizePx,
+    ...resolveFont(numberFontId),
+    gapRatio: gapRatioFor(numberFontId),
+  };
   const line1: Line | null = hasLine1
-    ? { text: line1Text as string, sizePx: line1SizePx }
+    ? {
+        text: line1Text as string,
+        sizePx: line1SizePx,
+        ...resolveFont(line1FontId),
+        gapRatio: gapRatioFor(line1FontId),
+      }
     : null;
   const line2: Line | null = hasLine2
-    ? { text: line2Text as string, sizePx: line2SizePx }
+    ? {
+        text: line2Text as string,
+        sizePx: line2SizePx,
+        ...resolveFont(line2FontId),
+        gapRatio: gapRatioFor(line2FontId),
+      }
     : null;
 
   const extraLineCount = (hasLine1 ? 1 : 0) + (hasLine2 ? 1 : 0);
@@ -165,40 +259,6 @@ export async function renderPlatePreviewPng(
   const plateBorderRadius = isOval ? "50%" : Math.round(plateWidthPx * 0.04);
   const canvasWidth = plateWidthPx + CANVAS_PAD_PX * 2;
   const canvasHeight = plateHeightPx + CANVAS_PAD_PX * 2;
-
-  // Lettertype ophalen bij Google Fonts (zie FONT_CONFIG_BY_ID hierboven).
-  // Lukt dit niet, dan renderen we gewoon door met het standaardlettertype
-  // van de renderer — zie de toelichting bovenaan dit bestand.
-  const fontConfig = FONT_CONFIG_BY_ID[fontId];
-  let fontFamily: string | undefined;
-  let fontWeight: SatoriFontWeight = FALLBACK_FONT_WEIGHT;
-  let fonts: {
-    name: string;
-    data: ArrayBuffer;
-    weight: SatoriFontWeight;
-    style: "normal";
-  }[] = [];
-
-  if (fontConfig) {
-    try {
-      const data = await loadGoogleFont(fontConfig.googleFamily, fontConfig.weight);
-      fontFamily = fontConfig.googleFamily;
-      fontWeight = fontConfig.weight;
-      fonts = [
-        {
-          name: fontConfig.googleFamily,
-          data,
-          weight: fontConfig.weight,
-          style: "normal",
-        },
-      ];
-    } catch (fontError) {
-      console.error(
-        `Ophalen van lettertype "${fontConfig.googleFamily}" voor de e-mailafbeelding is mislukt, val terug op het standaardlettertype:`,
-        fontError instanceof Error ? fontError.message : fontError
-      );
-    }
-  }
 
   const response = new ImageResponse(
     (
@@ -290,10 +350,12 @@ export async function renderPlatePreviewPng(
                 style={{
                   display: "flex",
                   marginTop:
-                    index === 0 ? 0 : orderedLines[index - 1].sizePx * gapRatio,
+                    index === 0
+                      ? 0
+                      : orderedLines[index - 1].sizePx * orderedLines[index - 1].gapRatio,
                   fontSize: line.sizePx,
-                  fontFamily,
-                  fontWeight,
+                  fontFamily: line.fontFamily,
+                  fontWeight: line.fontWeight,
                   lineHeight: 1,
                   color: textColor,
                 }}

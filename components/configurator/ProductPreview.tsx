@@ -34,27 +34,34 @@ export function ProductPreview() {
   const shape = productShapes.find((s) => s.id === selection.shapeId);
   const color = productColors.find((c) => c.id === selection.colorId);
   const size = pricingData.productSizes.find((s) => s.id === selection.sizeId);
-  const font = productFonts.find((f) => f.id === selection.fontId);
   const price = calculatePrice(selection, pricingData);
 
-  // Zolang er nog geen lettertype gekozen is (dat gebeurt pas bij stap 7,
-  // "Lettertype"), toont de preview op de eerdere stappen vast één van de
-  // echte keuzeopties in plaats van een neutraal placeholder-lettertype —
-  // Christiaan koos hiervoor oorspronkelijk "Modern" (27-8-2026); dat
-  // lettertype bestaat sinds 28-8-2026 niet meer (zie
-  // config/product-options.ts), vervangen door "Times" als nieuwe,
-  // vergelijkbaar neutrale fallback. Dit is puur een preview-fallback: de
-  // daadwerkelijke keuze (selection.fontId) blijft leeg totdat de klant
-  // echt bij stap 7 kiest, dus het label "Lettertype" hieronder blijft
-  // terecht "—" tonen tot dat moment.
+  // Sinds 28-8-2026 heeft elk tekstveld zijn eigen lettertype (op verzoek
+  // van Christiaan — de losse stap "Lettertype" is vervallen, dat wordt nu
+  // in stap 5 ("Tekst") per veld gekozen, zie TextInput.tsx). Zolang de
+  // klant voor een veld nog niets gekozen heeft (bv. op een eerdere stap,
+  // vóórdat stap 5 bereikt is, of simpelweg nog niet aangeklikt), valt de
+  // preview terug op "Times" als neutrale placeholder — zelfde aanpak als
+  // vroeger (toen nog vóór de introductie van per-veld lettertypes) met de
+  // toenmalige "Modern"-placeholder.
   const previewFallbackFont = productFonts.find((f) => f.id === "times");
-  const effectiveFont = font ?? previewFallbackFont;
+  const numberFont =
+    productFonts.find((f) => f.id === selection.numberFontId) ??
+    previewFallbackFont;
+  const line1Font =
+    productFonts.find((f) => f.id === selection.line1FontId) ??
+    previewFallbackFont;
+  const line2Font =
+    productFonts.find((f) => f.id === selection.line2FontId) ??
+    previewFallbackFont;
 
   const isOval = shape?.id === "ovaal";
   const ratio = size ? size.width / size.height : isOval ? DEFAULT_OVAL_RATIO : 1;
   const textColor = color ? getContrastTextColor(color.hex) : undefined;
-  const fontFamily =
-    effectiveFont?.cssFamily ?? "var(--font-fraunces), Georgia, serif";
+  const fallbackFontFamily = "var(--font-fraunces), Georgia, serif";
+  const numberFontFamily = numberFont?.cssFamily ?? fallbackFontFamily;
+  const line1FontFamily = line1Font?.cssFamily ?? fallbackFontFamily;
+  const line2FontFamily = line2Font?.cssFamily ?? fallbackFontFamily;
 
   const hasLine1 = (shape?.extraLines ?? 0) >= 1;
   const hasLine2 = (shape?.extraLines ?? 0) >= 2;
@@ -101,7 +108,9 @@ export function ProductPreview() {
       line2Chars: hasLine2 ? line2Text.length : null,
       minMarginXMm,
       minMarginYMm,
-      fontId: effectiveFont?.id,
+      numberFontId: numberFont?.id,
+      line1FontId: line1Font?.id,
+      line2FontId: line2Font?.id,
     });
     const pxPerMm = PREVIEW_WIDTH_PX / size.width;
     numberFontSize = fit.numberSizeMm * pxPerMm;
@@ -109,8 +118,19 @@ export function ProductPreview() {
     line2FontSize = fit.line2SizeMm ? fit.line2SizeMm * pxPerMm : line2FontSize;
   }
 
-  const gapRatio =
-    LINE_GAP_RATIO_BY_FONT[effectiveFont?.id ?? ""] ?? DEFAULT_LINE_GAP_RATIO;
+  // Regelafstand boven een regel — sinds elk tekstveld een eigen
+  // lettertype kan hebben, hoort de regelafstand bóven een regel bij het
+  // lettertype van de regel DAARBOVEN (dat lettertype bepaalt hoeveel
+  // "lucht" er van nature onder de tekst zit, zie LINE_GAP_RATIO_BY_FONT in
+  // plate-visual.ts). Hieronder per node vastgelegd welk lettertype-id
+  // erbij hoort, zodat de juiste regelafstand-verhouding gebruikt kan
+  // worden bij het samenstellen van de uiteindelijke volgorde hieronder.
+  const numberGapRatio =
+    LINE_GAP_RATIO_BY_FONT[numberFont?.id ?? ""] ?? DEFAULT_LINE_GAP_RATIO;
+  const line1GapRatio =
+    LINE_GAP_RATIO_BY_FONT[line1Font?.id ?? ""] ?? DEFAULT_LINE_GAP_RATIO;
+  const line2GapRatio =
+    LINE_GAP_RATIO_BY_FONT[line2Font?.id ?? ""] ?? DEFAULT_LINE_GAP_RATIO;
 
   // fontWeight: 700 (vet) op alle preview-tekst — zo lijkt de preview meer
   // op een echt geëmailleerd bordje, waar het nummer altijd dik/opvallend
@@ -119,7 +139,11 @@ export function ProductPreview() {
     <span
       key="number"
       className="leading-none"
-      style={{ fontFamily, fontSize: `${numberFontSize}px`, fontWeight: 700 }}
+      style={{
+        fontFamily: numberFontFamily,
+        fontSize: `${numberFontSize}px`,
+        fontWeight: 700,
+      }}
     >
       {numberText}
     </span>
@@ -128,7 +152,11 @@ export function ProductPreview() {
     <span
       key="line1"
       className="leading-none"
-      style={{ fontFamily, fontSize: `${line1FontSize}px`, fontWeight: 700 }}
+      style={{
+        fontFamily: line1FontFamily,
+        fontSize: `${line1FontSize}px`,
+        fontWeight: 700,
+      }}
     >
       {line1Text}
     </span>
@@ -137,7 +165,11 @@ export function ProductPreview() {
     <span
       key="line2"
       className="leading-none"
-      style={{ fontFamily, fontSize: `${line2FontSize}px`, fontWeight: 700 }}
+      style={{
+        fontFamily: line2FontFamily,
+        fontSize: `${line2FontSize}px`,
+        fontWeight: 700,
+      }}
     >
       {line2Text}
     </span>
@@ -146,30 +178,47 @@ export function ProductPreview() {
   const extraLineCount = (hasLine1 ? 1 : 0) + (hasLine2 ? 1 : 0);
   let orderedNodes: (JSX.Element | null)[];
   let orderedSizes: number[];
+  // Gapratio per node in de volgorde hieronder — de marge BOVEN een regel
+  // gebruikt de gapratio van de regel ERBOVEN (dat lettertype bepaalt hoe
+  // veel "lucht" er van nature onder die tekst zit), zie de toelichting bij
+  // numberGapRatio/line1GapRatio/line2GapRatio hierboven.
+  let orderedGapRatios: number[];
   if (extraLineCount === 0) {
     orderedNodes = [numberNode];
     orderedSizes = [numberFontSize];
+    orderedGapRatios = [numberGapRatio];
   } else if (extraLineCount === 1) {
     orderedNodes = selection.numberPosition === "end" ? [line1Node, numberNode] : [numberNode, line1Node];
     orderedSizes =
       selection.numberPosition === "end"
         ? [line1FontSize, numberFontSize]
         : [numberFontSize, line1FontSize];
+    orderedGapRatios =
+      selection.numberPosition === "end"
+        ? [line1GapRatio, numberGapRatio]
+        : [numberGapRatio, line1GapRatio];
   } else if (selection.numberPosition === "middle") {
     orderedNodes = [line1Node, numberNode, line2Node];
     orderedSizes = [line1FontSize, numberFontSize, line2FontSize];
+    orderedGapRatios = [line1GapRatio, numberGapRatio, line2GapRatio];
   } else if (selection.numberPosition === "end") {
     orderedNodes = [line1Node, line2Node, numberNode];
     orderedSizes = [line1FontSize, line2FontSize, numberFontSize];
+    orderedGapRatios = [line1GapRatio, line2GapRatio, numberGapRatio];
   } else {
     orderedNodes = [numberNode, line1Node, line2Node];
     orderedSizes = [numberFontSize, line1FontSize, line2FontSize];
+    orderedGapRatios = [numberGapRatio, line1GapRatio, line2GapRatio];
   }
 
   const nodesWithSpacing = orderedNodes
     .map((node, index) =>
       node
-        ? { node, marginTop: index === 0 ? 0 : orderedSizes[index - 1] * gapRatio }
+        ? {
+            node,
+            marginTop:
+              index === 0 ? 0 : orderedSizes[index - 1] * orderedGapRatios[index - 1],
+          }
         : null
     )
     .filter(Boolean) as { node: JSX.Element; marginTop: number }[];
@@ -326,9 +375,27 @@ export function ProductPreview() {
             <dd className="text-foreground">{size?.name ?? "—"}</dd>
           </div>
           <div className="flex justify-between border-t border-border/60 pt-1.5">
-            <dt className="text-muted-foreground">Lettertype</dt>
-            <dd className="text-foreground">{font?.name ?? "—"}</dd>
+            <dt className="text-muted-foreground">Lettertype huisnummer</dt>
+            <dd className="text-foreground">
+              {productFonts.find((f) => f.id === selection.numberFontId)?.name ?? "—"}
+            </dd>
           </div>
+          {hasLine1 && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Lettertype tekstregel 1</dt>
+              <dd className="text-foreground">
+                {productFonts.find((f) => f.id === selection.line1FontId)?.name ?? "—"}
+              </dd>
+            </div>
+          )}
+          {hasLine2 && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Lettertype tekstregel 2</dt>
+              <dd className="text-foreground">
+                {productFonts.find((f) => f.id === selection.line2FontId)?.name ?? "—"}
+              </dd>
+            </div>
+          )}
           {selection.hasFrame && (
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Kader</dt>

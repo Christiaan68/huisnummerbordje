@@ -60,7 +60,7 @@ export function QuestionModal({ onClose }: QuestionModalProps) {
       !selection.finish ||
       !selection.colorId ||
       !selection.sizeId ||
-      !selection.fontId
+      !selection.numberFontId
     ) {
       setStatus("error");
       setErrorMessage(
@@ -77,7 +77,9 @@ export function QuestionModal({ onClose }: QuestionModalProps) {
       finish: selection.finish,
       colorId: selection.colorId,
       sizeId: selection.sizeId,
-      fontId: selection.fontId,
+      numberFontId: selection.numberFontId,
+      line1FontId: selection.line1FontId || undefined,
+      line2FontId: selection.line2FontId || undefined,
       customText: selection.customText,
       extraLine1: selection.extraLine1 || undefined,
       extraLine2: selection.extraLine2 || undefined,

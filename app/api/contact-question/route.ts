@@ -64,9 +64,25 @@ export async function POST(request: Request) {
   const shape = productShapes.find((s) => s.id === data.shapeId);
   const color = productColors.find((c) => c.id === data.colorId);
   const size = pricingData.productSizes.find((s) => s.id === data.sizeId);
-  const font = productFonts.find((f) => f.id === data.fontId);
+  const numberFont = productFonts.find((f) => f.id === data.numberFontId);
+  // Elk tekstveld heeft sinds 28-8-2026 zijn eigen lettertype (zie
+  // types/configuration.ts) — line1Font/line2Font zijn alleen relevant als
+  // de gekozen vorm die tekstregel ook echt heeft.
+  const line1Font = data.line1FontId
+    ? productFonts.find((f) => f.id === data.line1FontId)
+    : undefined;
+  const line2Font = data.line2FontId
+    ? productFonts.find((f) => f.id === data.line2FontId)
+    : undefined;
 
-  if (!shape || !color || !size || !font) {
+  if (
+    !shape ||
+    !color ||
+    !size ||
+    !numberFont ||
+    (shape.extraLines >= 1 && !line1Font) ||
+    (shape.extraLines >= 2 && !line2Font)
+  ) {
     return NextResponse.json(
       { error: "Onbekende vorm, kleur, maat of lettertype." },
       { status: 400 }
@@ -97,7 +113,9 @@ export async function POST(request: Request) {
     customText: data.customText,
     extraLine1: data.extraLine1,
     extraLine2: data.extraLine2,
-    fontName: font.name,
+    numberFontName: numberFont.name,
+    line1FontName: line1Font?.name,
+    line2FontName: line2Font?.name,
     askerName: question.name,
     askerEmail: question.email,
     question: question.question,

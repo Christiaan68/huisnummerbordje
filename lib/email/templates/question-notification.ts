@@ -6,7 +6,12 @@ interface QuestionEmailData {
   customText: string;
   extraLine1?: string;
   extraLine2?: string;
-  fontName: string;
+  // Sinds 28-8-2026 heeft elk tekstveld zijn eigen lettertype (zie
+  // types/configuration.ts) — line1FontName/line2FontName zijn alleen
+  // gezet als die tekstregel bestaat.
+  numberFontName: string;
+  line1FontName?: string;
+  line2FontName?: string;
   askerName: string;
   askerEmail: string;
   question: string;
@@ -91,7 +96,9 @@ export function renderQuestionNotificationEmail(data: QuestionEmailData): string
                     ${row("Huisnummer", data.customText)}
                     ${data.extraLine1 ? row("Tekstregel 1", data.extraLine1) : ""}
                     ${data.extraLine2 ? row("Tekstregel 2", data.extraLine2) : ""}
-                    ${row("Lettertype", data.fontName)}
+                    ${row("Lettertype huisnummer", data.numberFontName)}
+                    ${data.line1FontName ? row("Lettertype tekstregel 1", data.line1FontName) : ""}
+                    ${data.line2FontName ? row("Lettertype tekstregel 2", data.line2FontName) : ""}
                   </table>
                 </td>
               </tr>

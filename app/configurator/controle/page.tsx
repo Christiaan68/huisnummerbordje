@@ -31,7 +31,7 @@ export default function ControlePage() {
       !selection.finish ||
       !selection.colorId ||
       !selection.sizeId ||
-      !selection.fontId
+      !selection.numberFontId
     ) {
       setStatus("error");
       setMessage("Niet alle keuzes zijn compleet. Ga terug en vul ze aan.");
@@ -53,7 +53,7 @@ export default function ControlePage() {
       !selection.finish ||
       !selection.colorId ||
       !selection.sizeId ||
-      !selection.fontId
+      !selection.numberFontId
     ) {
       setStatus("error");
       setMessage("Niet alle keuzes zijn compleet. Ga terug en vul ze aan.");
@@ -69,7 +69,9 @@ export default function ControlePage() {
       finish: selection.finish,
       colorId: selection.colorId,
       sizeId: selection.sizeId,
-      fontId: selection.fontId,
+      numberFontId: selection.numberFontId,
+      line1FontId: selection.line1FontId || undefined,
+      line2FontId: selection.line2FontId || undefined,
       customText: selection.customText,
       extraLine1: selection.extraLine1 || undefined,
       extraLine2: selection.extraLine2 || undefined,
@@ -115,7 +117,7 @@ export default function ControlePage() {
   return (
     <div>
       <p className="text-sm uppercase tracking-widest text-muted-foreground">
-        Configurator — stap 8 van 8
+        Configurator — stap 7 van 7
       </p>
       <h1 className="mt-1 font-serif text-2xl text-primary">
         {stage === "summary" && "Controle"}

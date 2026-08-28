@@ -15,7 +15,15 @@ export interface ConfiguratorSelection {
   finish: PlateFinish | null;
   colorId: string | null;
   sizeId: string | null;
-  fontId: string | null;
+  // Elk tekstveld heeft sinds 28-8-2026 zijn eigen lettertype (op verzoek
+  // van Christiaan: "elke tekst of nummer dat ik in moet typen, moet het
+  // lettertype gewijzigd kunnen worden" — de losse stap "Lettertype" is
+  // daarmee vervallen, zie lib/configuration/steps.ts). line1FontId/
+  // line2FontId zijn alleen relevant als de gekozen vorm die tekstregel
+  // ook echt heeft (shape.extraLines, zie config/product-options.ts).
+  numberFontId: string | null;
+  line1FontId: string | null;
+  line2FontId: string | null;
   customText: string;
   extraLine1: string;
   extraLine2: string;
@@ -31,7 +39,9 @@ export const emptyConfiguratorSelection: ConfiguratorSelection = {
   finish: null,
   colorId: null,
   sizeId: null,
-  fontId: null,
+  numberFontId: null,
+  line1FontId: null,
+  line2FontId: null,
   customText: "",
   extraLine1: "",
   extraLine2: "",
@@ -44,7 +54,9 @@ export interface ConfiguratorSelectionResolved {
   finish: PlateFinish;
   color: ProductColor;
   size: ProductSize;
-  font: ProductFont;
+  numberFont: ProductFont;
+  line1Font: ProductFont | null;
+  line2Font: ProductFont | null;
   customText: string;
   extraLine1: string;
   extraLine2: string;
@@ -56,7 +68,9 @@ export interface Configuration {
   finish: PlateFinish;
   colorId: string;
   sizeId: string;
-  fontId: string;
+  numberFontId: string;
+  line1FontId: string | null;
+  line2FontId: string | null;
   customText: string;
   extraLine1: string | null;
   extraLine2: string | null;
@@ -76,7 +90,9 @@ export interface CreateConfigurationInput {
   finish: PlateFinish;
   colorId: string;
   sizeId: string;
-  fontId: string;
+  numberFontId: string;
+  line1FontId?: string;
+  line2FontId?: string;
   customText: string;
   extraLine1?: string;
   extraLine2?: string;

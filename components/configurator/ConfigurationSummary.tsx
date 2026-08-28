@@ -25,7 +25,9 @@ export function ConfigurationSummary() {
   const shape = productShapes.find((s) => s.id === selection.shapeId);
   const color = productColors.find((c) => c.id === selection.colorId);
   const size = pricingData.productSizes.find((s) => s.id === selection.sizeId);
-  const font = productFonts.find((f) => f.id === selection.fontId);
+  const numberFont = productFonts.find((f) => f.id === selection.numberFontId);
+  const line1Font = productFonts.find((f) => f.id === selection.line1FontId);
+  const line2Font = productFonts.find((f) => f.id === selection.line2FontId);
   const price = calculatePrice(selection, pricingData);
 
   const hasLine1 = (shape?.extraLines ?? 0) >= 1;
@@ -41,13 +43,19 @@ export function ConfigurationSummary() {
       <Row label="Kleur" value={color?.name ?? "—"} />
       <Row label="Maat" value={size?.name ?? "—"} />
       <Row label="Huisnummer" value={selection.customText || "—"} />
+      <Row label="Lettertype huisnummer" value={numberFont?.name ?? "—"} />
       {hasLine1 && (
-        <Row label="Tekstregel 1" value={selection.extraLine1 || "—"} />
+        <>
+          <Row label="Tekstregel 1" value={selection.extraLine1 || "—"} />
+          <Row label="Lettertype tekstregel 1" value={line1Font?.name ?? "—"} />
+        </>
       )}
       {hasLine2 && (
-        <Row label="Tekstregel 2" value={selection.extraLine2 || "—"} />
+        <>
+          <Row label="Tekstregel 2" value={selection.extraLine2 || "—"} />
+          <Row label="Lettertype tekstregel 2" value={line2Font?.name ?? "—"} />
+        </>
       )}
-      <Row label="Lettertype" value={font?.name ?? "—"} />
       <Row
         label="Kader"
         value={

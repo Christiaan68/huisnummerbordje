@@ -18,7 +18,9 @@ type Action =
   | { type: "SET_TEXT"; customText: string }
   | { type: "SET_EXTRA_LINE_1"; value: string }
   | { type: "SET_EXTRA_LINE_2"; value: string }
-  | { type: "SET_FONT"; fontId: string }
+  | { type: "SET_NUMBER_FONT"; fontId: string }
+  | { type: "SET_LINE1_FONT"; fontId: string }
+  | { type: "SET_LINE2_FONT"; fontId: string }
   | { type: "SET_NUMBER_POSITION"; position: NumberPosition }
   | { type: "SET_HAS_FRAME"; hasFrame: boolean }
   | { type: "RESET" };
@@ -60,8 +62,12 @@ function reducer(
       return { ...state, extraLine1: action.value };
     case "SET_EXTRA_LINE_2":
       return { ...state, extraLine2: action.value };
-    case "SET_FONT":
-      return { ...state, fontId: action.fontId };
+    case "SET_NUMBER_FONT":
+      return { ...state, numberFontId: action.fontId };
+    case "SET_LINE1_FONT":
+      return { ...state, line1FontId: action.fontId };
+    case "SET_LINE2_FONT":
+      return { ...state, line2FontId: action.fontId };
     case "SET_NUMBER_POSITION":
       return { ...state, numberPosition: action.position };
     case "SET_HAS_FRAME":

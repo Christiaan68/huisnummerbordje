@@ -29,8 +29,15 @@ CREATE TABLE IF NOT EXISTS configurations (
   color_name VARCHAR(100) NOT NULL,
   size_id VARCHAR(64) NOT NULL,
   size_name VARCHAR(100) NOT NULL,
+  -- font_id/font_name: sinds 28-8-2026 specifiek het lettertype van het
+  -- HUISNUMMER (elk tekstveld heeft nu een eigen lettertype) — zie de
+  -- migratie van 28-8-2026 verderop in dit bestand.
   font_id VARCHAR(64) NOT NULL,
   font_name VARCHAR(100) NOT NULL,
+  line1_font_id VARCHAR(64) NULL,
+  line1_font_name VARCHAR(100) NULL,
+  line2_font_id VARCHAR(64) NULL,
+  line2_font_name VARCHAR(100) NULL,
 
   -- Tekst op het bordje
   custom_text VARCHAR(10) NOT NULL,
@@ -82,3 +89,18 @@ CREATE TABLE IF NOT EXISTS configurations (
 
 ALTER TABLE configurations ADD COLUMN has_frame BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE configurations ADD COLUMN price_frame_surcharge_cents INT NOT NULL DEFAULT 0;
+
+-- MIGRATIE 28-8-2026: elk tekstveld (huisnummer, tekstregel 1, tekstregel 2)
+-- heeft sinds deze datum zijn eigen lettertype (voorheen 1 lettertype voor
+-- het hele bordje). De bestaande kolommen font_id/font_name blijven
+-- ONGEWIJZIGD staan en bevatten voortaan het lettertype van het HUISNUMMER
+-- (bestaande, al bevestigde bestellingen hadden toch al voor alle
+-- tekstvelden hetzelfde lettertype, dus hun betekenis verandert feitelijk
+-- niet). Voer onderstaande vier regels ÉÉNMALIG uit in hetzelfde SQL-scherm
+-- om de 2 nieuwe, optionele kolomparen toe te voegen (NULL zolang een
+-- bestelling geen tekstregel 1/2 heeft):
+
+ALTER TABLE configurations ADD COLUMN line1_font_id VARCHAR(64) NULL;
+ALTER TABLE configurations ADD COLUMN line1_font_name VARCHAR(100) NULL;
+ALTER TABLE configurations ADD COLUMN line2_font_id VARCHAR(64) NULL;
+ALTER TABLE configurations ADD COLUMN line2_font_name VARCHAR(100) NULL;

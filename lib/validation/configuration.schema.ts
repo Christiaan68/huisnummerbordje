@@ -10,7 +10,14 @@ export const createConfigurationSchema = z
     }),
     colorId: z.string().min(1, "Kies een kleur."),
     sizeId: z.string().min(1, "Kies een maat."),
-    fontId: z.string().min(1, "Kies een lettertype."),
+    // Sinds 28-8-2026 heeft elk tekstveld zijn eigen lettertype (zie
+    // types/configuration.ts) — numberFontId is altijd verplicht (er is
+    // altijd een huisnummer), line1FontId/line2FontId alleen als de
+    // gekozen vorm die tekstregel ook echt heeft (zie de superRefine
+    // hieronder, net als bij extraLine1/extraLine2).
+    numberFontId: z.string().min(1, "Kies een lettertype voor het huisnummer."),
+    line1FontId: z.string().optional().default(""),
+    line2FontId: z.string().optional().default(""),
     customText: houseNumberSchema,
     extraLine1: extraLineSchema.optional().default(""),
     extraLine2: extraLineSchema.optional().default(""),
@@ -48,12 +55,26 @@ export const createConfigurationSchema = z
         path: ["extraLine1"],
       });
     }
+    if (shape.extraLines >= 1 && data.line1FontId.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Kies een lettertype voor tekstregel 1.",
+        path: ["line1FontId"],
+      });
+    }
 
     if (shape.extraLines >= 2 && data.extraLine2.trim().length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Vul de tweede tekstregel in.",
         path: ["extraLine2"],
+      });
+    }
+    if (shape.extraLines >= 2 && data.line2FontId.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Kies een lettertype voor tekstregel 2.",
+        path: ["line2FontId"],
       });
     }
   });

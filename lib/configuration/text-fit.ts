@@ -13,10 +13,17 @@ export interface AutoFitInput {
   // Standaard 0 (geen extra marge, dus gelijk aan het oude gedrag).
   minMarginXMm?: number;
   minMarginYMm?: number;
-  // Welk lettertype er gebruikt wordt voor het nummer — bepaalt hoe breed
-  // een karakter gemiddeld is (zie CHAR_WIDTH_RATIO_BY_FONT hieronder).
-  // Onbekend/leeg → de algemene standaardverhouding.
-  fontId?: string;
+  // Welk lettertype er voor elk tekstveld apart gebruikt wordt — bepaalt
+  // hoe breed een karakter gemiddeld is (zie CHAR_WIDTH_RATIO_BY_FONT
+  // hieronder) en hoeveel regelafstand dat lettertype nodig heeft (zie
+  // LINE_GAP_RATIO_BY_FONT in plate-visual.ts). Sinds 28-8-2026 kan elk
+  // tekstveld een eigen lettertype hebben (op verzoek van Christiaan, "stap
+  // 5 en 7 combineren" — zie lib/configuration/steps.ts) — vandaar 3 losse
+  // velden in plaats van 1 fontId voor het hele bordje. Onbekend/leeg →
+  // de algemene standaardverhouding.
+  numberFontId?: string | null;
+  line1FontId?: string | null;
+  line2FontId?: string | null;
 }
 
 export interface AutoFitResult {
@@ -71,6 +78,18 @@ const MARGIN_RATIO = 0.09;
 const MIN_MARGIN_MM = 5;
 const MIN_NUMBER_SIZE_MM = 15;
 
+function charWidthRatioFor(fontId: string | null | undefined): number {
+  return fontId != null && fontId in CHAR_WIDTH_RATIO_BY_FONT
+    ? CHAR_WIDTH_RATIO_BY_FONT[fontId]
+    : DEFAULT_CHAR_WIDTH_RATIO;
+}
+
+function gapRatioFor(fontId: string | null | undefined): number {
+  return fontId != null && fontId in LINE_GAP_RATIO_BY_FONT
+    ? LINE_GAP_RATIO_BY_FONT[fontId]
+    : DEFAULT_LINE_GAP_RATIO;
+}
+
 export function computeAutoFit(input: AutoFitInput): AutoFitResult {
   const {
     widthMm,
@@ -80,24 +99,34 @@ export function computeAutoFit(input: AutoFitInput): AutoFitResult {
     line2Chars,
     minMarginXMm = 0,
     minMarginYMm = 0,
-    fontId,
+    numberFontId,
+    line1FontId,
+    line2FontId,
   } = input;
 
-  const charWidthRatio: number =
-    fontId !== undefined && fontId in CHAR_WIDTH_RATIO_BY_FONT
-      ? CHAR_WIDTH_RATIO_BY_FONT[fontId]
-      : DEFAULT_CHAR_WIDTH_RATIO;
+  const numberCharWidthRatio = charWidthRatioFor(numberFontId);
+  const line1CharWidthRatio = charWidthRatioFor(line1FontId);
+  const line2CharWidthRatio = charWidthRatioFor(line2FontId);
 
-  // Dezelfde regelafstand-verhouding per lettertype die ook echt getekend
-  // wordt (zie LINE_GAP_RATIO_BY_FONT in plate-visual.ts) — voorheen gebruikte
-  // deze berekening altijd 0.18, terwijl Modern/Industrieel in werkelijkheid
-  // maar 0.06 regelafstand tekenen. Daardoor werd bij bordjes met een extra
-  // tekstregel onnodig veel hoogte gereserveerd voor de tussenruimte, vooral
-  // bij Modern en Industrieel.
-  const gapRatio: number =
-    fontId !== undefined && fontId in LINE_GAP_RATIO_BY_FONT
-      ? LINE_GAP_RATIO_BY_FONT[fontId]
-      : DEFAULT_LINE_GAP_RATIO;
+  const hasLine1 = Boolean(line1Chars && line1Chars > 0);
+  const hasLine2 = Boolean(line2Chars && line2Chars > 0);
+
+  // De regelafstand-verhouding (zie LINE_GAP_RATIO_BY_FONT in
+  // plate-visual.ts) hoort eigenlijk bij een specifieke tussenruimte tussen
+  // 2 regels — sinds elk tekstveld een eigen lettertype kan hebben
+  // (28-8-2026) kunnen die per tussenruimte verschillen. Deze berekening
+  // gebruikt bewust maar 1 schaalgetal voor de hele hoogteberekening (geen
+  // aparte term per tussenruimte, dat was ook vóór deze wijziging al zo) —
+  // daarvoor wordt de RUIMSTE (grootste) regelafstand van de betrokken
+  // lettertypes gebruikt, zodat er nooit te weinig hoogte gereserveerd
+  // wordt, ook niet als bijvoorbeeld het huisnummer een krap lettertype
+  // heeft maar een tekstregel een ruim lettertype.
+  const activeGapRatios = [
+    gapRatioFor(numberFontId),
+    ...(hasLine1 ? [gapRatioFor(line1FontId)] : []),
+    ...(hasLine2 ? [gapRatioFor(line2FontId)] : []),
+  ];
+  const gapRatio = Math.max(...activeGapRatios);
 
   const baseMarginMm = Math.max(
     MIN_MARGIN_MM,
@@ -112,20 +141,19 @@ export function computeAutoFit(input: AutoFitInput): AutoFitResult {
   const availableWidth = Math.max(widthMm - 2 * marginXMm, 10);
   const availableHeight = Math.max(heightMm - 2 * marginYMm, 10);
 
-  const hasLine1 = Boolean(line1Chars && line1Chars > 0);
-  const hasLine2 = Boolean(line2Chars && line2Chars > 0);
-
   let numberSizeFromWidth =
-    availableWidth / (Math.max(numberChars, 1) * charWidthRatio);
+    availableWidth / (Math.max(numberChars, 1) * numberCharWidthRatio);
 
   if (hasLine1 && line1Chars) {
     const limit =
-      availableWidth / (line1Chars * charWidthRatio * LINE1_TO_NUMBER_RATIO);
+      availableWidth /
+      (line1Chars * line1CharWidthRatio * LINE1_TO_NUMBER_RATIO);
     numberSizeFromWidth = Math.min(numberSizeFromWidth, limit);
   }
   if (hasLine2 && line2Chars) {
     const limit =
-      availableWidth / (line2Chars * charWidthRatio * LINE2_TO_NUMBER_RATIO);
+      availableWidth /
+      (line2Chars * line2CharWidthRatio * LINE2_TO_NUMBER_RATIO);
     numberSizeFromWidth = Math.min(numberSizeFromWidth, limit);
   }
 

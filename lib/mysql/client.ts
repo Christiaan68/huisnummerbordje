@@ -61,8 +61,21 @@ export interface NewOrderRow {
   colorName: string;
   sizeId: string;
   sizeName: string;
-  fontId: string;
-  fontName: string;
+  // Sinds 28-8-2026 heeft elk tekstveld zijn eigen lettertype (zie
+  // types/configuration.ts). De database-kolommen heten nog steeds
+  // font_id/font_name (zie saveOrderToDatabase hieronder) — dat blijft zo
+  // om geen bestaande, al bevestigde bestellingen in de tabel te hoeven
+  // hernoemen; ze bevatten voortaan gewoon het lettertype van het
+  // HUISNUMMER. line1FontId/line1FontName en line2FontId/line2FontName
+  // zijn nieuwe, optionele kolommen (alleen gevuld als de gekozen vorm die
+  // tekstregel heeft) — zie database/mysql/orders-schema.sql voor de
+  // eenmalige ALTER TABLE-migratie die daarvoor nodig was.
+  numberFontId: string;
+  numberFontName: string;
+  line1FontId: string | null;
+  line1FontName: string | null;
+  line2FontId: string | null;
+  line2FontName: string | null;
   customText: string;
   extraLine1: string | null;
   extraLine2: string | null;
@@ -96,13 +109,14 @@ export async function saveOrderToDatabase(order: NewOrderRow): Promise<void> {
   await db.execute(
     `INSERT INTO configurations (
       shape_id, shape_name, finish, color_id, color_name, size_id, size_name,
-      font_id, font_name, custom_text, extra_line_1, extra_line_2, number_position,
+      font_id, font_name, line1_font_id, line1_font_name, line2_font_id, line2_font_name,
+      custom_text, extra_line_1, extra_line_2, number_position,
       has_frame,
       price_total_cents, price_color_surcharge_cents, price_extra_chars_cents,
       price_extra_chars_count, price_frame_surcharge_cents, price_source,
       contact_name, contact_address, contact_postal_code, contact_city,
       contact_email, contact_phone, quantity
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       order.shapeId,
       order.shapeName,
@@ -111,8 +125,12 @@ export async function saveOrderToDatabase(order: NewOrderRow): Promise<void> {
       order.colorName,
       order.sizeId,
       order.sizeName,
-      order.fontId,
-      order.fontName,
+      order.numberFontId,
+      order.numberFontName,
+      order.line1FontId,
+      order.line1FontName,
+      order.line2FontId,
+      order.line2FontName,
       order.customText,
       order.extraLine1,
       order.extraLine2,

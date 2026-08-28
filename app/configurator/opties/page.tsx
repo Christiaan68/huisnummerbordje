@@ -5,7 +5,7 @@ export default function OptiesPage() {
   return (
     <div>
       <p className="text-sm uppercase tracking-widest text-muted-foreground">
-        Configurator — stap 6 van 8
+        Configurator — stap 6 van 7
       </p>
       <h1 className="mt-1 font-serif text-2xl text-primary">Opties</h1>
       <p className="mt-4 text-muted-foreground">
