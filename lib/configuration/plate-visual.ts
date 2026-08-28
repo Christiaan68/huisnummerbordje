@@ -11,16 +11,25 @@
 // aanpassing maar op één plek was doorgevoerd en de twee weergaves weer uit
 // elkaar waren gaan lopen.
 
-// Op verzoek van Christiaan op 28-8-2026 verder naar de rand/hoeken
-// verschoven (rechthoekig was 0.11, ovaal was 0.4) — de schroefgaatjes
-// stonden te veel richting het midden. Bewust niet verder dan dit: de
-// kaderlijn-hoekboog (getFrameBorderPath, rechthoekig) past zich
-// automatisch aan de nieuwe positie aan en blijft dus altijd om het
-// schroefje heen lopen; voor de ovale kaderlijn (getOvalFrameBorderPath,
-// een vaste ellips zonder inkeping) is bij deze waarde gecontroleerd dat
-// er over alle 5 ovale maten nog een marge van minimaal ~3,5 mm tussen
-// schroefje en kaderlijn overblijft (dus niet ertegenaan of eroverheen).
-export const SCREW_INSET_RATIO = 0.085;
+// Rechthoekige vormen: op uitdrukkelijk verzoek van Christiaan (28-8-2026,
+// na een eerdere kleinere verschuiving diezelfde dag) staat het
+// schroefgaatje zo dicht mogelijk bij "precies halverwege de bordjeshoek
+// en de kaderlijn" — dat is wiskundig alleen voor de vierkante maten
+// (105×105, 148×148, 210×210) EXACT te halen met één vaste verhouding
+// (was geprobeerd met een verhouding die uitgaat van de rechte afstand
+// tot de hoek, maar dat duwde het gaatje bij langwerpige maten als
+// 105×210 letterlijk over de korte rand heen — dus weer teruggedraaid).
+// Deze waarde is berekend voor het vierkante geval (waar hij exact klopt)
+// en is voor de langwerpige maten nog steeds heel dicht in de buurt
+// (rekenkundig gecontroleerd: nooit verder dan iets voorbij het midden,
+// richting het kader) — en, belangrijker, voor GEEN van de bestaande
+// maten komt het gaatje over de bordjesrand of het kader heen.
+export const SCREW_INSET_RATIO = 0.0239;
+
+// Ovale vorm: schroefpositie als fractie vanaf het midden op de lange as
+// (zie getScrewPositions) — los van de rechthoekige logica hierboven, want
+// de ovale kaderlijn (getOvalFrameBorderPath) is een vaste ellips zonder
+// inkeping die niet automatisch meebeweegt met de schroefpositie.
 export const OVAL_SCREW_AXIS_RATIO = 0.44;
 
 // Placeholder-verhouding (breedte/hoogte) voor een ovaal bordje zolang er
@@ -132,8 +141,9 @@ export function getScrewClearanceMarginsMm(
 export const FRAME_STROKE_WIDTH_RATIO = 0.014; // lijndikte, t.o.v. min(breedte, hoogte)
 
 // Afstand van de rechte kaderlijn tot de bordjesrand, t.o.v. min(breedte,
-// hoogte) — bewust klein, want de kaderlijn moet duidelijk dichter bij de
-// rand lopen dan de schroefjes (die op 11% van de rand zitten).
+// hoogte) — bewust klein, want de kaderlijn moet langs de rechte zijden
+// duidelijk dichter bij de rand lopen dan bij de hoeken, waar de boog juist
+// naar binnen buigt om het schroefje heen.
 const FRAME_EDGE_INSET_RATIO = 0.03;
 
 // Extra marge rond het schroefje (als veelvoud van de schroefstraal) die de
