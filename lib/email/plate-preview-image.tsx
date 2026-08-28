@@ -26,6 +26,14 @@ import {
 // Display) en "Industrieel" (Bebas Neue) zijn zelf al Google Fonts en worden
 // dus 1-op-1 hetzelfde lettertype als op de site (ze worden daar ook al via
 // next/font/google geladen, zie app/layout.tsx).
+//
+// "Fette Fraktur", "Bodoni", "Colonel" en "Times" (toegevoegd 28-8-2026)
+// werken op dezelfde manier als "Elegant"/"Industrieel": ook dit zijn al
+// Google Fonts (UnifrakturCook, Bodoni Moda, Saira Stencil One resp. Tinos —
+// zie app/layout.tsx voor waarom dit precies deze 4 zijn, o.a. als gratis
+// vervanger voor het betaalde Colonel/205TF en het niet-vrij-herverspreid-
+// bare Times New Roman), dus geen apart vervangend lettertype nodig voor de
+// e-mailafbeelding: dezelfde fontbestanden als in de live preview.
 // `next/og` (Satori) accepts alleen deze specifieke lettergewichten voor
 // `fonts[].weight` — een gewoon "number" is daar net te breed voor
 // (TypeScript strict mode accepteert dat niet), vandaar deze letterlijke
@@ -40,6 +48,10 @@ const FONT_CONFIG_BY_ID: Record<
   elegant: { googleFamily: "Playfair Display", weight: 700 },
   modern: { googleFamily: "Arimo", weight: 700 },
   industrial: { googleFamily: "Bebas Neue", weight: 400 },
+  "fette-fraktur": { googleFamily: "UnifrakturCook", weight: 700 },
+  bodoni: { googleFamily: "Bodoni Moda", weight: 700 },
+  colonel: { googleFamily: "Saira Stencil One", weight: 400 },
+  times: { googleFamily: "Tinos", weight: 700 },
 };
 const FALLBACK_FONT_WEIGHT: SatoriFontWeight = 700;
 

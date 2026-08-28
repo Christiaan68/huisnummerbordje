@@ -106,11 +106,23 @@ export const productSizes: ProductSize[] = [
   { id: "ovaal-220x300", shapeId: "ovaal", name: "220 × 300 mm", width: 300, height: 220, unit: "mm", priceFlatCents: null, priceCurvedCents: 8110, defaultMaxChars: 2, active: true, createdAt: "" },
 ];
 
+// De 4 lettertypes hieronder zijn op 28-8-2026 toegevoegd op verzoek van
+// Christiaan. cssFamily verwijst naar de CSS-variabelen die in
+// app/layout.tsx via next/font/google worden geladen — zie de toelichting
+// daar voor per lettertype welk (eventueel vervangend) Google Font
+// daadwerkelijk gebruikt wordt en waarom. Belangrijk: name hieronder is de
+// naam die de klant in de configurator ziet — dat is steeds de door
+// Christiaan gevraagde naam (Fette Fraktur/Bodoni/Colonel/Times), ook als
+// er onder water een net iets ander (gratis) lettertype gebruikt wordt.
 export const productFonts: ProductFont[] = [
   { id: "classic", name: "Klassiek", slug: "classic", cssFamily: "Georgia, 'Times New Roman', serif", active: true, createdAt: "" },
   { id: "modern", name: "Modern", slug: "modern", cssFamily: "'Helvetica Neue', Arial, sans-serif", active: true, createdAt: "" },
   { id: "industrial", name: "Industrieel", slug: "industrial", cssFamily: "var(--font-bebas), 'Arial Narrow', sans-serif", active: true, createdAt: "" },
   { id: "elegant", name: "Elegant", slug: "elegant", cssFamily: "var(--font-playfair), Georgia, serif", active: true, createdAt: "" },
+  { id: "fette-fraktur", name: "Fette Fraktur", slug: "fette-fraktur", cssFamily: "var(--font-fette-fraktur), 'UnifrakturCook', serif", active: true, createdAt: "" },
+  { id: "bodoni", name: "Bodoni", slug: "bodoni", cssFamily: "var(--font-bodoni), Georgia, serif", active: true, createdAt: "" },
+  { id: "colonel", name: "Colonel", slug: "colonel", cssFamily: "var(--font-colonel), 'Saira Stencil One', sans-serif", active: true, createdAt: "" },
+  { id: "times", name: "Times", slug: "times", cssFamily: "var(--font-times), 'Times New Roman', serif", active: true, createdAt: "" },
 ];
 
 /**

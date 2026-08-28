@@ -41,6 +41,15 @@ const CHAR_WIDTH_RATIO_BY_FONT: Record<string, number> = {
   elegant: 0.68, // Playfair Display (vet) — brede schreefcijfers
   modern: 0.62, // Helvetica Neue/Arial (vet)
   industrial: 0.5, // Bebas Neue — smal/condensed lettertype
+  // De 4 waarden hieronder (toegevoegd 28-8-2026) zijn — net als de
+  // LINE_GAP_RATIO_BY_FONT-waarden voor dezelfde 4 lettertypes in
+  // plate-visual.ts — een eerste, beredeneerde inschatting, nog niet
+  // visueel gecontroleerd. Bijstellen hier als het nummer in de preview bij
+  // een van deze lettertypes duidelijk te groot/klein oogt.
+  "fette-fraktur": 0.7, // UnifrakturCook — sierlijke gotische druletter, relatief brede vormen
+  bodoni: 0.66, // Bodoni Moda — hoog-contrast schreefletter, vergelijkbaar met Playfair Display
+  colonel: 0.55, // Saira Stencil One — geometrisch, vrij smal/condensed stencil-lettertype
+  times: 0.58, // Tinos (Times-vervanger) — van oudsher een compacte, smalle schreefletter
 };
 const DEFAULT_CHAR_WIDTH_RATIO = 0.62;
 // De regelhoogte in de echte preview is exact gelijk aan de fontgrootte
