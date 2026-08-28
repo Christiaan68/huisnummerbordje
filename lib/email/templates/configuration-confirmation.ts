@@ -65,6 +65,7 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
               <tr>
                 <td style="background-color:#1B2A41;padding:24px 32px;">
                   <span style="color:#f7f5f0;font-size:18px;font-weight:600;">Nieuwe configuratie huisnummerbordje</span>
+                  <div style="color:#a9b0bd;font-size:13px;margin-top:4px;">Ontvangen op ${date}</div>
                 </td>
               </tr>
               <tr>
@@ -118,7 +119,6 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
                           }`
                         : "Nee"
                     )}
-                    ${row("Datum", date)}
                     ${
                       data.priceColorSurchargeCents
                         ? row("Meerprijs kleur", formatPriceCents(data.priceColorSurchargeCents))
