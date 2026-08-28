@@ -40,11 +40,6 @@ export default function ContactVraagPage() {
         <h1 className="mt-4 font-serif text-3xl text-foreground sm:text-4xl">
           Stel een vraag
         </h1>
-        <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-          Heb je een vraag over onze geëmailleerde huisnummerbordjes? Vul
-          onderstaand formulier in, we nemen zo snel mogelijk contact met je
-          op.
-        </p>
 
         <ContactQuestionForm />
       </main>

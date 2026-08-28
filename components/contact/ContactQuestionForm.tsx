@@ -24,6 +24,12 @@ function fieldClass(hasError: boolean) {
  * naar app/api/contact-question-general/route.ts, dat de vraag doorstuurt
  * naar het e-mailadres dat in de prijstool is ingesteld onder "Vraag klant
  * naar" (zelfde adres/instelling als de configurator-vraag gebruikt).
+ *
+ * De introzin boven het formulier ("Heb je een vraag over...") staat
+ * bewust HIER (in plaats van statisch op app/contact/vraag/page.tsx) en
+ * wordt alleen getoond zolang het formulier nog niet verstuurd is — na het
+ * versturen hoort alleen de bedankmelding + "Naar home"-knop te staan, niet
+ * meer die introzin (op verzoek van Christiaan).
  */
 export function ContactQuestionForm() {
   const [status, setStatus] = useState<
@@ -79,7 +85,7 @@ export function ContactQuestionForm() {
         </p>
         {/* "Naar home" staat bewust alleen hier, ná het versturen — tijdens
             het invullen van het formulier hoort alleen "Vraag versturen"
-            zichtbaar te zijn (op verzoek van Christiaan). */}
+            zichtbaar te zijn. */}
         <Link
           href="/"
           className="mt-6 inline-flex items-center justify-center rounded-sm border border-border px-6 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/50"
@@ -91,76 +97,84 @@ export function ContactQuestionForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
-      <div>
-        <label
-          htmlFor="question-name"
-          className="mb-1.5 block text-sm font-medium text-foreground"
-        >
-          Naam
-        </label>
-        <input
-          id="question-name"
-          type="text"
-          {...register("name")}
-          className={fieldClass(!!errors.name)}
-        />
-        {errors.name && (
-          <p className="mt-1 text-sm text-destructive">{errors.name.message}</p>
+    <>
+      <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
+        Heb je een vraag over onze geëmailleerde huisnummerbordjes? Vul
+        onderstaand formulier in, we nemen zo snel mogelijk contact met je
+        op.
+      </p>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+        <div>
+          <label
+            htmlFor="question-name"
+            className="mb-1.5 block text-sm font-medium text-foreground"
+          >
+            Naam
+          </label>
+          <input
+            id="question-name"
+            type="text"
+            {...register("name")}
+            className={fieldClass(!!errors.name)}
+          />
+          {errors.name && (
+            <p className="mt-1 text-sm text-destructive">{errors.name.message}</p>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="question-email"
+            className="mb-1.5 block text-sm font-medium text-foreground"
+          >
+            E-mailadres
+          </label>
+          <input
+            id="question-email"
+            type="email"
+            {...register("email")}
+            className={fieldClass(!!errors.email)}
+          />
+          {errors.email && (
+            <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="question-text"
+            className="mb-1.5 block text-sm font-medium text-foreground"
+          >
+            Je vraag
+          </label>
+          <textarea
+            id="question-text"
+            rows={5}
+            {...register("question")}
+            className={fieldClass(!!errors.question)}
+          />
+          {errors.question && (
+            <p className="mt-1 text-sm text-destructive">
+              {errors.question.message}
+            </p>
+          )}
+        </div>
+
+        {status === "error" && errorMessage && (
+          <p className="text-sm text-destructive">{errorMessage}</p>
         )}
-      </div>
 
-      <div>
-        <label
-          htmlFor="question-email"
-          className="mb-1.5 block text-sm font-medium text-foreground"
-        >
-          E-mailadres
-        </label>
-        <input
-          id="question-email"
-          type="email"
-          {...register("email")}
-          className={fieldClass(!!errors.email)}
-        />
-        {errors.email && (
-          <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
-        )}
-      </div>
-
-      <div>
-        <label
-          htmlFor="question-text"
-          className="mb-1.5 block text-sm font-medium text-foreground"
-        >
-          Je vraag
-        </label>
-        <textarea
-          id="question-text"
-          rows={5}
-          {...register("question")}
-          className={fieldClass(!!errors.question)}
-        />
-        {errors.question && (
-          <p className="mt-1 text-sm text-destructive">
-            {errors.question.message}
-          </p>
-        )}
-      </div>
-
-      {status === "error" && errorMessage && (
-        <p className="text-sm text-destructive">{errorMessage}</p>
-      )}
-
-      <div className="pt-2">
-        <button
-          type="submit"
-          disabled={status === "submitting"}
-          className="inline-flex items-center justify-center rounded-sm bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
-        >
-          {status === "submitting" ? "Bezig..." : "Vraag versturen"}
-        </button>
-      </div>
-    </form>
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={status === "submitting"}
+            className="inline-flex items-center justify-center rounded-sm bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+          >
+            {status === "submitting" ? "Bezig..." : "Vraag versturen"}
+          </button>
+        </div>
+      </form>
+    </>
   );
 }
