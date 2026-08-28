@@ -11,8 +11,17 @@
 // aanpassing maar op één plek was doorgevoerd en de twee weergaves weer uit
 // elkaar waren gaan lopen.
 
-export const SCREW_INSET_RATIO = 0.11;
-export const OVAL_SCREW_AXIS_RATIO = 0.4;
+// Op verzoek van Christiaan op 28-8-2026 verder naar de rand/hoeken
+// verschoven (rechthoekig was 0.11, ovaal was 0.4) — de schroefgaatjes
+// stonden te veel richting het midden. Bewust niet verder dan dit: de
+// kaderlijn-hoekboog (getFrameBorderPath, rechthoekig) past zich
+// automatisch aan de nieuwe positie aan en blijft dus altijd om het
+// schroefje heen lopen; voor de ovale kaderlijn (getOvalFrameBorderPath,
+// een vaste ellips zonder inkeping) is bij deze waarde gecontroleerd dat
+// er over alle 5 ovale maten nog een marge van minimaal ~3,5 mm tussen
+// schroefje en kaderlijn overblijft (dus niet ertegenaan of eroverheen).
+export const SCREW_INSET_RATIO = 0.085;
+export const OVAL_SCREW_AXIS_RATIO = 0.44;
 
 // Placeholder-verhouding (breedte/hoogte) voor een ovaal bordje zolang er
 // nog geen maat gekozen is — zie ProductPreview.tsx voor de toelichting.
@@ -188,15 +197,18 @@ export function getFrameBorderPath(widthMm: number, heightMm: number): string {
  *
  * In tegenstelling tot de rechthoekige kaderlijn hierboven is hier GEEN
  * inkeping bij de schroefjes nodig. Bij een ovaal bordje zitten de
- * schroefjes op OVAL_SCREW_AXIS_RATIO (40%) van het midden op de lange as
- * (zie getScrewPositions) — dus op 80% van de afstand tot de ware rand. Een
- * kaderlijn die (met dezelfde FRAME_EDGE_INSET_RATIO als bij de
- * rechthoekige vorm) maar 3% van de kortste zijde naar binnen ligt, blijft
- * daar ruim buiten. Dit is gecontroleerd voor alle 5 bestaande ovale maten
+ * schroefjes op OVAL_SCREW_AXIS_RATIO (28-8-2026: 44%, was 40%) van het
+ * midden op de lange as (zie getScrewPositions) — dus op 88% van de
+ * afstand tot de ware rand. Een kaderlijn die (met dezelfde
+ * FRAME_EDGE_INSET_RATIO als bij de rechthoekige vorm) maar 3% van de
+ * kortste zijde naar binnen ligt, blijft daar nog steeds buiten. Dit is
+ * bij 44% opnieuw gecontroleerd voor alle 5 bestaande ovale maten
  * (105×150 t/m 220×300 mm): de marge tussen kaderlijn en schroefje is in
- * alle gevallen ruim voldoende (circa 7 tot 13,5 mm). Een gewone, gelijkmatig
- * naar binnen geplaatste ellips volstaat dus — precies zoals op Christiaans
- * foto, die geen inkeping bij de gaatjes laat zien.
+ * alle gevallen minimaal ~3,5 mm (bij de grootste maat ruim 6 mm) — dus
+ * niet ertegenaan of eroverheen, maar wel merkbaar krapper dan bij de
+ * oorspronkelijke 40%. Een gewone, gelijkmatig naar binnen geplaatste
+ * ellips volstaat dus nog steeds — precies zoals op Christiaans foto, die
+ * geen inkeping bij de gaatjes laat zien.
  *
  * De ellips wordt hier als SVG-pad (met twee boogsegmenten) opgebouwd in
  * plaats van als los <ellipse>-element, omdat het pad-formaat (met "A"-boog-
