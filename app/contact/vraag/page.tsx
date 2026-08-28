@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ContactQuestionForm } from "@/components/contact/ContactQuestionForm";
@@ -29,15 +27,7 @@ export default function ContactVraagPage() {
       <Header showConfiguratorLink={false} />
 
       <main className="relative mx-auto max-w-2xl px-6 pb-20 pt-32 sm:pt-40">
-        <Link
-          href="/contact"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Terug naar contact
-        </Link>
-
-        <h1 className="mt-4 font-serif text-3xl text-foreground sm:text-4xl">
+        <h1 className="font-serif text-3xl text-foreground sm:text-4xl">
           Stel een vraag
         </h1>
 
