@@ -96,8 +96,9 @@ export function getScrewClearanceMarginsMm(
 }
 
 // Sierrand ("kader") — optionele extra op het bordje (toegevoegd 25-8-2026,
-// n.a.v. voorbeeldfoto's van Christiaan). Alleen voor rechthoekige vormen
-// (niet "ovaal" — besloten door Christiaan, 25-8-2026).
+// n.a.v. voorbeeldfoto's van Christiaan). Aanvankelijk alleen voor
+// rechthoekige vormen (niet "ovaal"), maar sinds 28-8-2026 ook beschikbaar
+// voor de ovale vorm — zie getOvalFrameBorderPath verderop in dit bestand.
 //
 // Dit pad is meermaals herzien op basis van Christiaans feedback en foto's
 // van een echt bordje ("172"), voordat de vorm klopte. De doorbraak kwam
@@ -169,6 +170,48 @@ export function getFrameBorderPath(widthMm: number, heightMm: number): string {
     `A ${r} ${r} 0 0 0 ${fi} ${heightMm - knee}`,
     `L ${fi} ${knee}`,
     `A ${r} ${r} 0 0 0 ${knee} ${fi}`,
+    `Z`,
+  ].join(" ");
+}
+
+/**
+ * Bouwt het SVG-pad voor de kaderlijn van een OVAAL bordje (toegevoegd
+ * 28-8-2026, n.a.v. een voorbeeldfoto van Christiaan van een ovaal bordje
+ * "No 4" met een dunne ovale sierrand rond de gaatjes).
+ *
+ * In tegenstelling tot de rechthoekige kaderlijn hierboven is hier GEEN
+ * inkeping bij de schroefjes nodig. Bij een ovaal bordje zitten de
+ * schroefjes op OVAL_SCREW_AXIS_RATIO (40%) van het midden op de lange as
+ * (zie getScrewPositions) — dus op 80% van de afstand tot de ware rand. Een
+ * kaderlijn die (met dezelfde FRAME_EDGE_INSET_RATIO als bij de
+ * rechthoekige vorm) maar 3% van de kortste zijde naar binnen ligt, blijft
+ * daar ruim buiten. Dit is gecontroleerd voor alle 5 bestaande ovale maten
+ * (105×150 t/m 220×300 mm): de marge tussen kaderlijn en schroefje is in
+ * alle gevallen ruim voldoende (circa 7 tot 13,5 mm). Een gewone, gelijkmatig
+ * naar binnen geplaatste ellips volstaat dus — precies zoals op Christiaans
+ * foto, die geen inkeping bij de gaatjes laat zien.
+ *
+ * De ellips wordt hier als SVG-pad (met twee boogsegmenten) opgebouwd in
+ * plaats van als los <ellipse>-element, omdat het pad-formaat (met "A"-boog-
+ * commando's) al bewezen goed werkt bij zowel de live preview
+ * (ProductPreview.tsx, gewone SVG in de browser) als de e-mailafbeelding
+ * (plate-preview-image.tsx, gerenderd via next/og / Satori) — zie
+ * getFrameBorderPath hierboven, die op dezelfde manier werkt.
+ */
+export function getOvalFrameBorderPath(
+  widthMm: number,
+  heightMm: number
+): string {
+  const fi = Math.min(widthMm, heightMm) * FRAME_EDGE_INSET_RATIO;
+  const cx = widthMm / 2;
+  const cy = heightMm / 2;
+  const rx = widthMm / 2 - fi;
+  const ry = heightMm / 2 - fi;
+
+  return [
+    `M ${cx - rx} ${cy}`,
+    `A ${rx} ${ry} 0 1 0 ${cx + rx} ${cy}`,
+    `A ${rx} ${ry} 0 1 0 ${cx - rx} ${cy}`,
     `Z`,
   ].join(" ");
 }

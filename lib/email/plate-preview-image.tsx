@@ -7,6 +7,7 @@ import {
   LINE_GAP_RATIO_BY_FONT,
   getContrastTextColor,
   getFrameBorderPath,
+  getOvalFrameBorderPath,
   getScrewClearanceMarginsMm,
   getScrewPositions,
   getScrewRadiusMm,
@@ -249,7 +250,7 @@ export async function renderPlatePreviewPng(
             </div>
           ))}
 
-          {isFramed && !isOval && (
+          {isFramed && (
             <svg
               style={{
                 position: "absolute",
@@ -261,7 +262,11 @@ export async function renderPlatePreviewPng(
               viewBox={`0 0 ${widthMm} ${heightMm}`}
             >
               <path
-                d={getFrameBorderPath(widthMm, heightMm)}
+                d={
+                  isOval
+                    ? getOvalFrameBorderPath(widthMm, heightMm)
+                    : getFrameBorderPath(widthMm, heightMm)
+                }
                 fill="none"
                 stroke={textColor}
                 strokeWidth={Math.min(widthMm, heightMm) * FRAME_STROKE_WIDTH_RATIO}

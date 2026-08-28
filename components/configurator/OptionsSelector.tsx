@@ -3,34 +3,24 @@
 import { Check } from "lucide-react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { usePricingData } from "@/lib/configuration/PricingDataContext";
-import { productShapes } from "@/config/product-options";
 import { formatPriceCents } from "@/lib/configuration/pricing";
 import { cn } from "@/lib/utils";
 
-// De kaderoptie (toegevoegd 25-8-2026, n.a.v. voorbeeldfoto van Christiaan)
-// is een eenvoudige aan/uit-keuze (geen keuze tussen meerdere varianten,
-// zoals bij Vorm of Afwerking) — daarom hier één aanklikbaar vakje in
-// plaats van een groep van meerdere kaarten. Alleen beschikbaar voor
-// niet-ovale vormen (besloten door Christiaan, 25-8-2026): bij "ovaal"
-// wordt dit gewoon een toelichtende tekst, net als bij FinishSelector.tsx
-// wanneer een vorm maar in één afwerking leverbaar is.
+// De kaderoptie (toegevoegd 25-8-2026, n.a.v. voorbeeldfoto van Christiaan;
+// sinds 28-8-2026 ook beschikbaar voor de ovale vorm, zie
+// lib/configuration/plate-visual.ts / getOvalFrameBorderPath) is een
+// eenvoudige aan/uit-keuze (geen keuze tussen meerdere varianten, zoals bij
+// Vorm of Afwerking) — daarom hier één aanklikbaar vakje in plaats van een
+// groep van meerdere kaarten. Er is geen aparte voorbeeldfoto voor het
+// ovale kader, dus wordt dezelfde thumbnail hergebruikt als bij de andere
+// vormen.
 const FRAME_IMAGE_SRC = "/images/optie-kader.jpg";
 
 export function OptionsSelector() {
   const { selection, dispatch } = useConfigurator();
   const pricingData = usePricingData();
-  const shape = productShapes.find((s) => s.id === selection.shapeId);
-  const isOval = shape?.id === "ovaal";
 
   const frameSurchargeCents = pricingData.globalPricingOptions.frameSurchargeCents;
-
-  if (isOval) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Voor een ovaal bordje is geen kaderrand beschikbaar.
-      </p>
-    );
-  }
 
   const isSelected = selection.hasFrame;
 

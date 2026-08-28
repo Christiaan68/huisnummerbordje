@@ -35,19 +35,17 @@ function reducer(
           ? shape.availableFinishes[0]
           : null;
 
-      // De kaderoptie bestaat alleen voor niet-ovale vormen (besloten door
-      // Christiaan, 25-8-2026) — bij het kiezen van "ovaal" wordt een
-      // eerder aangevinkt kader dus automatisch weer uitgezet, net zoals
-      // hierboven al met "finish" en "sizeId" gebeurt.
-      const hasFrame = action.shapeId === "ovaal" ? false : state.hasFrame;
-
+      // De kaderoptie is sinds 28-8-2026 voor alle vormen beschikbaar,
+      // inclusief "ovaal" (zie lib/configuration/plate-visual.ts,
+      // getOvalFrameBorderPath) — een eerder aangevinkt kader hoeft dus niet
+      // meer automatisch uitgezet te worden bij het wisselen van vorm
+      // (vóór die datum gebeurde dat wel).
       return {
         ...state,
         shapeId: action.shapeId,
         finish,
         sizeId: null,
         numberPosition: "start",
-        hasFrame,
       };
     }
     case "SET_FINISH":

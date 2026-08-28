@@ -17,6 +17,7 @@ import {
   LINE_GAP_RATIO_BY_FONT,
   getContrastTextColor,
   getFrameBorderPath,
+  getOvalFrameBorderPath,
   getScrewClearanceMarginsMm,
   getScrewPositions,
   getScrewRadiusMm,
@@ -268,9 +269,13 @@ export function ProductPreview() {
               );
             })}
 
-            {selection.hasFrame && !isOval && (
+            {selection.hasFrame && (
               <path
-                d={getFrameBorderPath(plateWidth, plateHeight)}
+                d={
+                  isOval
+                    ? getOvalFrameBorderPath(plateWidth, plateHeight)
+                    : getFrameBorderPath(plateWidth, plateHeight)
+                }
                 fill="none"
                 stroke={textColor}
                 strokeWidth={
