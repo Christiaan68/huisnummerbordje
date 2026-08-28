@@ -8,6 +8,7 @@ import {
   productFonts,
 } from "@/config/product-options";
 import { calculatePrice, formatPriceCents } from "@/lib/configuration/pricing";
+import { buildOrderLabel } from "@/lib/configuration/orderLabel";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -32,6 +33,7 @@ export function ConfigurationSummary() {
 
   const hasLine1 = (shape?.extraLines ?? 0) >= 1;
   const hasLine2 = (shape?.extraLines ?? 0) >= 2;
+  const orderLabel = shape ? buildOrderLabel(shape, selection.numberPosition) : undefined;
 
   return (
     <dl>
@@ -56,6 +58,7 @@ export function ConfigurationSummary() {
           <Row label="Lettertype tekstregel 2" value={line2Font?.name ?? "—"} />
         </>
       )}
+      {orderLabel && <Row label="Volgorde" value={orderLabel} />}
       <Row
         label="Kader"
         value={

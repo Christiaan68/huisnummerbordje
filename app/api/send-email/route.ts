@@ -10,30 +10,16 @@ import { calculatePrice } from "@/lib/configuration/pricing";
 import { getLivePricingData } from "@/lib/configuration/livePricing";
 import { saveOrderToDatabase } from "@/lib/mysql/client";
 import { getNotificationEmail } from "@/lib/email/settings";
+import { buildOrderLabel } from "@/lib/configuration/orderLabel";
 import {
   productShapes,
   productColors,
   productFonts,
 } from "@/config/product-options";
 
-function buildOrderLabel(
-  shape: { extraLines: number },
-  position: "start" | "middle" | "end"
-): string | undefined {
-  if (shape.extraLines === 0) return undefined;
-  if (shape.extraLines === 1) {
-    return position === "end"
-      ? "Tekstregel boven, huisnummer onder"
-      : "Huisnummer boven, tekstregel onder";
-  }
-  if (position === "middle") {
-    return "Tekstregel 1 boven, huisnummer midden, tekstregel 2 onder";
-  }
-  if (position === "end") {
-    return "Tekstregel 1 boven, tekstregel 2 midden, huisnummer onder";
-  }
-  return "Huisnummer boven, tekstregel 1 midden, tekstregel 2 onder";
-}
+// buildOrderLabel staat sinds 28-8-2026 in lib/configuration/orderLabel.ts,
+// zodat dezelfde tekst ook in de "Controle"-stap van de configurator
+// gebruikt kan worden (components/configurator/ConfigurationSummary.tsx).
 
 export async function POST(request: Request) {
   let body: unknown;
