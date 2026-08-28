@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -71,10 +72,21 @@ export function ContactQuestionForm() {
 
   if (status === "success") {
     return (
-      <p className="mt-6 text-sm text-muted-foreground">
-        Bedankt! Je vraag is verstuurd. We nemen zo snel mogelijk contact met
-        je op via het e-mailadres dat je hebt ingevuld.
-      </p>
+      <div className="mt-6">
+        <p className="text-sm text-muted-foreground">
+          Bedankt! Je vraag is verstuurd. We nemen zo snel mogelijk contact
+          met je op via het e-mailadres dat je hebt ingevuld.
+        </p>
+        {/* "Naar home" staat bewust alleen hier, ná het versturen — tijdens
+            het invullen van het formulier hoort alleen "Vraag versturen"
+            zichtbaar te zijn (op verzoek van Christiaan). */}
+        <Link
+          href="/"
+          className="mt-6 inline-flex items-center justify-center rounded-sm border border-border px-6 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/50"
+        >
+          Naar home
+        </Link>
+      </div>
     );
   }
 

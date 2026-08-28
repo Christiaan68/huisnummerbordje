@@ -47,13 +47,6 @@ export default function ContactVraagPage() {
         </p>
 
         <ContactQuestionForm />
-
-        <Link
-          href="/"
-          className="mt-8 inline-flex items-center justify-center rounded-sm border border-border px-6 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/50"
-        >
-          Naar home
-        </Link>
       </main>
 
       <Footer />
