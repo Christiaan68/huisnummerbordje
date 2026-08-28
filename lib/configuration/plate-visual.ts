@@ -18,7 +18,14 @@ export const OVAL_SCREW_AXIS_RATIO = 0.4;
 // nog geen maat gekozen is — zie ProductPreview.tsx voor de toelichting.
 export const DEFAULT_OVAL_RATIO = 1.4;
 
-const SCREW_RADIUS_RATIO = 0.045; // van min(breedte, hoogte) van het bordje
+// Op verzoek van Christiaan op 28-8-2026 gehalveerd (was 0.045) — de
+// schroefgaatjes in alle previews (live configurator + bevestigingsmail)
+// oogden te groot. Omdat dit de enige plek is waar de schroefstraal
+// vandaan komt, werkt dit automatisch door in de tekst-marges
+// (getScrewClearanceMarginsMm) en de kaderlijn-hoekbogen
+// (getFrameBorderPath) — die blijven daardoor kloppen bij de nieuwe,
+// kleinere schroefjes.
+const SCREW_RADIUS_RATIO = 0.0225; // van min(breedte, hoogte) van het bordje
 const SCREW_CLEARANCE_BUFFER_MM = 3;
 
 export function getContrastTextColor(hex: string): string {
