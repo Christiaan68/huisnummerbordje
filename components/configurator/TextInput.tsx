@@ -1,7 +1,9 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Check, ChevronDown } from "lucide-react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
+import { useFontPreview, type FontPreviewField } from "@/lib/configuration/FontPreviewContext";
 import { productShapes, productFonts } from "@/config/product-options";
 import { houseNumberSchema, extraLineSchema } from "@/lib/validation/text-input.schema";
 import { cn } from "@/lib/utils";
@@ -13,47 +15,122 @@ function fieldClass(hasError: boolean) {
   );
 }
 
-// Lettertypekeuze per tekstveld — een dropdown die sinds 28-8-2026 direct
-// NAAST het bijbehorende tekstveld staat (was eerst een rij kaarten, daarna
-// een dropdown onder het veld, en kort een hele losse configuratorstap — op
-// verzoek van Christiaan uiteindelijk dit: compact, in hetzelfde blikveld
-// als de tekst zelf). De live preview rechts (ProductPreview.tsx) leest
-// dezelfde configurator-state en tekent bij elke wijziging meteen opnieuw —
-// daar is voor deze dropdown zelf dus niets extra's voor nodig.
+/**
+ * Lettertypekeuze per tekstveld — staat sinds 28-8-2026 direct NAAST het
+ * bijbehorende tekstveld (was eerst een rij kaarten, daarna een gewone
+ * dropdown eronder, en kort een hele losse configuratorstap; op verzoek van
+ * Christiaan uiteindelijk dit compacte menuutje, in hetzelfde blikveld als
+ * de tekst zelf).
+ *
+ * Bewust een zelfgebouwd menuutje in plaats van een standaard HTML
+ * `<select>`: zo kan tijdens het HANGEN met de muis boven een optie (nog
+ * vóór het echt aanklikken) de "Live preview" rechts alvast dat lettertype
+ * laten zien — bij een standaard `<select>` is de opengeklapte lijst
+ * onderdeel van de browser/het besturingssysteem, waar geen hover-events
+ * uit te lezen zijn. Zie lib/configuration/FontPreviewContext.tsx voor hoe
+ * die tijdelijke preview (los van de echte, opgeslagen keuze) doorgegeven
+ * wordt aan ProductPreview.tsx. Op telefoon/tablet is er geen muis, dus daar
+ * gebeurt er simpelweg niets tijdens het aanraken — pas de daadwerkelijke
+ * keuze (bij het tikken op een optie) telt, precies zoals gevraagd.
+ */
 function FontDropdown({
   id,
-  label,
+  field,
   selectedFontId,
   onSelect,
 }: {
   id: string;
-  label: string;
+  field: FontPreviewField;
   selectedFontId: string | null;
   onSelect: (fontId: string) => void;
 }) {
+  const { setOverride } = useFontPreview();
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const selectedFont = productFonts.find((f) => f.id === selectedFontId);
+  const labelId = `${id}-label`;
+
+  useEffect(() => {
+    if (!open) return;
+
+    function closeAndClear() {
+      setOpen(false);
+      setOverride(null);
+    }
+
+    function handlePointerDown(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        closeAndClear();
+      }
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") closeAndClear();
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open, setOverride]);
+
   return (
-    <div className="w-36 shrink-0 sm:w-40">
-      <label htmlFor={id} className="mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground">
-        {label}
+    <div ref={containerRef} className="relative w-36 shrink-0 sm:w-40">
+      <label id={labelId} htmlFor={id} className="mb-1.5 block text-sm font-medium text-muted-foreground">
+        Lettertype
       </label>
-      <div className="relative">
-        <select
-          id={id}
-          value={selectedFontId ?? ""}
-          onChange={(e) => onSelect(e.target.value)}
-          className="w-full appearance-none rounded-sm border border-border bg-secondary px-3 py-2.5 pr-8 text-sm text-foreground outline-none focus:border-primary"
+      <button
+        type="button"
+        id={id}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-labelledby={`${labelId} ${id}`}
+        onClick={() => {
+          const next = !open;
+          setOpen(next);
+          if (!next) setOverride(null);
+        }}
+        className="flex w-full items-center justify-between rounded-sm border border-border bg-secondary px-3 py-3 text-left text-sm text-foreground outline-none focus:border-primary"
+      >
+        <span className="truncate">{selectedFont?.name ?? "Kies..."}</span>
+        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </button>
+
+      {open && (
+        <ul
+          role="listbox"
+          aria-labelledby={labelId}
+          className="absolute z-20 mt-1 w-full overflow-hidden rounded-sm border border-border bg-card shadow-lg"
         >
-          <option value="" disabled>
-            Kies...
-          </option>
-          {productFonts.map((font) => (
-            <option key={font.id} value={font.id}>
-              {font.name}
-            </option>
-          ))}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-      </div>
+          {productFonts.map((font) => {
+            const isSelected = font.id === selectedFontId;
+            return (
+              <li key={font.id} role="option" aria-selected={isSelected}>
+                <button
+                  type="button"
+                  onMouseEnter={() => setOverride({ field, fontId: font.id })}
+                  onMouseLeave={() => setOverride(null)}
+                  onFocus={() => setOverride({ field, fontId: font.id })}
+                  onBlur={() => setOverride(null)}
+                  onClick={() => {
+                    onSelect(font.id);
+                    setOverride(null);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "flex w-full items-center justify-between px-3 py-2 text-left text-sm text-foreground hover:bg-secondary",
+                    isSelected && "bg-secondary/70"
+                  )}
+                >
+                  <span style={{ fontFamily: font.cssFamily }}>{font.name}</span>
+                  {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
@@ -105,7 +182,7 @@ export function TextInput() {
           </div>
           <FontDropdown
             id="numberFontId"
-            label="Lettertype"
+            field="numberFontId"
             selectedFontId={selection.numberFontId}
             onSelect={(fontId) => dispatch({ type: "SET_NUMBER_FONT", fontId })}
           />
@@ -141,7 +218,7 @@ export function TextInput() {
             </div>
             <FontDropdown
               id="line1FontId"
-              label="Lettertype"
+              field="line1FontId"
               selectedFontId={selection.line1FontId}
               onSelect={(fontId) => dispatch({ type: "SET_LINE1_FONT", fontId })}
             />
@@ -176,7 +253,7 @@ export function TextInput() {
             </div>
             <FontDropdown
               id="line2FontId"
-              label="Lettertype"
+              field="line2FontId"
               selectedFontId={selection.line2FontId}
               onSelect={(fontId) => dispatch({ type: "SET_LINE2_FONT", fontId })}
             />

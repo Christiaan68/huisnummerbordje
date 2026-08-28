@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef } from "react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
+import { useFontPreview } from "@/lib/configuration/FontPreviewContext";
 import { usePricingData } from "@/lib/configuration/PricingDataContext";
 import {
   productShapes,
@@ -27,9 +28,22 @@ const PREVIEW_WIDTH_PX = 260;
 
 export function ProductPreview() {
   const { selection } = useConfigurator();
+  const { override } = useFontPreview();
   const pricingData = usePricingData();
   const plateRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
+
+  // Zolang iemand met de muis boven een lettertype-optie in de dropdown
+  // hangt (zie TextInput.tsx/FontPreviewContext.tsx), toont de preview
+  // alvast dát lettertype voor het betreffende veld — zonder de echte
+  // configurator-keuze aan te passen. Weg met de muis (of geklikt) → terug
+  // naar de daadwerkelijk gekozen lettertypes hieronder.
+  const previewNumberFontId =
+    override?.field === "numberFontId" ? override.fontId : selection.numberFontId;
+  const previewLine1FontId =
+    override?.field === "line1FontId" ? override.fontId : selection.line1FontId;
+  const previewLine2FontId =
+    override?.field === "line2FontId" ? override.fontId : selection.line2FontId;
 
   const shape = productShapes.find((s) => s.id === selection.shapeId);
   const color = productColors.find((c) => c.id === selection.colorId);
@@ -46,13 +60,13 @@ export function ProductPreview() {
   // toenmalige "Modern"-placeholder.
   const previewFallbackFont = productFonts.find((f) => f.id === "times");
   const numberFont =
-    productFonts.find((f) => f.id === selection.numberFontId) ??
+    productFonts.find((f) => f.id === previewNumberFontId) ??
     previewFallbackFont;
   const line1Font =
-    productFonts.find((f) => f.id === selection.line1FontId) ??
+    productFonts.find((f) => f.id === previewLine1FontId) ??
     previewFallbackFont;
   const line2Font =
-    productFonts.find((f) => f.id === selection.line2FontId) ??
+    productFonts.find((f) => f.id === previewLine2FontId) ??
     previewFallbackFont;
 
   const isOval = shape?.id === "ovaal";
@@ -377,14 +391,14 @@ export function ProductPreview() {
           <div className="flex justify-between border-t border-border/60 pt-1.5">
             <dt className="text-muted-foreground">Lettertype huisnummer</dt>
             <dd className="text-foreground">
-              {productFonts.find((f) => f.id === selection.numberFontId)?.name ?? "—"}
+              {productFonts.find((f) => f.id === previewNumberFontId)?.name ?? "—"}
             </dd>
           </div>
           {hasLine1 && (
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Lettertype tekstregel 1</dt>
               <dd className="text-foreground">
-                {productFonts.find((f) => f.id === selection.line1FontId)?.name ?? "—"}
+                {productFonts.find((f) => f.id === previewLine1FontId)?.name ?? "—"}
               </dd>
             </div>
           )}
@@ -392,7 +406,7 @@ export function ProductPreview() {
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Lettertype tekstregel 2</dt>
               <dd className="text-foreground">
-                {productFonts.find((f) => f.id === selection.line2FontId)?.name ?? "—"}
+                {productFonts.find((f) => f.id === previewLine2FontId)?.name ?? "—"}
               </dd>
             </div>
           )}
