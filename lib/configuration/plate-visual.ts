@@ -45,6 +45,17 @@ export const DEFAULT_OVAL_RATIO = 1.4;
 const SCREW_RADIUS_RATIO = 0.0225; // van min(breedte, hoogte) van het bordje
 const SCREW_CLEARANCE_BUFFER_MM = 3;
 
+// Extra ruimte tussen tekst en kaderlijn wanneer het optionele kader
+// (getFrameBorderPath / getOvalFrameBorderPath, zie verderop) aan staat. Op
+// verzoek van Christiaan (29-8-2026, n.a.v. een foto uit de bevestigingsmail
+// waarop de tekst nog "krap" tegen het kader stond): de marge hierboven
+// (getScrewClearanceMarginsMm) houdt alleen rekening met vrije doorgang bij
+// de schroefjes, niet met het kader zelf. Deze extra marge komt daar apart
+// bovenop zodra er een kader gekozen is, zodat er ook visueel merkbaar meer
+// lucht tussen tekst en kaderlijn overblijft. Bewust als verhouding (i.p.v.
+// een vast aantal mm) zodat de extra ruimte meeschaalt met de bordjesmaat.
+const FRAME_TEXT_EXTRA_MARGIN_RATIO = 0.02; // van min(breedte, hoogte)
+
 export function getContrastTextColor(hex: string): string {
   const clean = hex.replace("#", "");
   const r = parseInt(clean.substring(0, 2), 16);
@@ -91,31 +102,48 @@ export function getScrewPositions(
 /**
  * Minimale marge (in mm) die vrijgehouden moet worden zodat de automatisch
  * berekende tekstgrootte (zie computeAutoFit in text-fit.ts) niet over de
- * schroefjes heen loopt.
+ * schroefjes heen loopt — en, als `hasFrame` meegegeven is, ook niet krap
+ * tegen de kaderlijn aan komt te staan (zie FRAME_TEXT_EXTRA_MARGIN_RATIO
+ * hierboven).
  */
 export function getScrewClearanceMarginsMm(
   isOval: boolean,
   widthMm: number,
-  heightMm: number
+  heightMm: number,
+  hasFrame = false
 ): { minMarginXMm: number; minMarginYMm: number } {
   const screwRadiusMm = getScrewRadiusMm(widthMm, heightMm);
+  const frameExtraMm = hasFrame
+    ? Math.min(widthMm, heightMm) * FRAME_TEXT_EXTRA_MARGIN_RATIO
+    : 0;
 
   if (isOval) {
     const longAxisIsWidth = widthMm >= heightMm;
     const axisMarginMm =
       (longAxisIsWidth ? widthMm : heightMm) * (0.5 - OVAL_SCREW_AXIS_RATIO) +
       screwRadiusMm +
-      SCREW_CLEARANCE_BUFFER_MM;
+      SCREW_CLEARANCE_BUFFER_MM +
+      frameExtraMm;
+    // Op de korte as zitten bij een ovaal bordje geen schroefjes, dus was
+    // die marge altijd 0 — maar de ovale kaderlijn loopt daar wél omheen
+    // (zie getOvalFrameBorderPath), dus bij een kader alsnog de extra marge
+    // op de korte as aanhouden.
     return longAxisIsWidth
-      ? { minMarginXMm: axisMarginMm, minMarginYMm: 0 }
-      : { minMarginXMm: 0, minMarginYMm: axisMarginMm };
+      ? { minMarginXMm: axisMarginMm, minMarginYMm: frameExtraMm }
+      : { minMarginXMm: frameExtraMm, minMarginYMm: axisMarginMm };
   }
 
   return {
     minMarginXMm:
-      widthMm * SCREW_INSET_RATIO + screwRadiusMm + SCREW_CLEARANCE_BUFFER_MM,
+      widthMm * SCREW_INSET_RATIO +
+      screwRadiusMm +
+      SCREW_CLEARANCE_BUFFER_MM +
+      frameExtraMm,
     minMarginYMm:
-      heightMm * SCREW_INSET_RATIO + screwRadiusMm + SCREW_CLEARANCE_BUFFER_MM,
+      heightMm * SCREW_INSET_RATIO +
+      screwRadiusMm +
+      SCREW_CLEARANCE_BUFFER_MM +
+      frameExtraMm,
   };
 }
 

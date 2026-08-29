@@ -122,10 +122,14 @@ export async function renderPlatePreviewPng(
   const hasLine1 = Boolean(line1Text && line1Text.length > 0);
   const hasLine2 = Boolean(line2Text && line2Text.length > 0);
 
+  // Vierde argument (hasFrame): als het optionele kader aan staat, houdt
+  // getScrewClearanceMarginsMm er ook rekening mee dat de tekst niet krap
+  // tegen de kaderlijn aan mag komen (29-8-2026).
   const { minMarginXMm, minMarginYMm } = getScrewClearanceMarginsMm(
     isOval,
     widthMm,
-    heightMm
+    heightMm,
+    isFramed
   );
   const fit = computeAutoFit({
     widthMm,

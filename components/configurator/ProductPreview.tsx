@@ -108,10 +108,14 @@ export function ProductPreview() {
     // verticaal bij een staande) — op de korte as staan ze in het midden,
     // dus daar is geen extra marge nodig (gemeld door Christiaan, 19-8-2026,
     // n.a.v. "88888" op een ovaal bordje dat de gaatjes overschreef).
+    // Vierde argument (hasFrame): als het optionele kader aan staat, houdt
+    // getScrewClearanceMarginsMm er ook rekening mee dat de tekst niet krap
+    // tegen de kaderlijn aan mag komen (29-8-2026).
     const { minMarginXMm, minMarginYMm } = getScrewClearanceMarginsMm(
       isOval,
       size.width,
-      size.height
+      size.height,
+      selection.hasFrame
     );
 
     const fit = computeAutoFit({
