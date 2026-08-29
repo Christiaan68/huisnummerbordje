@@ -9,11 +9,11 @@ import { QuestionModal } from "@/components/configurator/QuestionModal";
 import type { CreateConfigurationInput } from "@/types/configuration";
 import type { ContactDetails } from "@/lib/validation/contact.schema";
 
-type Stage = "summary" | "contact" | "success";
+type Stage = "summary" | "contact";
 
 export default function ControlePage() {
   const router = useRouter();
-  const { selection, dispatch } = useConfigurator();
+  const { selection } = useConfigurator();
   const [stage, setStage] = useState<Stage>("summary");
   const [status, setStatus] = useState<"idle" | "submitting" | "error" | "notice">(
     "idle"
@@ -40,11 +40,6 @@ export default function ControlePage() {
     setStatus("idle");
     setMessage(null);
     setStage("contact");
-  }
-
-  function handleNaarHome() {
-    dispatch({ type: "RESET" });
-    router.push("/");
   }
 
   async function handleContactSubmit(contact: ContactDetails) {
@@ -81,14 +76,18 @@ export default function ControlePage() {
     };
 
     try {
-      const response = await fetch("/api/send-email", {
+      // Sinds 29-8-2026 (Mollie): dit start alleen nog de betaling — de
+      // bevestigingsmails gaan pas uit ná een gelukte betaling, zie
+      // app/api/create-payment/route.ts en app/api/mollie-webhook/route.ts.
+      const response = await fetch("/api/create-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
-        const data = await response.json().catch(() => null);
         setStatus("error");
         setMessage(
           data?.error ?? "Er ging iets mis bij het versturen. Probeer het opnieuw."
@@ -96,16 +95,15 @@ export default function ControlePage() {
         return;
       }
 
-      const data = await response.json().catch(() => null);
-      if (data?.warning) {
+      if (!data?.checkoutUrl) {
         setStatus("error");
-        setMessage(data.warning);
+        setMessage("Er ging iets mis bij het starten van de betaling. Probeer het opnieuw.");
         return;
       }
 
-      setStatus("notice");
-      setMessage("Je configuratie en gegevens zijn bevestigd en per e-mail verstuurd!");
-      setStage("success");
+      // Bewuste, volledige paginanavigatie (niet router.push): de klant
+      // verlaat de webshop hier echt, naar de betaalpagina van Mollie.
+      window.location.href = data.checkoutUrl;
     } catch {
       setStatus("error");
       setMessage(
@@ -122,7 +120,6 @@ export default function ControlePage() {
       <h1 className="mt-1 font-serif text-2xl text-primary">
         {stage === "summary" && "Controle"}
         {stage === "contact" && "Jouw gegevens"}
-        {stage === "success" && "Bedankt!"}
       </h1>
 
       {stage === "summary" && (
@@ -183,8 +180,8 @@ export default function ControlePage() {
       {stage === "contact" && (
         <>
           <p className="mt-4 text-muted-foreground">
-            Vul je gegevens in, dan sturen we je configuratie inclusief deze
-            gegevens naar ons door.
+            Vul je gegevens in — daarna ga je verder naar de betaalpagina om
+            je bestelling af te ronden.
           </p>
 
           <p className="mt-2 text-sm text-muted-foreground">
@@ -218,22 +215,6 @@ export default function ControlePage() {
               {message}
             </p>
           )}
-        </>
-      )}
-
-      {stage === "success" && (
-        <>
-          <p className="mt-4 text-muted-foreground">{message}</p>
-
-          <div className="mt-10 border-t border-border pt-6">
-            <button
-              type="button"
-              onClick={handleNaarHome}
-              className="inline-flex items-center justify-center rounded-sm border border-border bg-secondary px-8 py-4 text-sm font-medium text-foreground transition-colors hover:bg-secondary/70"
-            >
-              Naar home
-            </button>
-          </div>
         </>
       )}
 

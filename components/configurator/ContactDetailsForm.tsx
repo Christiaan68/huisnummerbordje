@@ -44,9 +44,9 @@ export function ContactDetailsForm({
 
   // Akkoord met leveringsvoorwaarden/retourbeleid — bewust géén onderdeel
   // van contactDetailsSchema/ContactDetails: dat type wordt ook gebruikt
-  // als payload naar /api/send-email, en dit is puur een blokkade in de
-  // browser vóór het versturen, geen gegeven dat opgeslagen/gemaild hoeft
-  // te worden.
+  // als payload naar /api/create-payment, en dit is puur een blokkade in de
+  // browser vóór het doorgaan naar de betaalpagina, geen gegeven dat
+  // opgeslagen/gemaild hoeft te worden.
   const [agreed, setAgreed] = useState(false);
   const [agreedError, setAgreedError] = useState(false);
 
@@ -226,7 +226,7 @@ export function ContactDetailsForm({
           disabled={isSubmitting}
           className="inline-flex items-center justify-center rounded-sm bg-primary px-8 py-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
         >
-          {isSubmitting ? "Bezig..." : "Gegevens versturen"}
+          {isSubmitting ? "Bezig..." : "Doorgaan naar betalen"}
         </button>
       </div>
     </form>

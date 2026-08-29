@@ -75,7 +75,9 @@ const CANVAS_BG = "#f4f1ea";
 /**
  * Genereert een PNG-voorbeeldafbeelding van het geconfigureerde bordje,
  * voor gebruik als (cid-)bijlage in de bevestigingsmail aan de klant — zie
- * app/api/send-email/route.ts. Gebruikt dezelfde geometrie
+ * lib/email/sendOrderEmails.ts (sinds 29-8-2026; daarvoor stond dit
+ * rechtstreeks in het inmiddels verwijderde app/api/send-email/route.ts).
+ * Gebruikt dezelfde geometrie
  * (schroefposities/-marges) en dezelfde automatische tekstgrootte als de
  * live preview in de configurator (components/configurator/ProductPreview.tsx),
  * via lib/configuration/plate-visual.ts en lib/configuration/text-fit.ts,

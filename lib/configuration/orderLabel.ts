@@ -4,7 +4,8 @@
  * tekstregel(s) op het bordje komen te staan. Wordt gebruikt in zowel de
  * "Controle"-stap van de configurator (components/configurator/
  * ConfigurationSummary.tsx) als in de interne en klant-bevestigingsmail
- * (app/api/send-email/route.ts) — één plek, zodat de tekst overal
+ * (app/api/create-payment/route.ts en app/api/mollie-webhook/route.ts,
+ * sinds 29-8-2026) — één plek, zodat de tekst overal
  * hetzelfde is. Bij een vorm zonder extra tekstregel is er niets te
  * ordenen, dus dan geeft deze functie undefined terug (geen "Volgorde"-
  * regel nodig).

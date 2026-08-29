@@ -74,10 +74,23 @@ CREATE TABLE IF NOT EXISTS configurations (
   -- elke nieuwe bestelling krijgt gewoon 'nieuw'.
   status ENUM('nieuw', 'in_behandeling', 'afgerond', 'geannuleerd') NOT NULL DEFAULT 'nieuw',
 
+  -- Betaalstatus via Mollie (toegevoegd 29-8-2026, zie de migratie
+  -- hieronder). Een bestelling wordt AL in deze tabel gezet zodra de klant
+  -- naar Mollie doorgestuurd wordt (status 'pending', nog niets gemaild),
+  -- en pas op 'paid' gezet zodra Mollie via een "webhook" bevestigt dat er
+  -- echt betaald is — pas dán gaan de bevestigingsmails ook echt uit (zie
+  -- app/api/mollie-webhook/route.ts). mollie_payment_id is Mollie's eigen
+  -- kenmerk van de betaling (handig om in het Mollie-dashboard op te
+  -- zoeken); paid_at is het moment waarop de betaling bevestigd werd.
+  payment_status ENUM('pending', 'paid', 'failed', 'expired', 'canceled') NOT NULL DEFAULT 'pending',
+  mollie_payment_id VARCHAR(64) NULL,
+  paid_at TIMESTAMP NULL,
+
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   INDEX idx_created_at (created_at),
-  INDEX idx_contact_email (contact_email)
+  INDEX idx_contact_email (contact_email),
+  INDEX idx_mollie_payment_id (mollie_payment_id)
 );
 
 -- MIGRATIE 25-8-2026: de tabel "configurations" hierboven bestond al in
@@ -104,3 +117,19 @@ ALTER TABLE configurations ADD COLUMN line1_font_id VARCHAR(64) NULL;
 ALTER TABLE configurations ADD COLUMN line1_font_name VARCHAR(100) NULL;
 ALTER TABLE configurations ADD COLUMN line2_font_id VARCHAR(64) NULL;
 ALTER TABLE configurations ADD COLUMN line2_font_name VARCHAR(100) NULL;
+
+-- MIGRATIE 29-8-2026: betalen via Mollie toegevoegd. Een bestelling komt
+-- voortaan AL in deze tabel te staan zodra de klant naar Mollie
+-- doorgestuurd wordt (nog vóór er betaald is), met payment_status
+-- 'pending' — dat is nieuw: eerder kwam een bestelling pas in de tabel
+-- terecht op het moment dat de bevestigingsmails al verstuurd waren. Voer
+-- onderstaande drie regels ÉÉNMALIG uit in hetzelfde SQL-scherm om de 3
+-- nieuwe kolommen toe te voegen (bestaande, al vóór deze migratie
+-- geplaatste bestellingen krijgen automatisch 'paid' mee, want die waren
+-- immers al (buiten Mollie om) afgerond en gemaild):
+
+ALTER TABLE configurations ADD COLUMN payment_status ENUM('pending', 'paid', 'failed', 'expired', 'canceled') NOT NULL DEFAULT 'pending';
+ALTER TABLE configurations ADD COLUMN mollie_payment_id VARCHAR(64) NULL;
+ALTER TABLE configurations ADD COLUMN paid_at TIMESTAMP NULL;
+ALTER TABLE configurations ADD INDEX idx_mollie_payment_id (mollie_payment_id);
+UPDATE configurations SET payment_status = 'paid' WHERE payment_status = 'pending';
