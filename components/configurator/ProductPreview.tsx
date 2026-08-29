@@ -149,6 +149,16 @@ export function ProductPreview() {
   // fontWeight: 700 (vet) op alle preview-tekst — zo lijkt de preview meer
   // op een echt geëmailleerd bordje, waar het nummer altijd dik/opvallend
   // gedrukt is (zie referentiefoto van Christiaan, 19-8-2026).
+  // whiteSpace: "nowrap" op elke regel: de auto-fit-berekening hierboven
+  // schat de tekenbreedte per lettertype in (CHAR_WIDTH_RATIO_BY_FONT in
+  // text-fit.ts) — dat is een inschatting, geen exacte lettertypemeting.
+  // Op sommige toestellen (met name iPhone/iPad bleek dit, 28-8-2026)
+  // rendert eenzelfde lettertype net iets breder dan op een laptop,
+  // waardoor een tekstregel zonder deze regel soms over 2 regels
+  // uiteenviel in plaats van 1. Met nowrap blijft een regel ALTIJD 1 regel
+  // — in het (zeldzame) geval dat de tekst toch iets te breed uitvalt,
+  // steekt die dan liever een klein stukje buiten het bordje uit dan dat
+  // hij in tweeën splitst.
   const numberNode = (
     <span
       key="number"
@@ -157,6 +167,7 @@ export function ProductPreview() {
         fontFamily: numberFontFamily,
         fontSize: `${numberFontSize}px`,
         fontWeight: 700,
+        whiteSpace: "nowrap",
       }}
     >
       {numberText}
@@ -170,6 +181,7 @@ export function ProductPreview() {
         fontFamily: line1FontFamily,
         fontSize: `${line1FontSize}px`,
         fontWeight: 700,
+        whiteSpace: "nowrap",
       }}
     >
       {line1Text}
@@ -183,6 +195,7 @@ export function ProductPreview() {
         fontFamily: line2FontFamily,
         fontSize: `${line2FontSize}px`,
         fontWeight: 700,
+        whiteSpace: "nowrap",
       }}
     >
       {line2Text}

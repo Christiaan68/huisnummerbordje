@@ -358,6 +358,12 @@ export async function renderPlatePreviewPng(
                   fontWeight: line.fontWeight,
                   lineHeight: 1,
                   color: textColor,
+                  // Zelfde reden als in ProductPreview.tsx (de live preview,
+                  // 28-8-2026): de auto-fit-berekening is een inschatting,
+                  // geen exacte lettertypemeting — whiteSpace "nowrap"
+                  // voorkomt dat een tekstregel in de e-mailafbeelding ooit
+                  // over 2 regels uiteenvalt.
+                  whiteSpace: "nowrap",
                 }}
               >
                 {line.text}
