@@ -131,6 +131,41 @@ export async function POST(request: Request) {
     priceFrameSurchargeCents: price?.frameSurchargeCents ?? 0,
   };
 
+  // Voorbeeldafbeelding van het geconfigureerde bordje — sinds 29-8-2026
+  // (op verzoek van Christiaan) al vóór de interne meldingsmail gegenereerd,
+  // zodat dezelfde afbeelding in ZOWEL de interne mail (naar de webshop,
+  // hieronder) als de klantmail (verderop) meegestuurd kan worden, zonder
+  // 'm twee keer te hoeven genereren. Bewust NIET verstuurd als publieke
+  // afbeelding-URL, maar als losse bijlage met een content-id (cid) — dat
+  // werkt betrouwbaar in alle e-mailclients, ook Outlook (die data-URI-
+  // afbeeldingen niet toont). Mislukt het genereren om wat voor reden dan
+  // ook, dan mag dat geen van beide bevestigingsmails ooit blokkeren: de
+  // mail(s) gaan dan gewoon zonder afbeelding.
+  const PREVIEW_IMAGE_CID = "bordje-voorbeeld";
+  let previewImageBuffer: Buffer | null = null;
+  try {
+    previewImageBuffer = await renderPlatePreviewPng({
+      isOval: shape.id === "ovaal",
+      isCurved: data.finish !== "vlak",
+      isFramed: Boolean(data.hasFrame),
+      widthMm: size.width,
+      heightMm: size.height,
+      colorHex: color.hex,
+      numberFontId: numberFont.id,
+      line1FontId: line1Font?.id,
+      line2FontId: line2Font?.id,
+      numberText: data.customText,
+      line1Text: shape.extraLines >= 1 ? data.extraLine1 : null,
+      line2Text: shape.extraLines >= 2 ? data.extraLine2 : null,
+      numberPosition: data.numberPosition,
+    });
+  } catch (previewError) {
+    console.error(
+      "Genereren van de voorbeeldafbeelding is mislukt (mail(s) worden wel zonder afbeelding verstuurd):",
+      previewError instanceof Error ? previewError.message : previewError
+    );
+  }
+
   const html = renderConfigurationEmail({
     shapeName: shape.name,
     finish: data.finish,
@@ -148,6 +183,7 @@ export async function POST(request: Request) {
     hasFrame: data.hasFrame,
     contact,
     orderLabel,
+    previewImageCid: previewImageBuffer ? PREVIEW_IMAGE_CID : undefined,
     ...priceFields,
   });
 
@@ -160,6 +196,15 @@ export async function POST(request: Request) {
       to: adminEmail,
       subject: `Nieuwe configuratie van ${contact.name}: ${shape.name} — ${data.customText}`,
       html,
+      attachments: previewImageBuffer
+        ? [
+            {
+              content: previewImageBuffer,
+              filename: "voorbeeld-bordje.png",
+              inlineContentId: PREVIEW_IMAGE_CID,
+            },
+          ]
+        : undefined,
     });
 
     if (error) {
@@ -218,39 +263,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Voorbeeldafbeelding van het geconfigureerde bordje, voor in de
-    // bevestigingsmail aan de klant (gevraagd door Christiaan, 19-8-2026:
-    // "zodat de klant weet wat er besteld is"). Bewust NIET verstuurd als
-    // publieke afbeeldings-URL, maar als losse bijlage met een content-id
-    // (cid) — dat werkt betrouwbaar in alle e-mailclients, ook Outlook
-    // (die data-URI-afbeeldingen niet toont). Mislukt het genereren om wat
-    // voor reden dan ook, dan mag dat de bestelbevestiging zelf nooit
-    // blokkeren: de e-mail gaat dan gewoon zonder afbeelding.
-    const PREVIEW_IMAGE_CID = "bordje-voorbeeld";
-    let previewImageBuffer: Buffer | null = null;
-    try {
-      previewImageBuffer = await renderPlatePreviewPng({
-        isOval: shape.id === "ovaal",
-        isCurved: data.finish !== "vlak",
-        isFramed: Boolean(data.hasFrame),
-        widthMm: size.width,
-        heightMm: size.height,
-        colorHex: color.hex,
-        numberFontId: numberFont.id,
-        line1FontId: line1Font?.id,
-        line2FontId: line2Font?.id,
-        numberText: data.customText,
-        line1Text: shape.extraLines >= 1 ? data.extraLine1 : null,
-        line2Text: shape.extraLines >= 2 ? data.extraLine2 : null,
-        numberPosition: data.numberPosition,
-      });
-    } catch (previewError) {
-      console.error(
-        "Genereren van de voorbeeldafbeelding voor de klantmail is mislukt (e-mail wordt wel zonder afbeelding verstuurd):",
-        previewError instanceof Error ? previewError.message : previewError
-      );
-    }
-
+    // De voorbeeldafbeelding (previewImageBuffer) is hierboven, vóór de
+    // interne mail, al één keer gegenereerd — wordt hier gewoon hergebruikt
+    // voor de klantmail, zie de toelichting daar.
     const customerHtml = renderCustomerConfirmationEmail({
       contactName: contact.name,
       shapeName: shape.name,

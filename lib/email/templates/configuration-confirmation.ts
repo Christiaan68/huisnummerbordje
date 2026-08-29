@@ -28,6 +28,13 @@ interface ConfigurationEmailData {
     quantity: string;
   };
   orderLabel?: string;
+  // Content-id van de bijgevoegde voorbeeldafbeelding van het bordje (zie
+  // app/api/send-email/route.ts / lib/email/plate-preview-image.tsx) — op
+  // verzoek van Christiaan (29-8-2026) toegevoegd aan ook déze interne
+  // meldingsmail, niet alleen aan de klantmail. Onbekend/leeg (bv. omdat
+  // het genereren onverhoopt mislukt is) → geen afbeelding tonen, de rest
+  // van de mail blijft gewoon werken.
+  previewImageCid?: string;
   // Prijs — zie lib/configuration/pricing.ts. priceTotalCents is null
   // wanneer er (nog) geen prijs bekend is voor deze maat/afwerking.
   priceTotalCents?: number | null;
@@ -68,6 +75,22 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
                   <div style="color:#a9b0bd;font-size:13px;margin-top:4px;">Ontvangen op ${date}</div>
                 </td>
               </tr>
+              ${
+                data.previewImageCid
+                  ? `
+              <tr>
+                <td style="padding:20px 32px 0;" align="center">
+                  <img
+                    src="cid:${data.previewImageCid}"
+                    alt="Voorbeeld van het geconfigureerde huisnummerbordje"
+                    width="320"
+                    style="display:block;max-width:320px;width:100%;height:auto;border-radius:6px;"
+                  />
+                </td>
+              </tr>
+              `
+                  : ""
+              }
               <tr>
                 <td style="padding:24px 32px 0;">
                   <span style="color:#1B2A41;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">
