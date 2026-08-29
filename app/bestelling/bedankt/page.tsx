@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { PendingPaymentAutoRefresh } from "@/components/order/PendingPaymentAutoRefresh";
 import { siteContent } from "@/config/site-content";
 import { getOrderById } from "@/lib/mysql/client";
 
@@ -69,10 +70,13 @@ export default async function BestellingBedanktPage({
         aria-hidden="true"
       />
 
-      {/* Ververst deze pagina één keer vanzelf na 4 seconden, zolang de
-          betaling nog niet definitief bevestigd is — een gewone HTML-
-          meta-refresh, geen extra JavaScript-component nodig. */}
-      {showAutoRefresh && <meta httpEquiv="refresh" content="4" />}
+      {/* Ververst deze pagina om de 4 seconden vanzelf, zolang de betaling
+          nog niet definitief bevestigd is — via React/JavaScript
+          (PendingPaymentAutoRefresh), NIET via een browser-<meta refresh>:
+          die laatste bleek na wegnavigeren (bv. "Naar home") alsnog een
+          ongevraagde terugkeer naar deze pagina te veroorzaken, zie de
+          toelichting in dat bestand. */}
+      {showAutoRefresh && <PendingPaymentAutoRefresh />}
 
       <Header showConfiguratorLink={false} />
 
