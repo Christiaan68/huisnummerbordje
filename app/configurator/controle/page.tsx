@@ -2,14 +2,25 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronLeft } from "lucide-react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { ConfigurationSummary } from "@/components/configurator/ConfigurationSummary";
 import { ContactDetailsForm } from "@/components/configurator/ContactDetailsForm";
 import { QuestionModal } from "@/components/configurator/QuestionModal";
+import { configuratorSteps } from "@/lib/configuration/steps";
 import type { CreateConfigurationInput } from "@/types/configuration";
 import type { ContactDetails } from "@/lib/validation/contact.schema";
 
 type Stage = "summary" | "contact";
+
+// De stap vóór "Controle" — op dit moment "Opties" — wordt hier uit
+// steps.ts opgezocht in plaats van hardcoded, zodat dit vanzelf blijft
+// kloppen als de volgorde van de configurator-stappen ooit wijzigt. Zelfde
+// bron als ConfiguratorNav.tsx (de "Terug"-knop op alle andere stappen)
+// gebruikt.
+const CONTROLE_STEP_INDEX = configuratorSteps.findIndex((s) => s.id === "controle");
+const PREVIOUS_STEP_PATH =
+  configuratorSteps[CONTROLE_STEP_INDEX - 1]?.path ?? "/configurator/opties";
 
 export default function ControlePage() {
   const router = useRouter();
@@ -21,8 +32,12 @@ export default function ControlePage() {
   const [message, setMessage] = useState<string | null>(null);
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
 
-  function handleWijzigen() {
-    router.push("/configurator/vorm");
+  // Voorheen "Wijzigen" (ging helemaal terug naar stap 1, "Vorm") — op
+  // verzoek van Christiaan (29-8-2026) vervangen door een gewone "Terug",
+  // die net als op alle andere stappen maar één stap terug gaat (naar
+  // "Opties"), in plaats van de hele configuratie kwijt te raken.
+  function handleTerug() {
+    router.push(PREVIOUS_STEP_PATH);
   }
 
   function handleConfiguratieBevestigen() {
@@ -126,7 +141,8 @@ export default function ControlePage() {
         <>
           <p className="mt-4 text-muted-foreground">
             Controleer je configuratie hieronder. Klopt alles? Bevestig dan je
-            bestelling. Wil je nog iets aanpassen? Klik op &quot;Wijzigen&quot;.
+            bestelling. Wil je nog iets aanpassen? Klik op &quot;Terug&quot; om
+            naar de vorige stap te gaan.
           </p>
 
           <div className="mt-8">
@@ -160,10 +176,11 @@ export default function ControlePage() {
           <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6">
             <button
               type="button"
-              onClick={handleWijzigen}
-              className="text-sm text-muted-foreground hover:text-foreground"
+              onClick={handleTerug}
+              className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
-              Wijzigen
+              <ChevronLeft className="h-4 w-4" />
+              Terug
             </button>
 
             <button
