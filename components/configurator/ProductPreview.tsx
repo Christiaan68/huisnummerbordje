@@ -55,10 +55,10 @@ export function ProductPreview() {
   // in stap 5 ("Tekst") per veld gekozen, zie TextInput.tsx). Zolang de
   // klant voor een veld nog niets gekozen heeft (bv. op een eerdere stap,
   // vóórdat stap 5 bereikt is, of simpelweg nog niet aangeklikt), valt de
-  // preview terug op "Times" als neutrale placeholder — zelfde aanpak als
-  // vroeger (toen nog vóór de introductie van per-veld lettertypes) met de
-  // toenmalige "Modern"-placeholder.
-  const previewFallbackFont = productFonts.find((f) => f.id === "times");
+  // preview terug op "Bodoni" als placeholder (op verzoek van Christiaan,
+  // 29-8-2026 — was eerst "Times", daarvoor, vóór de introductie van
+  // per-veld lettertypes, de inmiddels verwijderde "Modern"-placeholder).
+  const previewFallbackFont = productFonts.find((f) => f.id === "bodoni");
   const numberFont =
     productFonts.find((f) => f.id === previewNumberFontId) ??
     previewFallbackFont;
@@ -98,7 +98,18 @@ export function ProductPreview() {
   let line1FontSize = 14;
   let line2FontSize = 14;
 
-  if (size) {
+  // De automatische tekstgrootte-berekening liep tot nu toe pas zodra er
+  // een echte maat gekozen was (stap 4, "Maat") — daarvóór (bv. op stap 1,
+  // "Vorm") stond het voorbeeldcijfer "12" op een vaste, kleine
+  // placeholdergrootte (34px). Op verzoek van Christiaan (29-8-2026: "het
+  // getal 12 mag ook meteen zo groot zijn zoals die later in de preview
+  // komt te staan") loopt deze berekening nu altijd, ook vóórdat een maat
+  // gekozen is — met dezelfde placeholder-afmetingen (plateWidth/
+  // plateHeight hierboven) die de bordjestekening zelf ook al gebruikt
+  // zolang er nog geen maat is. Zodra een echte maat gekozen wordt, geven
+  // plateWidth/plateHeight gewoon de echte afmetingen door, dus voor de
+  // stappen ná "Maat" verandert er niets.
+  {
     // Hoeveel marge er minstens vrij moet blijven zodat de tekst niet over
     // de schroefjes heen loopt — berekend uit de werkelijke positie/grootte
     // van de schroefjes hierboven (screwPositions/screwRadius worden verderop
@@ -113,14 +124,14 @@ export function ProductPreview() {
     // tegen de kaderlijn aan mag komen (29-8-2026).
     const { minMarginXMm, minMarginYMm } = getScrewClearanceMarginsMm(
       isOval,
-      size.width,
-      size.height,
+      plateWidth,
+      plateHeight,
       selection.hasFrame
     );
 
     const fit = computeAutoFit({
-      widthMm: size.width,
-      heightMm: size.height,
+      widthMm: plateWidth,
+      heightMm: plateHeight,
       numberChars: numberText.length,
       line1Chars: hasLine1 ? line1Text.length : null,
       line2Chars: hasLine2 ? line2Text.length : null,
@@ -130,7 +141,7 @@ export function ProductPreview() {
       line1FontId: line1Font?.id,
       line2FontId: line2Font?.id,
     });
-    const pxPerMm = PREVIEW_WIDTH_PX / size.width;
+    const pxPerMm = PREVIEW_WIDTH_PX / plateWidth;
     numberFontSize = fit.numberSizeMm * pxPerMm;
     line1FontSize = fit.line1SizeMm ? fit.line1SizeMm * pxPerMm : line1FontSize;
     line2FontSize = fit.line2SizeMm ? fit.line2SizeMm * pxPerMm : line2FontSize;
