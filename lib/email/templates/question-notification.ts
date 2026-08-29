@@ -44,9 +44,14 @@ export function renderQuestionNotificationEmail(data: QuestionEmailData): string
     </tr>
   `;
 
+  // Zelfde tijdzone-correctie als in configuration-confirmation.ts
+  // (29-8-2026): zonder expliciete "timeZone" rekent de server in UTC,
+  // niet in Nederlandse tijd — "Europe/Amsterdam" lost dat het hele jaar
+  // door op, ook bij de overgang tussen zomer- en wintertijd.
   const date = new Date().toLocaleString("nl-NL", {
     dateStyle: "long",
     timeStyle: "short",
+    timeZone: "Europe/Amsterdam",
   });
 
   const hasConfiguration = Boolean(data.shapeName);

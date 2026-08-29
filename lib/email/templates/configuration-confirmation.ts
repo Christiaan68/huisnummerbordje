@@ -56,9 +56,17 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
     </tr>
   `;
 
+  // De server waar de webshop op draait rekent in UTC (internationale
+  // standaardtijd), niet in Nederlandse tijd — zonder expliciete
+  // "timeZone" hierbeneden stond hier daardoor een tijd die in de zomer
+  // 2 uur (zomertijd) en in de winter 1 uur (wintertijd) achterliep op de
+  // daadwerkelijke Nederlandse tijd (gemeld door Christiaan, 29-8-2026).
+  // "Europe/Amsterdam" rekent dat verschil automatisch mee, het hele jaar
+  // door, inclusief de overgang tussen zomer- en wintertijd.
   const date = new Date().toLocaleString("nl-NL", {
     dateStyle: "long",
     timeStyle: "short",
+    timeZone: "Europe/Amsterdam",
   });
 
   return `
