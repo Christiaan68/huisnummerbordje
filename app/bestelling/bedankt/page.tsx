@@ -83,14 +83,20 @@ export default async function BestellingBedanktPage({
         </p>
 
         <div className="mt-10 flex flex-wrap gap-4">
-          <Link
-            href="/configurator/vorm"
-            className="inline-flex items-center justify-center rounded-sm bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            {order?.payment_status === "paid"
-              ? "Nieuwe configuratie starten"
-              : "Opnieuw proberen"}
-          </Link>
+          {/* Op verzoek van Christiaan (29-8-2026, na de eerste live test):
+              is de betaling al gelukt, dan kan er vanaf hier alleen nog naar
+              home — geen knop meer om meteen weer een nieuwe configuratie te
+              starten. Bij de overige statussen (nog niet gelukt/verlopen/
+              geannuleerd/nog in behandeling) blijft "Opnieuw proberen" wel
+              gewoon staan, dat is juist dan nuttig. */}
+          {order?.payment_status !== "paid" && (
+            <Link
+              href="/configurator/vorm"
+              className="inline-flex items-center justify-center rounded-sm bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Opnieuw proberen
+            </Link>
+          )}
           <Link
             href="/"
             className="inline-flex items-center justify-center rounded-sm border border-border bg-secondary px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary/70"
