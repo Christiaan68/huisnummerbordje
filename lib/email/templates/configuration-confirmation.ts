@@ -42,6 +42,12 @@ interface ConfigurationEmailData {
   priceExtraCharsCents?: number;
   priceExtraCharsCount?: number;
   priceFrameSurchargeCents?: number;
+  // Betaalgegevens via Mollie (toegevoegd 29-8-2026, na de eerste live
+  // test — Christiaan wilde in de mail kunnen zien dát en waarmee er
+  // betaald is). Al kant-en-klaar geformatteerd doorgegeven, zie
+  // lib/mollie/client.ts (getPaymentMethodLabel) en lib/formatDate.ts.
+  paymentMethodName?: string;
+  paidAt?: string;
 }
 
 /**
@@ -169,6 +175,12 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
                         ? formatPriceCents(data.priceTotalCents)
                         : "Prijs op aanvraag"
                     )}
+                    ${
+                      data.paymentMethodName && data.paidAt
+                        ? row("Betaalmethode", data.paymentMethodName) +
+                          row("Betaald op", data.paidAt)
+                        : ""
+                    }
                   </table>
                 </td>
               </tr>

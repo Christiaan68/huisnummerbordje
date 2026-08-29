@@ -30,6 +30,12 @@ interface CustomerConfirmationData {
   priceExtraCharsCents?: number;
   priceExtraCharsCount?: number;
   priceFrameSurchargeCents?: number;
+  // Betaalgegevens via Mollie (toegevoegd 29-8-2026, na de eerste live
+  // test — Christiaan wilde dat de klant hier ook zelf kan zien dát en
+  // waarmee er betaald is). Al kant-en-klaar geformatteerd doorgegeven,
+  // zie lib/mollie/client.ts (getPaymentMethodLabel) en lib/formatDate.ts.
+  paymentMethodName?: string;
+  paidAt?: string;
 }
 
 /**
@@ -72,6 +78,23 @@ export function renderCustomerConfirmationEmail(
                   </p>
                 </td>
               </tr>
+              ${
+                data.paymentMethodName && data.paidAt
+                  ? `
+              <tr>
+                <td style="padding:0 32px 8px;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#eaf1e6;border:1px solid #c9dcc0;border-radius:6px;">
+                    <tr>
+                      <td style="padding:14px 18px;color:#33512e;font-size:14px;line-height:1.5;">
+                        <strong>Betaling ontvangen</strong> — via ${data.paymentMethodName}, op ${data.paidAt}.
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              `
+                  : ""
+              }
               ${
                 data.previewImageCid
                   ? `

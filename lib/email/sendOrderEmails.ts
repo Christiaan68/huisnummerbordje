@@ -64,6 +64,13 @@ export interface SendOrderEmailsInput {
     quantity: string;
   };
   adminEmail: string;
+  // Betaalgegevens (toegevoegd 29-8-2026, na de eerste live test): al
+  // opgezocht/geformatteerd bij Mollie vandaan gehaald door de aanroeper
+  // (zie app/api/mollie-webhook/route.ts, getPaymentMethodLabel/
+  // formatDutchDateTime) — deze functie geeft ze alleen door aan de
+  // sjablonen.
+  paymentMethodName: string;
+  paidAtFormatted: string;
 }
 
 export interface SendOrderEmailsResult {
@@ -162,6 +169,8 @@ export async function sendOrderEmails(
       },
       orderLabel: input.orderLabel,
       previewImageCid: previewImageBuffer ? PREVIEW_IMAGE_CID : undefined,
+      paymentMethodName: input.paymentMethodName,
+      paidAt: input.paidAtFormatted,
       ...priceFields,
     });
 
@@ -203,6 +212,8 @@ export async function sendOrderEmails(
       quantity: input.contact.quantity,
       orderLabel: input.orderLabel,
       previewImageCid: previewImageBuffer ? PREVIEW_IMAGE_CID : undefined,
+      paymentMethodName: input.paymentMethodName,
+      paidAt: input.paidAtFormatted,
       ...priceFields,
     });
 

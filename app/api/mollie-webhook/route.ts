@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createMollie } from "@/lib/mollie/client";
+import { createMollie, getPaymentMethodLabel } from "@/lib/mollie/client";
+import { formatDutchDateTime } from "@/lib/formatDate";
 import {
   getOrderById,
   markOrderAsPaid,
@@ -131,6 +132,15 @@ export async function POST(request: Request) {
 
       const orderLabel = buildOrderLabel(shape, order.number_position);
 
+      // Op verzoek van Christiaan (29-8-2026, na de eerste test) laten de
+      // mails voortaan ook zien DAT en WAARMEE er betaald is — Mollie geeft
+      // dat door via payment.method (bv. "ideal") en payment.paidAt (het
+      // exacte moment). paidAt kan in theorie ontbreken (bv. bij een heel
+      // ongebruikelijke edge-case) — dan valt dit terug op "nu" in plaats
+      // van de mail te laten mislukken.
+      const paymentMethodName = getPaymentMethodLabel(payment.method);
+      const paidAtFormatted = formatDutchDateTime(payment.paidAt ?? new Date());
+
       const result = await sendOrderEmails({
         shape: { name: shape.name, extraLines: shape.extraLines },
         finish: order.finish,
@@ -167,6 +177,8 @@ export async function POST(request: Request) {
           quantity: order.quantity,
         },
         adminEmail,
+        paymentMethodName,
+        paidAtFormatted,
       });
 
       if (!result.internalEmailSent || !result.customerEmailSent) {
