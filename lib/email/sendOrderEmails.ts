@@ -29,6 +29,13 @@ import { computeAutoFit } from "@/lib/configuration/text-fit";
  */
 
 export interface SendOrderEmailsInput {
+  // Het eigen bestelnummer van de webshop (het rij-id in de database) — op
+  // verzoek van Christiaan (29-8-2026) voortaan ook zichtbaar in beide
+  // mails, zodat een klant of Christiaan zelf er makkelijk naar kan
+  // verwijzen (bijvoorbeeld bij contact, of om 'm te herkennen in Mollies
+  // "Verrekeningen"-overzicht, waar dezelfde nummering al in de
+  // betaalomschrijving stond — zie app/api/create-payment/route.ts).
+  orderId: number;
   shape: { name: string; extraLines: number };
   finish: "vlak" | "gewelfd";
   colorName: string;
@@ -144,6 +151,7 @@ export async function sendOrderEmails(
   let internalEmailSent = false;
   try {
     const html = renderConfigurationEmail({
+      orderNumber: `#${input.orderId}`,
       shapeName: input.shape.name,
       finish: input.finish,
       colorName: input.colorName,
@@ -197,6 +205,7 @@ export async function sendOrderEmails(
   let customerEmailSent = false;
   try {
     const customerHtml = renderCustomerConfirmationEmail({
+      orderNumber: `#${input.orderId}`,
       contactName: input.contact.name,
       shapeName: input.shape.name,
       finish: input.finish,

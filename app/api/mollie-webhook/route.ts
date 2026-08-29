@@ -142,6 +142,7 @@ export async function POST(request: Request) {
       const paidAtFormatted = formatDutchDateTime(payment.paidAt ?? new Date());
 
       const result = await sendOrderEmails({
+        orderId,
         shape: { name: shape.name, extraLines: shape.extraLines },
         finish: order.finish,
         colorName: color.name,

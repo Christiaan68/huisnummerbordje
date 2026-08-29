@@ -1,6 +1,10 @@
 import { formatPriceCents } from "@/lib/configuration/pricing";
 
 interface ConfigurationEmailData {
+  // Het eigen bestelnummer van de webshop (bv. "#630002"), toegevoegd
+  // 29-8-2026 op verzoek van Christiaan — al kant-en-klaar geformatteerd
+  // doorgegeven, zie lib/email/sendOrderEmails.ts.
+  orderNumber?: string;
   shapeName: string;
   finish: "vlak" | "gewelfd";
   colorName: string;
@@ -135,6 +139,7 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
               <tr>
                 <td style="padding:12px 32px 24px;">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    ${data.orderNumber ? row("Bestelnummer", data.orderNumber) : ""}
                     ${row("Vorm", data.shapeName)}
                     ${row("Afwerking", data.finish === "vlak" ? "Vlak" : "Gewelfd")}
                     ${row("Kleur", data.colorName)}
