@@ -24,6 +24,11 @@ export const metadata: Metadata = {
 // claude/avg-cookieproof-ga4.md voor de volledige achtergrond, en
 // app/cookiebeleid/page.tsx voor het cookie-specifieke deel (waar deze
 // verklaring naar verwijst i.p.v. alles te dupliceren).
+//
+// Aangevuld 29-8-2026: Mollie (de op die dag toegevoegde betaalprovider,
+// zie de Mollie-integratie elders in de code) toegevoegd aan sectie 2
+// ("Betaalgegevens") en sectie 6 (externe partijen) — deze verklaring was
+// geschreven vóór Mollie er was en liep daar dus nog op achter.
 export default function PrivacyverklaringPage() {
   return (
     <div className="relative min-h-screen">
@@ -91,6 +96,15 @@ export default function PrivacyverklaringPage() {
             naam, adres, postcode, woonplaats, e-mailadres, telefoonnummer
             (indien opgegeven), en de door jou gekozen configuratie van het
             bordje (vorm, maat, kleur, lettertype, tekst en aantal).
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-foreground">
+            <span className="font-medium">Betaalgegevens.</span> Het
+            afrekenen van je bestelling verloopt via onze betaalprovider
+            Mollie. Je vult je betaalgegevens (zoals bank- of
+            creditcardgegevens) rechtstreeks bij Mollie in — die gegevens
+            komen nooit bij onszelf terecht. Wij ontvangen van Mollie alleen
+            de bevestiging dát er betaald is, met welke betaalmethode en op
+            welk moment.
           </p>
           <p className="mt-3 text-sm leading-relaxed text-foreground">
             <span className="font-medium">Contactverzoeken.</span> Stel je
@@ -169,6 +183,20 @@ export default function PrivacyverklaringPage() {
             verwerken:
           </p>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-foreground">
+            <li>
+              <span className="font-medium">Mollie</span> — onze
+              betaalprovider, voor het afhandelen van de betaling van je
+              bestelling. Zie{" "}
+              <a
+                href="https://www.mollie.com/legal/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline decoration-border underline-offset-2 hover:text-primary"
+              >
+                Mollies eigen privacyverklaring
+              </a>{" "}
+              voor hoe zij met jouw betaalgegevens omgaan.
+            </li>
             <li>
               <span className="font-medium">Resend</span> — voor het
               versturen van bestel- en bevestigingsmails.
