@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,18 +28,19 @@ export function ContactDetailsForm({
   const {
     register,
     handleSubmit,
-    trigger,
-    formState: { errors, isValid },
+    watch,
+    formState: { errors },
   } = useForm<ContactDetails>({
     resolver: zodResolver(contactDetailsSchema),
-    // "onChange" zorgt ervoor dat formState.isValid (zie canSubmit
-    // hieronder) meteen bij elke wijziging opnieuw berekend wordt — nodig
-    // om de "Doorgaan naar betalen"-knop pas volledig oranje te laten
-    // kleuren zodra alle verplichte vakjes correct zijn ingevuld (toegevoegd
-    // 29-8-2026 op verzoek van Christiaan; hij vond het verwarrend dat de
-    // knop al vanaf het begin, met alle vakjes nog leeg, volledig oranje
-    // (dus "klaar om te versturen") oogde).
-    mode: "onChange",
+    // Bewust GEEN "mode: onChange" — dat zou (via formState.errors) meteen
+    // bij elke toetsaanslag rode randen/foutmeldingen bij de losse vakjes
+    // laten verschijnen, ook vóór een eerste poging tot versturen. Dat
+    // gedrag bestond niet eerder en moet ook niet ontstaan (Christiaan,
+    // 29-8-2026: "dat moet niet en dat moet zo blijven als het was"). De
+    // losse vakjes valideren dus nog steeds zoals altijd: pas na een eerste
+    // klik op "Doorgaan naar betalen", en daarna live. Zie canSubmit
+    // hieronder voor hoe de knop wél live meekleurt, zonder dat gedrag aan
+    // te raken.
     defaultValues: {
       name: "",
       address: "",
@@ -51,15 +52,6 @@ export function ContactDetailsForm({
     },
   });
 
-  // react-hook-form berekent formState.isValid pas ná de EERSTE wijziging
-  // van de gebruiker — zonder deze regel zou de knop dus bij binnenkomst
-  // (alles nog leeg) onterecht als "geldig"/volledig oranje getoond worden,
-  // totdat iemand ergens in gaat typen. Deze eenmalige controle bij het
-  // laden zorgt dat isValid vanaf het begin klopt.
-  useEffect(() => {
-    trigger();
-  }, [trigger]);
-
   // Akkoord met leveringsvoorwaarden/retourbeleid — bewust géén onderdeel
   // van contactDetailsSchema/ContactDetails: dat type wordt ook gebruikt
   // als payload naar /api/create-payment, en dit is puur een blokkade in de
@@ -68,11 +60,16 @@ export function ContactDetailsForm({
   const [agreed, setAgreed] = useState(false);
   const [agreedError, setAgreedError] = useState(false);
 
-  // De knop is pas volledig oranje ("klaar om te versturen") zodra ZOWEL
-  // alle velden uit het schema geldig zijn ALS het akkoordvakje is
-  // aangevinkt — dat vakje zit immers niet in het schema (zie hierboven),
-  // dus isValid alleen zou het vergeten aanvinken niet laten zien.
-  const canSubmit = isValid && agreed;
+  // Voor de kleur van de "Doorgaan naar betalen"-knop (zie canSubmit
+  // hieronder) wordt HIER, los van react-hook-form's eigen foutmeldingen-
+  // systeem, apart en stil gecontroleerd of het formulier al compleet is —
+  // met dezelfde `contactDetailsSchema` als de echte validatie, maar zonder
+  // formState.errors aan te raken. Zo reageert alleen de knop live mee
+  // terwijl de losse vakjes (rode rand + foutmelding) exact hetzelfde
+  // gedrag houden als voorheen.
+  const watchedValues = watch();
+  const isFormComplete = contactDetailsSchema.safeParse(watchedValues).success;
+  const canSubmit = isFormComplete && agreed;
 
   function handleValidSubmit(data: ContactDetails) {
     if (!agreed) {
