@@ -71,8 +71,20 @@ export default async function BestellingBedanktPage({
     restartLabel = "Nieuwe bestelling starten";
   } else {
     title = "Betaling wordt verwerkt";
+    // Tekst aangepast (31-8-2026), naar aanleiding van Mollie-testen door
+    // Christiaan: bij meerdere toegestane betaalmethodes (zie method-array
+    // in app/api/create-payment/route.ts) rondt Mollie een mislukte,
+    // verlopen of geannuleerde poging niet meteen af — de klant krijgt op
+    // Mollie's eigen pagina een nieuwe poging aangeboden. Verlaat de klant
+    // die pagina zonder opnieuw te proberen (via het "Vorige pagina"-linkje
+    // van Mollie, of gewoon de browser-terugknop), dan blijft deze pagina
+    // op 'pending' staan totdat Mollie de betaling ook echt definitief
+    // afsluit — en dat volgt de normale verlooptijd van de gekozen methode
+    // (bij iDEAL bijvoorbeeld 15 minuten), niet "een paar seconden". Vandaar
+    // deze iets voorzichtigere tekst, zodat een klant niet ongerust wordt
+    // als het net wat langer duurt dan verwacht.
     message =
-      "We wachten nog even op de bevestiging van je betaling. Dit duurt normaal maar een paar seconden — deze pagina ververst zichzelf vanzelf. Je hoeft hier niets voor te doen.";
+      "We wachten nog even op de bevestiging van je betaling. Dit duurt meestal maar een paar seconden — maar als een betaalpoging niet is gelukt, kan het soms iets langer duren voordat dat definitief bevestigd wordt. Deze pagina ververst zichzelf vanzelf. Je hoeft hier niets voor te doen.";
     showAutoRefresh = true;
     // Bewust GEEN knop hier — zie toelichting bij showRestartButton.
   }
