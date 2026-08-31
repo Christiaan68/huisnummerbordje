@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { contactDetailsSchema, type ContactDetails } from "@/lib/validation/contact.schema";
+import { PaymentMethodIcons } from "@/components/layout/PaymentMethodIcons";
 import { cn } from "@/lib/utils";
 
 interface ContactDetailsFormProps {
@@ -234,7 +235,18 @@ export function ContactDetailsForm({
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-4 border-t border-border pt-6">
+      {/* Betaalmethodes (31-8-2026, op verzoek van Christiaan) — hier, vlak
+          boven de knop, op het moment dat het er voor de klant echt toe
+          doet. Zie ook Footer.tsx voor dezelfde rij als algemene
+          geruststelling op elke pagina, en de `method`-beperking in
+          app/api/create-payment/route.ts die ervoor zorgt dat Mollie ook
+          daadwerkelijk alleen deze 3 methodes aanbiedt. */}
+      <div className="border-t border-border pt-6">
+        <p className="mb-2 text-xs text-muted-foreground">Veilig betalen met:</p>
+        <PaymentMethodIcons />
+      </div>
+
+      <div className="flex items-center justify-between gap-4">
         <button
           type="button"
           onClick={onBack}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LangcatTransitionLink } from "@/components/layout/LangcatTransitionLink";
 import { CookieSettingsButton } from "@/components/consent/CookieSettingsButton";
+import { PaymentMethodIcons } from "@/components/layout/PaymentMethodIcons";
 
 export function Footer() {
   return (
@@ -55,6 +56,14 @@ export function Footer() {
           </Link>
           <CookieSettingsButton className="underline underline-offset-4 hover:text-foreground" />
         </div>
+      </div>
+
+      {/* Betaalmethodes (31-8-2026, op verzoek van Christiaan) — algemene
+          geruststelling op elke pagina, los van het moment vlak vóór het
+          afrekenen zelf (zie ContactDetailsForm.tsx voor die 2e plek). */}
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 border-t border-border px-6 py-4 text-sm text-muted-foreground">
+        <span>Betalen met:</span>
+        <PaymentMethodIcons />
       </div>
     </footer>
   );
