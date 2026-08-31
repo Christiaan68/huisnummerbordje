@@ -11,29 +11,49 @@ import { useRouter } from "next/navigation";
  * opnieuw de configurator instapte, sprong hij na 1-2 seconden ONGEVRAAGD
  * terug naar die wachtpagina.
  *
- * Root cause: een `<meta httpEquiv="refresh">`-tag is een timer die de
- * BROWSER zelf instelt op het moment dat de pagina voor het eerst geladen
- * wordt (bij een "echte" paginalading) — die timer blijft gewoon doortikken,
- * ook nadat je via een gewone link naar een andere pagina bent genavigeerd
- * binnen dezelfde webshop (dat gaat namelijk met Next.js' eigen, snellere
- * "client-side" navigatie, zonder dat de browser de pagina echt opnieuw
- * laadt/verlaat — en alleen bij een echte paginalading/verlating annuleert
- * de browser zo'n timer vanzelf). Na het verstrijken van de ingestelde tijd
- * stuurde de browser je daardoor alsnog naar de oude wachtpagina-URL,
- * ongeacht waar je intussen naartoe genavigeerd was.
+ * Root cause (van die eerdere bug): een `<meta httpEquiv="refresh">`-tag is
+ * een timer die de BROWSER zelf instelt op het moment dat de pagina voor
+ * het eerst geladen wordt (bij een "echte" paginalading) — die timer blijft
+ * gewoon doortikken, ook nadat je via een gewone link naar een andere
+ * pagina bent genavigeerd binnen dezelfde webshop (dat gaat namelijk met
+ * Next.js' eigen, snellere "client-side" navigatie, zonder dat de browser
+ * de pagina echt opnieuw laadt/verlaat — en alleen bij een échte
+ * paginalading/verlating annuleert de browser zo'n timer vanzelf). Na het
+ * verstrijken van de ingestelde tijd stuurde de browser je daardoor alsnog
+ * naar de oude wachtpagina-URL, ongeacht waar je intussen naartoe
+ * genavigeerd was.
  *
- * Oplossing: in plaats daarvan hier, met React, zelf een eenmalige
- * tijdklok instellen (`setTimeout`) die na 4 seconden alleen de gegevens
- * van déze pagina ververst (`router.refresh()` — haalt de betaalstatus
- * opnieuw op bij de server, zonder de hele pagina opnieuw te laden en
- * zonder de URL/geschiedenis te wijzigen) — en, cruciaal, die tijdklok
- * weer opruimt zodra deze component van het scherm verdwijnt (bv. omdat de
- * bezoeker wegnavigeert naar een andere pagina). Zolang de betaalstatus
- * 'pending' blijft, blijft de bedankt-pagina deze component tonen en start
- * elke ververste weergave vanzelf een nieuwe tijdklok voor de volgende 4
- * seconden — dat stopt vanzelf zodra de status niet meer 'pending' is (de
- * pagina toont deze component dan niet meer) of zodra de bezoeker
- * wegnavigeert (de opruimfunctie hieronder annuleert de lopende tijdklok).
+ * Oplossing: in plaats daarvan hier, met React, zelf een tijdklok
+ * instellen (`setTimeout`) die na 4 seconden alleen de gegevens van déze
+ * pagina ververst (`router.refresh()` — haalt de betaalstatus opnieuw op
+ * bij de server, zonder de hele pagina opnieuw te laden en zonder de
+ * URL/geschiedenis te wijzigen).
+ *
+ * BUGFIX (31-8-2026, gevonden bij het uitzoeken van de Mollie-"blijft
+ * hangen"-melding): de eerdere versie hier telde het aantal ververste
+ * weergaves NIET bij in React-state, en herhaalde de tijdklok dus ook maar
+ * ÉÉN KEER — na de allereerste 4 seconden werd er wél ververst, maar
+ * daarna nooit meer, want er werd geen nieuwe tijdklok meer ingesteld
+ * (React herbruikt deze component gewoon bij een ververste weergave, in
+ * plaats van 'm opnieuw op te bouwen zoals eerder hier stond aangenomen).
+ * Bij een normale, snel gelukte betaling viel dit niet op (één keer
+ * verversen was toevallig al genoeg om de "betaald"-status op te pikken),
+ * maar bij een betaling die langer op zich liet wachten (bijvoorbeeld een
+ * mislukte/verlopen/geannuleerde poging bij Mollie) bleef de pagina daarna
+ * voor altijd op "Betaling wordt verwerkt" staan, ook als de echte status
+ * allang bekend was — de klant moest dan zelf de pagina verversen om de
+ * juiste status alsnog te zien. Christiaan liep hier tegenaan: de eerdere
+ * "extra regel na een paar keer verversen"-tekst verscheen daardoor ook
+ * nooit, want er kwam nooit een 2e keer verversen.
+ *
+ * Nu bijgehouden via `attempts` in React-state, die zowel het aantal
+ * ververste weergaves telt ALS (via de dependency-array van de effect)
+ * zorgt dat er na elke ververste weergave weer een nieuwe tijdklok van 4
+ * seconden wordt ingesteld — dit blijft zo doorgaan zolang de betaalstatus
+ * 'pending' blijft (de bedankt-pagina toont deze component dan nog
+ * steeds), en stopt vanzelf zodra de status definitief is (dan verdwijnt
+ * deze component uit de pagina) of zodra de bezoeker wegnavigeert (de
+ * opruimfunctie hieronder annuleert dan de lopende tijdklok).
  *
  * UITBREIDING (31-8-2026, op verzoek van Christiaan, na het Mollie-
  * uitzoekwerk rond "open"/"mislukt"/"verlopen"/"geannuleerd"): als een
@@ -48,40 +68,21 @@ import { useRouter } from "next/navigation";
  * keer verversen (dus na zo'n 8 seconden) verschijnt onderstaande extra
  * regel, zodat een klant bij een normale, snelle bevestiging niets van
  * deze tekst merkt, en 'm alleen ziet als het daadwerkelijk langer duurt.
- *
- * Het aantal keren verversen wordt bijgehouden in sessionStorage (niet in
- * React-state): deze component blijkt namelijk bij elke ververste weergave
- * opnieuw op te bouwen (zie hierboven), waardoor gewoon React-state elke
- * keer weer op nul zou beginnen. sessionStorage overleeft dat wel, en is
- * per bestelling (orderId) apart bijgehouden, zodat een andere/nieuwe
- * bestelling niet per ongeluk meteen met deze tekst begint.
  */
-export function PendingPaymentAutoRefresh({ orderId }: { orderId: number }) {
+export function PendingPaymentAutoRefresh() {
   const router = useRouter();
-  const [showSlowNotice, setShowSlowNotice] = useState(false);
+  const [attempts, setAttempts] = useState(0);
 
   useEffect(() => {
-    try {
-      const storageKey = `bedankt-pogingen-${orderId}`;
-      const attempts = Number(sessionStorage.getItem(storageKey) ?? "0") + 1;
-      sessionStorage.setItem(storageKey, String(attempts));
-      if (attempts >= 2) {
-        setShowSlowNotice(true);
-      }
-    } catch {
-      // sessionStorage kan in zeldzame gevallen niet beschikbaar zijn (bv.
-      // privénavigatie met strikte instellingen) — dan laten we de extra
-      // regel gewoon achterwege, de rest (verversen) blijft gewoon werken.
-    }
-
     const timer = setTimeout(() => {
+      setAttempts((current) => current + 1);
       router.refresh();
     }, 4000);
 
     return () => clearTimeout(timer);
-  }, [router, orderId]);
+  }, [router, attempts]);
 
-  if (!showSlowNotice) {
+  if (attempts < 2) {
     return null;
   }
 

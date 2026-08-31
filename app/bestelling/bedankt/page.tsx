@@ -102,7 +102,7 @@ export default async function BestellingBedanktPage({
           toelichting in dat bestand. Toont vanaf de 2e ververste weergave
           ook zelf een extra regel tekst als het langer duurt dan een paar
           seconden — zie de toelichting in PendingPaymentAutoRefresh.tsx. */}
-      {showAutoRefresh && <PendingPaymentAutoRefresh orderId={orderId} />}
+      {showAutoRefresh && <PendingPaymentAutoRefresh />}
 
       <Header showConfiguratorLink={false} />
 
