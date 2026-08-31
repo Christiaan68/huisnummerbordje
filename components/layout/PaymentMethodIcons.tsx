@@ -1,4 +1,3 @@
-import { CreditCard, Landmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -11,20 +10,20 @@ import { cn } from "@/lib/utils";
  *
  * "Apple Pay" staat hier BEWUST nog niet bij: dat kan Christiaan pas
  * activeren zodra zijn Mollie-account volledig gevalideerd is. Zodra dat
- * zo is, hier `Wallet` weer importeren en `{ icon: Wallet, label: "Apple
- * Pay" }` weer aan PAYMENT_METHODS toevoegen (en "applepay" aan de
- * `method`-array in app/api/create-payment/route.ts).
+ * zo is, hier een { src: "/images/payment-methods/applepay.svg", alt:
+ * "Apple Pay" }-entry toevoegen (en "applepay" aan de `method`-array in
+ * app/api/create-payment/route.ts) — het bijbehorende icoontje staat dan
+ * ook nog in hetzelfde "squircle"-formaat te downloaden bij
+ * mollie.com/resources.
  *
- * Bewust GEEN officiële merklogo's (het officiële iDEAL-beeldmerk of de
- * Visa-/Mastercard-logo's) — die vereisen de exacte, door elke
- * merkhouder zelf aangeleverde beeldbestanden en strikte
- * huisstijlregels. In plaats daarvan: een neutraal icoontje uit dezelfde
- * lucide-icoonset die de rest van de configurator al gebruikt (bv. de
- * "Terug"-knoppen), gecombineerd met de naam in tekst — duidelijk
- * leesbaar voor de klant, zonder risico op een onjuist gebruikt
- * beeldmerk. Mocht je hier later de échte, officiële icoontjes voor
- * willen, dan kan dat door de bestanden uit Mollie's eigen
- * downloadpakket (mollie.com/resources) aan te leveren.
+ * De icoontjes zelf (public/images/payment-methods/*.svg) zijn de
+ * officiële "squircle"-iconen uit Mollie's eigen downloadpakket
+ * (mollie.com/resources — Christiaan heeft ze zelf gedownload en
+ * aangeleverd, 31-8-2026), inclusief het huidige "iDEAL | Wero"-beeldmerk
+ * (iDEAL is sinds 29 januari 2026 samengegaan met het Europese
+ * betaalmerk Wero). Elk icoontje is al een compleet, afgerond blokje met
+ * eigen achtergrondkleur — vandaar geen extra rand/tekstlabel eromheen
+ * (dat zou dubbelop zijn).
  *
  * Gebruikt op 2 plekken: in de footer (components/layout/Footer.tsx, op
  * elke pagina zichtbaar als algemene geruststelling) en vlak boven de
@@ -35,21 +34,19 @@ import { cn } from "@/lib/utils";
  * laptop.
  */
 const PAYMENT_METHODS = [
-  { icon: Landmark, label: "iDEAL" },
-  { icon: CreditCard, label: "Creditcard" },
+  { src: "/images/payment-methods/ideal.svg", alt: "iDEAL" },
+  { src: "/images/payment-methods/creditcard.svg", alt: "Creditcard" },
 ] as const;
 
 export function PaymentMethodIcons({ className }: { className?: string }) {
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      {PAYMENT_METHODS.map(({ icon: Icon, label }) => (
-        <span
-          key={label}
-          className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-2.5 py-1 text-xs text-muted-foreground"
-        >
-          <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-          {label}
-        </span>
+      {PAYMENT_METHODS.map(({ src, alt }) => (
+        // eslint-disable-next-line @next/next/no-img-element -- zelfde
+        // aanpak als elders in de site (bv. app/contact/page.tsx): een
+        // gewone <img> voor een klein, statisch icoontje, zonder de
+        // overhead van next/image's optimalisatie-pijplijn.
+        <img key={alt} src={src} alt={alt} className="h-8 w-8 rounded-[7px]" />
       ))}
     </div>
   );
