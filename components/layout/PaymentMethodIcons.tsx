@@ -25,6 +25,21 @@ import { cn } from "@/lib/utils";
  * eigen achtergrondkleur — vandaar geen extra rand/tekstlabel eromheen
  * (dat zou dubbelop zijn).
  *
+ * Voor "creditcard" zijn hier bewust de losse Visa- en Mastercard-
+ * merklogo's gebruikt in plaats van Mollie's algemene/generieke
+ * "creditcard"-icoon (Christiaan, 31-8-2026: dat generieke icoon vond hij
+ * niet mooi). Maestro is BEWUST niet toegevoegd: dat is een debitcard (geen
+ * creditcard), en Nederlandse banken zijn sinds 2023 gestopt met het
+ * uitgeven van nieuwe Maestro-passen (wordt vervangen door "Debit
+ * Mastercard") — een uitstervend merk dus. Mocht dat ooit alsnog gewenst
+ * zijn: het bestand staat al klaar op Christiaans computer (Huisnummer
+ * betaalopties/Maestro/Maestro-squircle.svg) en kan op dezelfde manier
+ * toegevoegd worden. Technisch hoeft er niets aan de Mollie-koppeling zelf
+ * te veranderen: zowel Visa als Mastercard (en een eventuele Maestro-pas)
+ * lopen bij Mollie via diezelfde ene "creditcard"-betaalmethode in
+ * app/api/create-payment/route.ts — dit zijn dus puur merklogo's ter
+ * geruststelling, geen aparte technische instellingen.
+ *
  * Gebruikt op 2 plekken: in de footer (components/layout/Footer.tsx, op
  * elke pagina zichtbaar als algemene geruststelling) en vlak boven de
  * "Doorgaan naar betalen"-knop (components/configurator/
@@ -35,7 +50,8 @@ import { cn } from "@/lib/utils";
  */
 const PAYMENT_METHODS = [
   { src: "/images/payment-methods/ideal.svg", alt: "iDEAL" },
-  { src: "/images/payment-methods/creditcard.svg", alt: "Creditcard" },
+  { src: "/images/payment-methods/visa.svg", alt: "Visa" },
+  { src: "/images/payment-methods/mastercard.svg", alt: "Mastercard" },
 ] as const;
 
 export function PaymentMethodIcons({ className }: { className?: string }) {
