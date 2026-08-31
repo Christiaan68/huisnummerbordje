@@ -40,18 +40,24 @@ export interface AutoFitResult {
 // "Klassiek"/Georgia, 19-8-2026 — vandaar dat dit per lettertype apart
 // wordt bijgehouden in plaats van één algemene waarde).
 //
-// De 5 waarden hieronder (huidige volledige lettertypelijst, zie
+// De waarden hieronder (huidige volledige lettertypelijst, zie
 // config/product-options.ts) zijn een eerste, beredeneerde inschatting —
 // net als de LINE_GAP_RATIO_BY_FONT-waarden voor dezelfde lettertypes in
 // plate-visual.ts — nog niet visueel gecontroleerd. Bijstellen hier als het
 // nummer in de preview bij een van deze lettertypes duidelijk te groot/
-// klein oogt.
+// klein oogt. Let op voor "commercial-script" (31-8-2026 toegevoegd): dit
+// lettertype rendert, in tegenstelling tot alle andere hier, op gewicht
+// Regular/400 in plaats van Bold/700 (zie FONT_WEIGHT_BY_ID in
+// plate-visual.ts — Pinyon Script heeft geen vette variant) — de
+// verhouding hieronder is dus niet zoals de andere bij 700 ingeschat, maar
+// meteen bij het daadwerkelijke gewicht 400.
 const CHAR_WIDTH_RATIO_BY_FONT: Record<string, number> = {
   "fette-fraktur": 0.7, // UnifrakturCook — sierlijke gotische druletter, relatief brede vormen
   bodoni: 0.66, // Bodoni Moda — hoog-contrast schreefletter, vergelijkbaar met Playfair Display
   colonel: 0.55, // Saira Stencil One — geometrisch, vrij smal/condensed stencil-lettertype
   times: 0.58, // Tinos (Times-vervanger) — van oudsher een compacte, smalle schreefletter
   "schwitserland-schmal": 0.52, // Roboto Condensed — smal/condensed lettertype
+  "commercial-script": 0.55, // Pinyon Script (gewicht 400) — verbonden schrijfletter, gemiddelde tekenbreedte
 };
 const DEFAULT_CHAR_WIDTH_RATIO = 0.62;
 // De regelhoogte in de echte preview is exact gelijk aan de fontgrootte

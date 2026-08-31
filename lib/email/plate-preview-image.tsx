@@ -15,18 +15,23 @@ import {
 
 // Welk (vrij te gebruiken) Google Font er voor elk lettertype-optie in de
 // e-mailafbeelding gebruikt wordt, en met welk gewicht (zie ProductPreview:
-// alle preview-tekst is altijd vet/700).
+// preview-tekst is normaal altijd vet/700 — behalve "Commercial Script",
+// zie hieronder).
 //
-// Alle 5 huidige lettertype-opties ("Fette Fraktur", "Bodoni", "Colonel",
-// "Times", "Schwitserland Schmal" — zie config/product-options.ts) zijn
-// zelf al Google Fonts, en worden ook al op de site zelf via
-// next/font/google geladen (zie app/layout.tsx voor de precieze koppeling
-// en de toelichting waarom dit — voor 3 van de 5 — vervangende lettertypes
-// zijn, o.a. voor het betaalde Colonel/205TF). Daardoor is hier geen aparte
-// substitutie nodig zoals vroeger bij de inmiddels verwijderde "Klassiek"/
-// "Modern" (systeemlettertypes Georgia/Helvetica, niet los als bestand
-// herverspreidbaar — zie lib/email/google-fonts.ts): dezelfde fontbestanden
-// als in de live preview worden hier gewoon opnieuw opgehaald.
+// Alle 6 huidige lettertype-opties ("Fette Fraktur", "Bodoni", "Colonel",
+// "Times", "Schwitserland Schmal", "Commercial Script" — zie
+// config/product-options.ts) zijn zelf al Google Fonts, en worden ook al op
+// de site zelf via next/font/google geladen (zie app/layout.tsx voor de
+// precieze koppeling en de toelichting waarom dit — voor een deel ervan —
+// vervangende lettertypes zijn, o.a. voor het betaalde Colonel/205TF).
+// Daardoor is hier geen aparte substitutie nodig zoals vroeger bij de
+// inmiddels verwijderde "Klassiek"/"Modern" (systeemlettertypes Georgia/
+// Helvetica, niet los als bestand herverspreidbaar — zie
+// lib/email/google-fonts.ts): dezelfde fontbestanden als in de live preview
+// worden hier gewoon opnieuw opgehaald.
+// "Commercial Script" (Pinyon Script) bestaat bij Google Fonts alleen in
+// gewicht 400 (Regular), vandaar hier weight: 400 in plaats van 700 zoals
+// bij de meeste andere lettertypes.
 // `next/og` (Satori) accepts alleen deze specifieke lettergewichten voor
 // `fonts[].weight` — een gewoon "number" is daar net te breed voor
 // (TypeScript strict mode accepteert dat niet), vandaar deze letterlijke
@@ -42,6 +47,7 @@ const FONT_CONFIG_BY_ID: Record<
   colonel: { googleFamily: "Saira Stencil One", weight: 400 },
   times: { googleFamily: "Tinos", weight: 700 },
   "schwitserland-schmal": { googleFamily: "Roboto Condensed", weight: 700 },
+  "commercial-script": { googleFamily: "Pinyon Script", weight: 400 },
 };
 const FALLBACK_FONT_WEIGHT: SatoriFontWeight = 700;
 

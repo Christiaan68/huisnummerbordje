@@ -292,7 +292,7 @@ export function getOvalFrameBorderPath(
 // "leeg oogverticaal ruimte"-gevoel van een schreefletter anders is dan bij
 // een strak, condensed lettertype.
 //
-// Deze 5 waarden (huidige volledige lettertypelijst, zie
+// Deze waarden (huidige volledige lettertypelijst, zie
 // config/product-options.ts) zijn een eerste, beredeneerde inschatting —
 // blackletter/hoog-contrast-schreefletter → ruim, geometrische stencil-/
 // condensed letter → krap — nog NIET visueel gecontroleerd in de
@@ -300,11 +300,31 @@ export function getOvalFrameBorderPath(
 // regelafstand bij één van deze in de praktijk niet goed oogt. (De 4
 // eerdere waarden voor de op 28-8-2026 wéér verwijderde lettertypes
 // classic/elegant/modern/industrial zijn met die lettertypes meeverwijderd.)
+// "commercial-script" (31-8-2026 toegevoegd) heeft bewust een hogere
+// waarde dan alle andere: een verbonden schrijfletter zoals Pinyon Script
+// heeft van nature veel meer "lucht" nodig door de lussen/uithalen die
+// onder en boven de basislijn uitsteken (vergelijkbaar met, maar nog iets
+// ruimer dan, de blackletter "fette-fraktur").
 export const LINE_GAP_RATIO_BY_FONT: Record<string, number> = {
   "fette-fraktur": 0.2,
   bodoni: 0.16,
   colonel: 0.06,
   times: 0.1,
   "schwitserland-schmal": 0.06,
+  "commercial-script": 0.22,
 };
 export const DEFAULT_LINE_GAP_RATIO = 0.08;
+
+// Lettergewicht per lettertype-optie, gebruikt door zowel de live preview
+// (ProductPreview.tsx) als de e-mailafbeelding (plate-preview-image.tsx,
+// via FONT_CONFIG_BY_ID daar) om te bepalen hoe vet de tekst getekend
+// wordt. Toegevoegd op 31-8-2026, samen met "Commercial Script": alle 5
+// eerdere lettertypes tekenen preview-tekst altijd vet (700, zie de
+// toelichting bij numberNode in ProductPreview.tsx), maar het Google Font
+// achter "Commercial Script" (Pinyon Script) bestaat alleen in gewicht 400
+// (Regular) — een vette variant bestaat er niet. Onbekend/leeg → de
+// standaardwaarde (700, hetzelfde gedrag als vóór deze toevoeging).
+export const FONT_WEIGHT_BY_ID: Record<string, number> = {
+  "commercial-script": 400,
+};
+export const DEFAULT_FONT_WEIGHT = 700;

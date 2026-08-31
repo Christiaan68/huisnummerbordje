@@ -14,6 +14,8 @@ import { calculatePrice, formatPriceCents } from "@/lib/configuration/pricing";
 import {
   DEFAULT_OVAL_RATIO,
   DEFAULT_LINE_GAP_RATIO,
+  DEFAULT_FONT_WEIGHT,
+  FONT_WEIGHT_BY_ID,
   FRAME_STROKE_WIDTH_RATIO,
   LINE_GAP_RATIO_BY_FONT,
   getContrastTextColor,
@@ -161,9 +163,14 @@ export function ProductPreview() {
   const line2GapRatio =
     LINE_GAP_RATIO_BY_FONT[line2Font?.id ?? ""] ?? DEFAULT_LINE_GAP_RATIO;
 
-  // fontWeight: 700 (vet) op alle preview-tekst — zo lijkt de preview meer
-  // op een echt geëmailleerd bordje, waar het nummer altijd dik/opvallend
-  // gedrukt is (zie referentiefoto van Christiaan, 19-8-2026).
+  // fontWeight: 700 (vet) op preview-tekst — zo lijkt de preview meer op
+  // een echt geëmailleerd bordje, waar het nummer altijd dik/opvallend
+  // gedrukt is (zie referentiefoto van Christiaan, 19-8-2026). Sinds
+  // 31-8-2026 (toevoeging "Commercial Script"/Pinyon Script, dat geen vette
+  // variant heeft) niet meer hardcoded 700, maar per lettertype opgezocht
+  // via FONT_WEIGHT_BY_ID (plate-visual.ts) — voor alle andere lettertypes
+  // blijft dat gewoon 700 (DEFAULT_FONT_WEIGHT), dus geen gedragsverandering
+  // daar.
   // whiteSpace: "nowrap" op elke regel: de auto-fit-berekening hierboven
   // schat de tekenbreedte per lettertype in (CHAR_WIDTH_RATIO_BY_FONT in
   // text-fit.ts) — dat is een inschatting, geen exacte lettertypemeting.
@@ -181,7 +188,7 @@ export function ProductPreview() {
       style={{
         fontFamily: numberFontFamily,
         fontSize: `${numberFontSize}px`,
-        fontWeight: 700,
+        fontWeight: FONT_WEIGHT_BY_ID[numberFont?.id ?? ""] ?? DEFAULT_FONT_WEIGHT,
         whiteSpace: "nowrap",
       }}
     >
@@ -195,7 +202,7 @@ export function ProductPreview() {
       style={{
         fontFamily: line1FontFamily,
         fontSize: `${line1FontSize}px`,
-        fontWeight: 700,
+        fontWeight: FONT_WEIGHT_BY_ID[line1Font?.id ?? ""] ?? DEFAULT_FONT_WEIGHT,
         whiteSpace: "nowrap",
       }}
     >
@@ -209,7 +216,7 @@ export function ProductPreview() {
       style={{
         fontFamily: line2FontFamily,
         fontSize: `${line2FontSize}px`,
-        fontWeight: 700,
+        fontWeight: FONT_WEIGHT_BY_ID[line2Font?.id ?? ""] ?? DEFAULT_FONT_WEIGHT,
         whiteSpace: "nowrap",
       }}
     >

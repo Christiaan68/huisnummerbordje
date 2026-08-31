@@ -108,22 +108,26 @@ export const productSizes: ProductSize[] = [
 
 // De oorspronkelijke 4 lettertypes (Klassiek/Georgia, Modern/Helvetica,
 // Industrieel/Bebas Neue, Elegant/Playfair Display) zijn op 28-8-2026 op
-// verzoek van Christiaan verwijderd, ten gunste van de 5 lettertypes
+// verzoek van Christiaan verwijderd, ten gunste van de eerste 5 lettertypes
 // hieronder — de eerste 4 daarvan waren al diezelfde dag eerder
-// toegevoegd, "Schwitserland Schmal" kwam er aansluitend nog bij. cssFamily
-// verwijst naar de CSS-variabelen die in app/layout.tsx via
-// next/font/google worden geladen — zie de toelichting daar voor per
-// lettertype welk (eventueel vervangend) Google Font daadwerkelijk
-// gebruikt wordt en waarom. Belangrijk: name hieronder is de naam die de
-// klant in de configurator ziet — dat is steeds de door Christiaan
-// gevraagde naam, ook als er onder water een net iets ander (gratis)
-// lettertype gebruikt wordt.
+// toegevoegd, "Schwitserland Schmal" kwam er aansluitend nog bij.
+// "Commercial Script" is op 31-8-2026 als 6e lettertype toegevoegd (zelfde
+// verzoek: gebruik het Google Font "Pinyon Script", maar toon de klant de
+// naam "Commercial Script" — zie app/layout.tsx voor de OFL-licentie- en
+// gewicht-toelichting). cssFamily verwijst naar de CSS-variabelen die in
+// app/layout.tsx via next/font/google worden geladen — zie de toelichting
+// daar voor per lettertype welk (eventueel vervangend) Google Font
+// daadwerkelijk gebruikt wordt en waarom. Belangrijk: name hieronder is de
+// naam die de klant in de configurator ziet — dat is steeds de door
+// Christiaan gevraagde naam, ook als er onder water een net iets ander
+// (gratis) lettertype gebruikt wordt.
 export const productFonts: ProductFont[] = [
   { id: "fette-fraktur", name: "Fette Fraktur", slug: "fette-fraktur", cssFamily: "var(--font-fette-fraktur), 'UnifrakturCook', serif", active: true, createdAt: "" },
   { id: "bodoni", name: "Bodoni", slug: "bodoni", cssFamily: "var(--font-bodoni), Georgia, serif", active: true, createdAt: "" },
   { id: "colonel", name: "Colonel", slug: "colonel", cssFamily: "var(--font-colonel), 'Saira Stencil One', sans-serif", active: true, createdAt: "" },
   { id: "times", name: "Times", slug: "times", cssFamily: "var(--font-times), 'Times New Roman', serif", active: true, createdAt: "" },
   { id: "schwitserland-schmal", name: "Schwitserland Schmal", slug: "schwitserland-schmal", cssFamily: "var(--font-roboto-condensed), 'Arial Narrow', sans-serif", active: true, createdAt: "" },
+  { id: "commercial-script", name: "Commercial Script", slug: "commercial-script", cssFamily: "var(--font-commercial-script), cursive", active: true, createdAt: "" },
 ];
 
 /**

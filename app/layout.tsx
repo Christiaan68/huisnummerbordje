@@ -7,6 +7,7 @@ import {
   Saira_Stencil_One,
   Tinos,
   Roboto_Condensed,
+  Pinyon_Script,
 } from "next/font/google";
 import Script from "next/script";
 import { cookies } from "next/headers";
@@ -28,16 +29,16 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
-// De 5 lettertypes hieronder zijn de volledige huidige lijst uit
-// config/product-options.ts (`productFonts`) — op 28-8-2026 toegevoegd op
-// verzoek van Christiaan, ter vervanging van de oorspronkelijke 4
-// systeemlettertypes ("Klassiek"/Georgia, "Modern"/Helvetica,
-// "Industrieel"/Bebas Neue, "Elegant"/Playfair Display), die dezelfde dag
-// weer verwijderd zijn. Voor 3 ervan was het gevraagde lettertype zelf niet
-// (gratis) beschikbaar; in dat geval wordt hieronder een gratis Google Font
-// gebruikt die er in stijl dicht bij komt — de klant ziet in de
-// configurator gewoon de gevraagde naam (zie config/product-options.ts),
-// niet de naam van het vervangende lettertype:
+// De 6 lettertypes hieronder zijn de volledige huidige lijst uit
+// config/product-options.ts (`productFonts`) — de eerste 5 op 28-8-2026
+// toegevoegd op verzoek van Christiaan, ter vervanging van de
+// oorspronkelijke 4 systeemlettertypes ("Klassiek"/Georgia, "Modern"/
+// Helvetica, "Industrieel"/Bebas Neue, "Elegant"/Playfair Display), die
+// dezelfde dag weer verwijderd zijn. Voor een deel ervan was het gevraagde
+// lettertype zelf niet (gratis) beschikbaar; in dat geval wordt hieronder
+// een gratis Google Font gebruikt die er in stijl dicht bij komt — de
+// klant ziet in de configurator gewoon de gevraagde naam (zie
+// config/product-options.ts), niet de naam van het vervangende lettertype:
 // - "Fette Fraktur" (Duitse gotische druletter) → UnifrakturCook, enige
 //   vetgedrukte ("fette") blackletter-google font.
 // - "Bodoni" → Bodoni Moda, een moderne Google Fonts-eigen doorontwikkeling
@@ -52,8 +53,20 @@ const fraunces = Fraunces({
 //   een smal/condensed "Zwitsers" schriftbeeld (vergelijkbaar met het
 //   type letter dat eerder "Industrieel"/Bebas Neue invulde, maar dan
 //   condensed in plaats van extra-condensed/all-caps).
+// - "Commercial Script" (31-8-2026 toegevoegd) → Pinyon Script, een
+//   sierlijk, verbonden Google Font in de stijl van een handgeschreven
+//   "commercial script"-kalligrafie (net als de vorige 3 vervangingen: de
+//   klant ziet de naam "Commercial Script", niet "Pinyon Script"). OFL-
+//   gelicentieerd (net als alle andere Google Fonts hier), gecontroleerd
+//   via Googles eigen "google/fonts"-repository op GitHub. Bijzonderheid:
+//   Pinyon Script bestaat bij Google Fonts alleen in het gewicht Regular
+//   (400) — er is geen vette (700) variant, in tegenstelling tot de
+//   andere 5 lettertypes. Daarom hieronder ook alleen weight: "400"
+//   opgevraagd; de plekken waar de preview/e-mailafbeelding normaal altijd
+//   vet (700) tekent, houden voor dit ene lettertype rekening met die
+//   uitzondering — zie FONT_WEIGHT_BY_ID in lib/configuration/plate-visual.ts.
 //
-// Al deze 5 lettertypes worden HIER zelf gehost via next/font/google —
+// Al deze 6 lettertypes worden HIER zelf gehost via next/font/google —
 // dezelfde fontbestanden worden dus zowel in de live preview als in de
 // e-mailafbeelding gebruikt (zie lib/email/plate-preview-image.tsx), in
 // tegenstelling tot de oude "Klassiek"/"Modern" waar de e-mailafbeelding
@@ -93,6 +106,17 @@ const robotoCondensed = Roboto_Condensed({
   display: "swap",
 });
 
+// Pinyon Script bestaat bij Google Fonts alleen in gewicht 400 (Regular) —
+// zie de toelichting hierboven. next/font/google zou een foutmelding geven
+// bij het opvragen van een niet-bestaand gewicht (bv. "700"), vandaar hier
+// bewust alleen "400".
+const pinyonScript = Pinyon_Script({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-commercial-script",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Geëmailleerde Huisnummerbordjes | Duurzaam. Opvallend. Authentiek.",
   description:
@@ -114,7 +138,7 @@ export default function RootLayout({
   return (
     <html
       lang="nl"
-      className={`${inter.variable} ${fraunces.variable} ${unifrakturCook.variable} ${bodoniModa.variable} ${sairaStencilOne.variable} ${tinos.variable} ${robotoCondensed.variable}`}
+      className={`${inter.variable} ${fraunces.variable} ${unifrakturCook.variable} ${bodoniModa.variable} ${sairaStencilOne.variable} ${tinos.variable} ${robotoCondensed.variable} ${pinyonScript.variable}`}
     >
       <body className="min-h-screen font-sans antialiased">
         {/* Google Consent Mode — standaardstatus, toegevoegd 27-8-2026 in
