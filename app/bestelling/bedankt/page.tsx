@@ -94,16 +94,6 @@ export default async function BestellingBedanktPage({
         aria-hidden="true"
       />
 
-      {/* Ververst deze pagina om de 4 seconden vanzelf, zolang de betaling
-          nog niet definitief bevestigd is — via React/JavaScript
-          (PendingPaymentAutoRefresh), NIET via een browser-<meta refresh>:
-          die laatste bleek na wegnavigeren (bv. "Naar home") alsnog een
-          ongevraagde terugkeer naar deze pagina te veroorzaken, zie de
-          toelichting in dat bestand. Toont vanaf de 2e ververste weergave
-          ook zelf een extra regel tekst als het langer duurt dan een paar
-          seconden — zie de toelichting in PendingPaymentAutoRefresh.tsx. */}
-      {showAutoRefresh && <PendingPaymentAutoRefresh />}
-
       <Header showConfiguratorLink={false} />
 
       <main className="relative mx-auto max-w-2xl px-6 pb-20 pt-32 sm:pt-40">
@@ -111,6 +101,22 @@ export default async function BestellingBedanktPage({
         <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
           {message}
         </p>
+
+        {/* Ververst deze pagina om de 4 seconden vanzelf, zolang de
+            betaling nog niet definitief bevestigd is — via React/
+            JavaScript (PendingPaymentAutoRefresh), NIET via een browser-
+            <meta refresh>: die laatste bleek na wegnavigeren (bv. "Naar
+            home") alsnog een ongevraagde terugkeer naar deze pagina te
+            veroorzaken, zie de toelichting in dat bestand. Toont vanaf de
+            2e ververste weergave ook zelf een extra regel tekst als het
+            langer duurt dan een paar seconden — zie de toelichting in
+            PendingPaymentAutoRefresh.tsx. BEWUST hier, ná de {message}-
+            paragraaf, geplaatst (31-8-2026, na een layout-bug: dit
+            component stond eerder helemaal bovenaan de pagina, vóór de
+            Header — dat maakte niet uit zolang het altijd niets zichtbaars
+            liet zien, maar sinds het soms ook echt tekst toont, moet het
+            gewoon op de juiste plek in de normale inhoud staan). */}
+        {showAutoRefresh && <PendingPaymentAutoRefresh />}
 
         <div className="mt-10 flex flex-wrap gap-4">
           {/* Zie showRestartButton hierboven: deze knop verschijnt alleen
