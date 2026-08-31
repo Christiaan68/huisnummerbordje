@@ -182,7 +182,17 @@ export async function POST(request: Request) {
       // Mollie-account volledig gevalideerd is) — voeg "applepay" pas aan
       // deze array toe (en aan PAYMENT_METHODS in PaymentMethodIcons.tsx)
       // zodra dat wél zo is.
-      method: ["ideal", "creditcard"],
+      //
+      // De "as any" hieronder: @mollie/api-client verwacht hier zijn
+      // eigen `PaymentMethod`-type, maar exporteert dat type zelf niet
+      // publiek (dus niet los te importeren/te gebruiken) — vandaar dat
+      // Vercel's typecontrole struikelde over kale tekst als "ideal"
+      // (31-8-2026, twee mislukte deploys; foutmelding: Type '"ideal"' is
+      // not assignable to type 'PaymentMethod'). De waarden hieronder
+      // ("ideal", "creditcard") zijn wel exact wat Mollie's eigen API en
+      // dit pakket intern verwachten — alleen de TypeScript-typecontrole
+      // kan het (door die ontbrekende export) niet zelf bevestigen.
+      method: ["ideal", "creditcard"] as any,
     });
 
     await setOrderMolliePaymentId(orderId, payment.id);
