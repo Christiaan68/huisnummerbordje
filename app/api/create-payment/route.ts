@@ -169,14 +169,20 @@ export async function POST(request: Request) {
       redirectUrl: `${siteUrl}/bestelling/bedankt?order=${orderId}`,
       webhookUrl: `${siteUrl}/api/mollie-webhook`,
       metadata: { orderId: String(orderId) },
-      // Op verzoek van Christiaan (31-8-2026) beperkt tot precies deze 3
+      // Op verzoek van Christiaan (31-8-2026) beperkt tot deze
       // betaalmethodes — zonder dit veld toont Mollie's betaalpagina ALLE
       // methodes die in het Mollie-account geactiveerd staan. Zie ook
-      // components/layout/PaymentMethodIcons.tsx, dat dezelfde 3 methodes
+      // components/layout/PaymentMethodIcons.tsx, dat dezelfde methodes
       // (los, als informatie vooraf) aan de klant toont op de webshop
       // zelf — deze twee plekken moeten dus bij elkaar blijven passen als
       // dit ooit wijzigt.
-      method: ["ideal", "creditcard", "applepay"],
+      //
+      // "applepay" staat hier BEWUST nog niet bij: Christiaan heeft Apple
+      // Pay nog niet geactiveerd in Mollie (dat kan pas zodra het
+      // Mollie-account volledig gevalideerd is) — voeg "applepay" pas aan
+      // deze array toe (en aan PAYMENT_METHODS in PaymentMethodIcons.tsx)
+      // zodra dat wél zo is.
+      method: ["ideal", "creditcard"],
     });
 
     await setOrderMolliePaymentId(orderId, payment.id);
