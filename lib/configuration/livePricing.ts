@@ -43,21 +43,20 @@ const PRIJSTOOL_ID_NAAR_WEBSHOP_ID: Record<string, string> = {
   "4220300": "ovaal-220x300",
 
   // De 3 nieuwe "oren"-maten (jaren-30-stijl met bevestigingsogen,
-  // toegevoegd 9-9-2026 — zie config/product-options.ts) staan hier BEWUST
-  // nog NIET in: "oren-2-horizontaal-130x100", "oren-2-verticaal-100x130" en
-  // "oren-4-hoeken-160x160" hebben nog geen prijstool-product-ID, omdat
-  // Christiaan deze 3 producten nog zelf moet aanmaken in de
-  // prijsbeheeromgeving (met een basisprijs) — zie de toelichting bij
-  // priceFlatCents/priceCurvedCents (`null`) in config/product-options.ts.
-  // Zolang er voor deze 3 id's geen regel hierboven staat, slaat de
-  // koppel-logica hieronder ze gewoon over (`prijzenPerWebshopId.get(...)`
-  // geeft dan `undefined`, zie `mergedProductSizes` verderop) — de webshop
-  // valt voor deze 3 maten dus netjes terug op de statische
-  // priceFlatCents: null / priceCurvedCents: null uit product-options.ts
-  // (dezelfde "prijs op aanvraag"-afhandeling als bij elke andere
-  // ontbrekende koppeling), zonder te crashen. Zodra Christiaan deze
-  // producten heeft aangemaakt en gepubliceerd, moet hier alsnog een regel
-  // per maat bij (zie de toelichting bovenaan dit object).
+  // toegevoegd 9-9-2026 — zie config/product-options.ts). Christiaan heeft
+  // deze 3 producten op 9-9-2026 aangemaakt in de prijsbeheeromgeving; de
+  // id's hieronder komen rechtstreeks uit dat scherm (bevestigd via
+  // screenshot, herkenbaar aan de afmetingen in het id, bv. "5130100" =
+  // 130 × 100 mm). Zodra Christiaan bij zo'n product een basisprijs invult
+  // (via het "basePriceVlak"-veld, zie de toelichting bij
+  // priceFlatCents/priceCurvedCents in config/product-options.ts — deze 3
+  // vormen kennen geen vlak/gewelfd-onderscheid, dus alleen dat veld vullen)
+  // en publiceert, wordt die prijs automatisch opgehaald; tot die tijd blijft
+  // het gewoon "prijs op aanvraag" (basePriceVlak nog 0/leeg → priceFlatCents
+  // wordt dan null, zie de afhandeling hieronder).
+  "5130100": "oren-2-horizontaal-130x100",
+  "6100130": "oren-2-verticaal-100x130",
+  "6160160": "oren-4-hoeken-160x160",
 };
 
 export interface PricingData {
