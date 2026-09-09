@@ -10,6 +10,8 @@ import {
 } from "@/lib/validation/question.schema";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { ConfigurationSummary } from "@/components/configurator/ConfigurationSummary";
+import { productShapes } from "@/config/product-options";
+import { isEarsShape } from "@/lib/configuration/shape-helpers";
 import { cn } from "@/lib/utils";
 import type { CreateConfigurationInput } from "@/types/configuration";
 
@@ -55,13 +57,22 @@ export function QuestionModal({ onClose }: QuestionModalProps) {
   }
 
   async function onSubmit(data: QuestionDetails) {
-    if (
-      !selection.shapeId ||
-      !selection.finish ||
-      !selection.colorId ||
-      !selection.sizeId ||
-      !selection.numberFontId
-    ) {
+    // Sinds 9-9-2026 (uitbreiding naar 7 vormen) is welke velden verplicht
+    // zijn afhankelijk van de gekozen vorm — exact dezelfde conditionele
+    // aanpak als isConfiguratieCompleet() in
+    // app/configurator/controle/page.tsx: de 3 "oren"-vormen (colorMode
+    // "ears-and-plate") kennen geen afwerking-, kleur- (in de enkelvoudige
+    // zin) of lettertypekeuze en hebben in plaats daarvan 2 losse verplichte
+    // kleuren (oren + vlak). Vóór deze fix eiste deze guard altijd
+    // finish/colorId/numberFontId, waardoor een vraag stellen voor een
+    // (verder complete) "oren"-configuratie ALTIJD geblokkeerd werd.
+    const shape = productShapes.find((s) => s.id === selection.shapeId);
+    const earsShape = isEarsShape(shape);
+    const incomplete = earsShape
+      ? !selection.earColorId || !selection.plateColorId
+      : !selection.finish || !selection.colorId || !selection.numberFontId;
+
+    if (!selection.shapeId || !selection.sizeId || incomplete) {
       setStatus("error");
       setErrorMessage(
         "Je configuratie is nog niet compleet. Sluit dit venster en maak eerst al je keuzes."
@@ -72,12 +83,19 @@ export function QuestionModal({ onClose }: QuestionModalProps) {
     setStatus("submitting");
     setErrorMessage(null);
 
+    // Zelfde vertaling naar de wire-payload als in
+    // app/configurator/controle/page.tsx (handleContactSubmit): een
+    // niet-toepasselijk veld wordt weggelaten (`undefined`), nooit `null`
+    // meegestuurd — zie de toelichting bij CreateConfigurationInput in
+    // types/configuration.ts.
     const payload: CreateConfigurationInput & QuestionDetails = {
       shapeId: selection.shapeId,
       finish: selection.finish,
-      colorId: selection.colorId,
+      colorId: earsShape ? undefined : selection.colorId || undefined,
+      earColorId: earsShape ? selection.earColorId || undefined : undefined,
+      plateColorId: earsShape ? selection.plateColorId || undefined : undefined,
       sizeId: selection.sizeId,
-      numberFontId: selection.numberFontId,
+      numberFontId: earsShape ? undefined : selection.numberFontId || undefined,
       line1FontId: selection.line1FontId || undefined,
       line2FontId: selection.line2FontId || undefined,
       customText: selection.customText,

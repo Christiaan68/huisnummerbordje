@@ -8,8 +8,16 @@ interface QuestionEmailData {
   // app/api/contact-question-general/route.ts) zijn deze velden allemaal
   // afwezig en wordt die sectie overgeslagen.
   shapeName?: string;
+  // Alleen gezet voor de 4 oorspronkelijke vormen (colorMode "single") — de
+  // 3 "oren"-vormen (toegevoegd 9-9-2026, colorMode "ears-and-plate") kennen
+  // geen afwerkingskeuze, zie app/api/contact-question/route.ts.
   finish?: "vlak" | "gewelfd";
   colorName?: string;
+  // earColorName/plateColorName: alleen gezet voor de 3 "oren"-vormen (2
+  // losse verplichte kleuren i.p.v. de ene `colorName` hierboven) — zie
+  // types/configuration.ts / config/product-options.ts (productColorsOren).
+  earColorName?: string;
+  plateColorName?: string;
   sizeName?: string;
   customText?: string;
   extraLine1?: string;
@@ -113,13 +121,15 @@ export function renderQuestionNotificationEmail(data: QuestionEmailData): string
                 <td style="padding:12px 32px 28px;">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                     ${row("Vorm", data.shapeName ?? "")}
-                    ${row("Afwerking", data.finish === "vlak" ? "Vlak" : "Gewelfd")}
-                    ${row("Kleur", data.colorName ?? "")}
+                    ${data.finish ? row("Afwerking", data.finish === "vlak" ? "Vlak" : "Gewelfd") : ""}
+                    ${data.colorName ? row("Kleur", data.colorName) : ""}
+                    ${data.earColorName ? row("Kleur oren", data.earColorName) : ""}
+                    ${data.plateColorName ? row("Kleur vlak", data.plateColorName) : ""}
                     ${row("Maat", data.sizeName ?? "")}
                     ${row("Huisnummer", data.customText ?? "")}
                     ${data.extraLine1 ? row("Tekstregel 1", data.extraLine1) : ""}
                     ${data.extraLine2 ? row("Tekstregel 2", data.extraLine2) : ""}
-                    ${row("Lettertype huisnummer", data.numberFontName ?? "")}
+                    ${data.numberFontName ? row("Lettertype huisnummer", data.numberFontName) : ""}
                     ${data.line1FontName ? row("Lettertype tekstregel 1", data.line1FontName) : ""}
                     ${data.line2FontName ? row("Lettertype tekstregel 2", data.line2FontName) : ""}
                   </table>

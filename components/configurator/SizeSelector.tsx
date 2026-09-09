@@ -1,8 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { usePricingData } from "@/lib/configuration/PricingDataContext";
+import { productShapes } from "@/config/product-options";
+import { configuratorSteps, getVisibleSteps } from "@/lib/configuration/steps";
 import { cn } from "@/lib/utils";
 
 function formatPrice(cents: number | null): string {
@@ -14,12 +18,42 @@ function formatPrice(cents: number | null): string {
 }
 
 export function SizeSelector() {
+  const router = useRouter();
   const { selection, dispatch } = useConfigurator();
   const { productSizes } = usePricingData();
+  const shape = productShapes.find((s) => s.id === selection.shapeId);
 
   const sizes = productSizes.filter(
     (size) => size.shapeId === selection.shapeId && size.active
   );
+
+  // Vormen zonder maatkeuze (hasSizeChoice: false — de 3 "oren"-vormen,
+  // nieuw 9-9-2026) hebben precies 1 vaste maat, al automatisch gezet door
+  // ConfiguratorContext.tsx, en slaan deze stap al over in de normale
+  // klik-door-navigatie (zie lib/configuration/steps.ts, getVisibleSteps).
+  // Deze guard vangt alleen rechtstreekse navigatie naar deze URL bij zo'n
+  // vorm op, zodat er nooit een (voor die vorm zinloze) maatkeuze getoond
+  // wordt — de klant wordt meteen doorgestuurd naar de eerstvolgende stap
+  // die voor zijn vorm wél van toepassing is.
+  const skipThisStep = Boolean(shape && !shape.hasSizeChoice);
+
+  useEffect(() => {
+    if (!skipThisStep) return;
+    const ownIndex = configuratorSteps.findIndex((s) => s.id === "maat");
+    const nextStep = getVisibleSteps(selection).find(
+      (s) => configuratorSteps.findIndex((cs) => cs.id === s.id) > ownIndex
+    );
+    router.replace(nextStep?.path ?? "/configurator/controle");
+  }, [skipThisStep, selection, router]);
+
+  if (skipThisStep) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Deze vorm heeft geen maatkeuze. Je wordt doorgestuurd naar de
+        volgende stap...
+      </p>
+    );
+  }
 
   if (!selection.shapeId) {
     return (

@@ -6,6 +6,7 @@ import {
 import { renderCustomerConfirmationEmail } from "@/lib/email/templates/customer-confirmation";
 import { renderPlatePreviewPng } from "@/lib/email/plate-preview-image";
 import { computeAutoFit } from "@/lib/configuration/text-fit";
+import type { EarsStyle } from "@/lib/configuration/plate-visual";
 
 /**
  * Bouwt en verstuurt de twee bevestigingsmails (intern naar de webshop +
@@ -45,8 +46,36 @@ export interface SendOrderEmailsInput {
   // stabiel id in plaats van de Nederlandse naam-tekst zelf.
   shape: { id: string; name: string; extraLines: number };
   finish: "vlak" | "gewelfd";
-  colorName: string;
+  // colorName: verplicht voor colorMode "single"-vormen (de 4
+  // oorspronkelijke vormen). Sinds 9-9-2026 (uitbreiding naar 7 vormen)
+  // optioneel: voor colorMode "ears-and-plate"-vormen (de 3 nieuwe
+  // "oren"-vormen) blijft dit veld leeg/niet meegegeven, en zijn juist
+  // earColorName + plateColorName hieronder gevuld — vul dus ÓF colorName,
+  // ÓF earColorName+plateColorName, NOOIT beide tegelijk. Zie
+  // types/configuration.ts (ConfiguratorSelection) voor dezelfde
+  // "óf/óf"-opzet.
+  colorName?: string;
+  // earColorName/plateColorName: toegevoegd 9-9-2026 voor colorMode
+  // "ears-and-plate"-vormen — kleur van de "oren" resp. het vlak. Zie de
+  // toelichting bij colorName hierboven.
+  earColorName?: string;
+  plateColorName?: string;
   colorHex: string;
+  // earColorHex/plateColorHex/shapeKind/earsStyle: het beeld-tegenhanger van
+  // earColorName/plateColorName hierboven — nodig om de voorbeeldafbeelding
+  // (renderPlatePreviewPng, zie lib/email/plate-preview-image.tsx) voor de
+  // 3 "oren"-vormen met de juiste 2 losse kleuren en oren-geometrie te
+  // tekenen. Zelfde "óf/óf" als colorHex/colorName: bij colorMode
+  // "ears-and-plate" earColorHex+plateColorHex+shapeKind:"ears"+earsStyle
+  // invullen, bij colorMode "single" alleen colorHex (isOval bepaalt dan
+  // nog steeds rect vs. ovaal, zoals al vóór 9-9-2026). Optioneel gehouden
+  // (i.p.v. verplicht) zodat een aanroeper die deze velden nog niet
+  // doorgeeft niet breekt — renderPlatePreviewPng valt dan terug op
+  // colorHex/"rect"|"oval" (zie plate-preview-image.tsx).
+  earColorHex?: string;
+  plateColorHex?: string;
+  shapeKind?: "rect" | "oval" | "ears";
+  earsStyle?: EarsStyle;
   isOval: boolean;
   widthMm: number;
   heightMm: number;
@@ -129,11 +158,15 @@ export async function sendOrderEmails(
   try {
     previewImageBuffer = await renderPlatePreviewPng({
       isOval: input.isOval,
+      shapeKind: input.shapeKind,
+      earsStyle: input.earsStyle,
       isCurved: input.finish !== "vlak",
       isFramed: input.hasFrame,
       widthMm: input.widthMm,
       heightMm: input.heightMm,
       colorHex: input.colorHex,
+      earColorHex: input.earColorHex,
+      plateColorHex: input.plateColorHex,
       numberFontId: input.numberFontId,
       line1FontId: input.line1FontId,
       line2FontId: input.line2FontId,
@@ -169,6 +202,8 @@ export async function sendOrderEmails(
       shapeId: input.shape.id,
       finish: input.finish,
       colorName: input.colorName,
+      earColorName: input.earColorName,
+      plateColorName: input.plateColorName,
       sizeName: input.sizeName,
       customText: input.customText,
       extraLine1: input.extraLine1 ?? undefined,
@@ -242,6 +277,8 @@ export async function sendOrderEmails(
       shapeName: input.shape.name,
       finish: input.finish,
       colorName: input.colorName,
+      earColorName: input.earColorName,
+      plateColorName: input.plateColorName,
       sizeName: input.sizeName,
       customText: input.customText,
       extraLine1: input.extraLine1 ?? undefined,

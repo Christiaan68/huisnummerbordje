@@ -41,6 +41,23 @@ const PRIJSTOOL_ID_NAAR_WEBSHOP_ID: Record<string, string> = {
   "4143183": "ovaal-143x183",
   "4160210": "ovaal-160x210",
   "4220300": "ovaal-220x300",
+
+  // De 3 nieuwe "oren"-maten (jaren-30-stijl met bevestigingsogen,
+  // toegevoegd 9-9-2026 — zie config/product-options.ts) staan hier BEWUST
+  // nog NIET in: "oren-2-horizontaal-130x100", "oren-2-verticaal-100x130" en
+  // "oren-4-hoeken-160x160" hebben nog geen prijstool-product-ID, omdat
+  // Christiaan deze 3 producten nog zelf moet aanmaken in de
+  // prijsbeheeromgeving (met een basisprijs) — zie de toelichting bij
+  // priceFlatCents/priceCurvedCents (`null`) in config/product-options.ts.
+  // Zolang er voor deze 3 id's geen regel hierboven staat, slaat de
+  // koppel-logica hieronder ze gewoon over (`prijzenPerWebshopId.get(...)`
+  // geeft dan `undefined`, zie `mergedProductSizes` verderop) — de webshop
+  // valt voor deze 3 maten dus netjes terug op de statische
+  // priceFlatCents: null / priceCurvedCents: null uit product-options.ts
+  // (dezelfde "prijs op aanvraag"-afhandeling als bij elke andere
+  // ontbrekende koppeling), zonder te crashen. Zodra Christiaan deze
+  // producten heeft aangemaakt en gepubliceerd, moet hier alsnog een regel
+  // per maat bij (zie de toelichting bovenaan dit object).
 };
 
 export interface PricingData {

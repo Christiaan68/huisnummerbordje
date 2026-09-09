@@ -6,6 +6,7 @@ import { getLivePricingData } from "@/lib/configuration/livePricing";
 import { saveOrderToDatabase, setOrderMolliePaymentId } from "@/lib/mysql/client";
 import { buildOrderLabel } from "@/lib/configuration/orderLabel";
 import { createMollie, getSiteUrl } from "@/lib/mollie/client";
+import { isEarsShape, getEarsColorOptions } from "@/lib/configuration/shape-helpers";
 import {
   productShapes,
   productColors,
@@ -65,95 +66,249 @@ export async function POST(request: Request) {
   const pricingData = await getLivePricingData();
 
   const shape = productShapes.find((s) => s.id === data.shapeId);
-  const color = productColors.find((c) => c.id === data.colorId);
-  const size = pricingData.productSizes.find((s) => s.id === data.sizeId);
-  const numberFont = productFonts.find((f) => f.id === data.numberFontId);
-  const line1Font = data.line1FontId
-    ? productFonts.find((f) => f.id === data.line1FontId)
-    : undefined;
-  const line2Font = data.line2FontId
-    ? productFonts.find((f) => f.id === data.line2FontId)
-    : undefined;
-
-  if (
-    !shape ||
-    !color ||
-    !size ||
-    !numberFont ||
-    (shape.extraLines >= 1 && !line1Font) ||
-    (shape.extraLines >= 2 && !line2Font)
-  ) {
+  if (!shape) {
     return NextResponse.json(
       { error: "Onbekende vorm, kleur, maat of lettertype." },
       { status: 400 }
     );
   }
 
+  // Sinds 9-9-2026 (uitbreiding naar 7 vormen, zie config/product-options.ts)
+  // lopen de validatie/lookup en het opslaan van de bestelling hieronder
+  // uiteen naar 2 takken, afhankelijk van shape.colorMode (zie
+  // lib/configuration/shape-helpers.ts, isEarsShape):
+  // - colorMode "single" (de 4 oorspronkelijke vormen): EXACT hetzelfde
+  //   gedrag als vóór deze uitbreiding — zie de tak "else" hieronder.
+  // - colorMode "ears-and-plate" (de 3 nieuwe "oren"-vormen): 2 losse,
+  //   allebei verplichte kleuren (oren + vlak) uit de aparte lijst
+  //   getEarsColorOptions() i.p.v. productColors, geen lettertype- of
+  //   afwerkingkeuze, en een vaste (niet door de klant gekozen) maat die
+  //   nog wél opgezocht wordt — nodig voor de prijsberekening.
+  const earsShape = isEarsShape(shape);
+
   const orderLabel = buildOrderLabel(shape, data.numberPosition);
-  const price = calculatePrice(data, pricingData);
-
-  // Zonder een bekende prijs kan er niets bij Mollie in rekening gebracht
-  // worden — anders dan vroeger (toen ging de bestelling er ook zonder
-  // bekende prijs gewoon door, met "prijs op aanvraag" in de mail) is dat
-  // nu geen optie meer: er moet altijd een concreet bedrag betaald worden.
-  if (price === null || price.totalCents == null || price.totalCents <= 0) {
-    return NextResponse.json(
-      {
-        error:
-          "Voor deze combinatie is de prijs nog niet bekend, dus kunnen we 'm nog niet laten betalen. Gebruik het contactformulier (\"Stel een vraag\") om 'm alsnog bij ons aan te vragen.",
-      },
-      { status: 400 }
-    );
-  }
-
-  const priceFields = {
-    priceTotalCents: price.totalCents,
-    priceColorSurchargeCents: price.colorSurchargeCents,
-    priceExtraCharsCents: price.extraCharsCents,
-    priceExtraCharsCount: price.extraCharsCount,
-    priceFrameSurchargeCents: price.frameSurchargeCents,
-  };
 
   let orderId: number;
-  try {
-    orderId = await saveOrderToDatabase({
-      shapeId: shape.id,
-      shapeName: shape.name,
-      finish: data.finish,
-      colorId: color.id,
-      colorName: color.name,
-      sizeId: size.id,
-      sizeName: size.name,
-      numberFontId: numberFont.id,
-      numberFontName: numberFont.name,
-      line1FontId: line1Font?.id ?? null,
-      line1FontName: line1Font?.name ?? null,
-      line2FontId: line2Font?.id ?? null,
-      line2FontName: line2Font?.name ?? null,
-      customText: data.customText,
-      extraLine1: data.extraLine1 || null,
-      extraLine2: data.extraLine2 || null,
-      numberPosition: data.numberPosition,
-      hasFrame: data.hasFrame,
-      priceSource: pricingData.bron,
-      contactName: contact.name,
-      contactAddress: contact.address,
-      contactPostalCode: contact.postalCode,
-      contactCity: contact.city,
-      contactEmail: contact.email,
-      contactPhone: contact.phone || null,
-      quantity: contact.quantity,
-      ...priceFields,
-    });
-  } catch (err) {
-    console.error(
-      "Opslaan van de (nog niet betaalde) bestelling is mislukt:",
-      err instanceof Error ? err.message : err
+  // Alleen gezet ná de "prijs bekend?"-check in elke tak hieronder — bewust
+  // een los, altijd-een-getal veld (i.p.v. het bredere PriceBreakdown-type
+  // van calculatePrice() hier opnieuw op te slaan) zodat de Mollie-
+  // betaalaanmaak verderop in deze functie niet opnieuw met een mogelijk
+  // `null` totaalbedrag om hoeft te gaan.
+  let priceTotalCentsForPayment: number;
+
+  if (earsShape) {
+    const earsColors = getEarsColorOptions();
+    const earColor = earsColors.find((c) => c.id === data.earColorId);
+    const plateColor = earsColors.find((c) => c.id === data.plateColorId);
+    // Geen maatkeuze voor deze vormen (hasSizeChoice: false) — de ene vaste
+    // maat wordt hier via het shapeId opgezocht, niet via data.sizeId (dat
+    // veld is voor deze vormen niet verplicht ingevuld, zie
+    // lib/validation/configuration.schema.ts).
+    const size = pricingData.productSizes.find((s) => s.shapeId === shape.id);
+
+    if (!earColor || !plateColor) {
+      return NextResponse.json(
+        {
+          error:
+            "Kies een geldige kleur voor zowel de oren als het vlak van dit bordje.",
+        },
+        { status: 400 }
+      );
+    }
+    if (!size) {
+      return NextResponse.json(
+        { error: "Onbekende vorm, kleur, maat of lettertype." },
+        { status: 400 }
+      );
+    }
+
+    // BUGFIX 9-9-2026 (uitbreiding naar 7 vormen): `data.finish` (uit
+    // createConfigurationSchema) is sinds deze uitbreiding getypeerd als
+    // `PlateFinish | null | undefined` (zie types/configuration.ts,
+    // CreateConfigurationInput — `finish` is het enige veld dat zods
+    // `.nullable()` gebruikt, en heeft daarnaast geen `.default()`, dus kan
+    // ook `undefined` zijn). `calculatePrice()` verwacht het strengere
+    // `ConfiguratorSelection` (finish: PlateFinish | null, zonder
+    // `undefined`) — vandaar hier `?? null`, puur om aan dat type te
+    // voldoen; dit verandert niets aan het gedrag (calculatePrice
+    // behandelt `null`/`undefined` toch al identiek, zie
+    // lib/configuration/pricing.ts).
+    const price = calculatePrice(
+      { ...data, sizeId: size.id, finish: data.finish ?? null },
+      pricingData
     );
-    return NextResponse.json(
-      { error: "Er ging iets mis op de server. Probeer het opnieuw." },
-      { status: 500 }
-    );
+
+    if (price === null || price.totalCents == null || price.totalCents <= 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Voor deze combinatie is de prijs nog niet bekend, dus kunnen we 'm nog niet laten betalen. Gebruik het contactformulier (\"Stel een vraag\") om 'm alsnog bij ons aan te vragen.",
+        },
+        { status: 400 }
+      );
+    }
+    priceTotalCentsForPayment = price.totalCents;
+
+    const priceFields = {
+      priceTotalCents: price.totalCents,
+      priceColorSurchargeCents: price.colorSurchargeCents,
+      priceExtraCharsCents: price.extraCharsCents,
+      priceExtraCharsCount: price.extraCharsCount,
+      priceFrameSurchargeCents: price.frameSurchargeCents,
+    };
+
+    try {
+      orderId = await saveOrderToDatabase({
+        shapeId: shape.id,
+        shapeName: shape.name,
+        // Deze vormen kennen geen vlak/gewelfd-onderscheid (hasFinishChoice:
+        // false) — de kolom `finish` is desondanks NOT NULL (zie
+        // database/mysql/orders-schema.sql), dus hier een vaste waarde
+        // ("vlak") als placeholder. Eigen keuze — zie het rapport van deze
+        // wijziging.
+        finish: "vlak",
+        colorId: null,
+        colorName: null,
+        earColorId: earColor.id,
+        earColorName: earColor.name,
+        plateColorId: plateColor.id,
+        plateColorName: plateColor.name,
+        sizeId: size.id,
+        sizeName: size.name,
+        // Geen lettertypekeuze voor deze vormen (hasFontChoice: false) — zie
+        // de toelichting bij NewOrderRow.numberFontId in lib/mysql/client.ts.
+        numberFontId: "",
+        numberFontName: "",
+        line1FontId: null,
+        line1FontName: null,
+        line2FontId: null,
+        line2FontName: null,
+        customText: data.customText,
+        extraLine1: null,
+        extraLine2: null,
+        numberPosition: data.numberPosition,
+        hasFrame: false,
+        priceSource: pricingData.bron,
+        contactName: contact.name,
+        contactAddress: contact.address,
+        contactPostalCode: contact.postalCode,
+        contactCity: contact.city,
+        contactEmail: contact.email,
+        contactPhone: contact.phone || null,
+        quantity: contact.quantity,
+        ...priceFields,
+      });
+    } catch (err) {
+      console.error(
+        "Opslaan van de (nog niet betaalde) bestelling is mislukt:",
+        err instanceof Error ? err.message : err
+      );
+      return NextResponse.json(
+        { error: "Er ging iets mis op de server. Probeer het opnieuw." },
+        { status: 500 }
+      );
+    }
+  } else {
+    // --- Bestaande vormen (colorMode "single") — dit stuk is functioneel
+    // exact het gedrag van vóór de uitbreiding naar 7 vormen. ---
+    const color = productColors.find((c) => c.id === data.colorId);
+    const size = pricingData.productSizes.find((s) => s.id === data.sizeId);
+    const numberFont = productFonts.find((f) => f.id === data.numberFontId);
+    const line1Font = data.line1FontId
+      ? productFonts.find((f) => f.id === data.line1FontId)
+      : undefined;
+    const line2Font = data.line2FontId
+      ? productFonts.find((f) => f.id === data.line2FontId)
+      : undefined;
+
+    if (
+      !color ||
+      !size ||
+      !numberFont ||
+      (shape.extraLines >= 1 && !line1Font) ||
+      (shape.extraLines >= 2 && !line2Font)
+    ) {
+      return NextResponse.json(
+        { error: "Onbekende vorm, kleur, maat of lettertype." },
+        { status: 400 }
+      );
+    }
+
+    // BUGFIX 9-9-2026: zelfde reden als bij de "oren"-tak hierboven —
+    // `data.finish` kan statisch `undefined` zijn, `calculatePrice()`
+    // verwacht `PlateFinish | null`. Voor deze (bestaande) vormen is
+    // `data.finish` op dit punt door de superRefine-validatie in
+    // createConfigurationSchema altijd al daadwerkelijk gevuld
+    // ("vlak"/"gewelfd"); dit is dus puur een type-fix, geen gedragswijziging.
+    const price = calculatePrice({ ...data, finish: data.finish ?? null }, pricingData);
+
+    // Zonder een bekende prijs kan er niets bij Mollie in rekening gebracht
+    // worden — anders dan vroeger (toen ging de bestelling er ook zonder
+    // bekende prijs gewoon door, met "prijs op aanvraag" in de mail) is dat
+    // nu geen optie meer: er moet altijd een concreet bedrag betaald worden.
+    if (price === null || price.totalCents == null || price.totalCents <= 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Voor deze combinatie is de prijs nog niet bekend, dus kunnen we 'm nog niet laten betalen. Gebruik het contactformulier (\"Stel een vraag\") om 'm alsnog bij ons aan te vragen.",
+        },
+        { status: 400 }
+      );
+    }
+    priceTotalCentsForPayment = price.totalCents;
+
+    const priceFields = {
+      priceTotalCents: price.totalCents,
+      priceColorSurchargeCents: price.colorSurchargeCents,
+      priceExtraCharsCents: price.extraCharsCents,
+      priceExtraCharsCount: price.extraCharsCount,
+      priceFrameSurchargeCents: price.frameSurchargeCents,
+    };
+
+    try {
+      orderId = await saveOrderToDatabase({
+        shapeId: shape.id,
+        shapeName: shape.name,
+        finish: data.finish as "vlak" | "gewelfd",
+        colorId: color.id,
+        colorName: color.name,
+        earColorId: null,
+        earColorName: null,
+        plateColorId: null,
+        plateColorName: null,
+        sizeId: size.id,
+        sizeName: size.name,
+        numberFontId: numberFont.id,
+        numberFontName: numberFont.name,
+        line1FontId: line1Font?.id ?? null,
+        line1FontName: line1Font?.name ?? null,
+        line2FontId: line2Font?.id ?? null,
+        line2FontName: line2Font?.name ?? null,
+        customText: data.customText,
+        extraLine1: data.extraLine1 || null,
+        extraLine2: data.extraLine2 || null,
+        numberPosition: data.numberPosition,
+        hasFrame: data.hasFrame,
+        priceSource: pricingData.bron,
+        contactName: contact.name,
+        contactAddress: contact.address,
+        contactPostalCode: contact.postalCode,
+        contactCity: contact.city,
+        contactEmail: contact.email,
+        contactPhone: contact.phone || null,
+        quantity: contact.quantity,
+        ...priceFields,
+      });
+    } catch (err) {
+      console.error(
+        "Opslaan van de (nog niet betaalde) bestelling is mislukt:",
+        err instanceof Error ? err.message : err
+      );
+      return NextResponse.json(
+        { error: "Er ging iets mis op de server. Probeer het opnieuw." },
+        { status: 500 }
+      );
+    }
   }
 
   try {
@@ -163,7 +318,7 @@ export async function POST(request: Request) {
     const payment = await mollie.payments.create({
       amount: {
         currency: "EUR",
-        value: (priceFields.priceTotalCents / 100).toFixed(2),
+        value: (priceTotalCentsForPayment / 100).toFixed(2),
       },
       description: `Huisnummerbordje bestelling #${orderId}`,
       redirectUrl: `${siteUrl}/bestelling/bedankt?order=${orderId}`,

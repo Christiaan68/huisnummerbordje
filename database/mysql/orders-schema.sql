@@ -133,3 +133,38 @@ ALTER TABLE configurations ADD COLUMN mollie_payment_id VARCHAR(64) NULL;
 ALTER TABLE configurations ADD COLUMN paid_at TIMESTAMP NULL;
 ALTER TABLE configurations ADD INDEX idx_mollie_payment_id (mollie_payment_id);
 UPDATE configurations SET payment_status = 'paid' WHERE payment_status = 'pending';
+
+-- MIGRATIE 9-9-2026: uitbreiding naar 7 vormen — 3 nieuwe vormen in
+-- jaren-30-stijl met bevestigingsogen ("oren"), zie config/product-options.ts
+-- (colorMode "ears-and-plate") en types/product.ts. Deze 3 vormen kennen,
+-- anders dan de 4 oorspronkelijke vormen, GEEN ENKELE kleur (color_id/
+-- color_name), maar TWEE losse, allebei verplichte kleuren: één voor de
+-- "oren" en één voor het vlak, allebei gekozen uit een aparte kleurenlijst
+-- (productColorsOren in config/product-options.ts, nooit uit dezelfde lijst
+-- als color_id/color_name).
+--
+-- Daarvoor zijn twee dingen nodig:
+-- 1) de bestaande kolommen color_id/color_name (hierboven bij de CREATE
+--    TABLE nog NOT NULL) moeten NULL mogen worden — voor deze 3 nieuwe
+--    vormen wordt hier altijd NULL in gezet, precies zoals nu al gebeurt bij
+--    bv. font_id-achtige "niet van toepassing"-gevallen elders in deze tabel.
+-- 2) er komen 4 nieuwe, optionele kolommen bij voor de kleur van de oren en
+--    het vlak (id + leesbare naam, zelfde opzet als color_id/color_name
+--    zelf — zie de toelichting bovenaan dit bestand over waarom zowel de
+--    technische id als de naam bewaard blijven).
+--
+-- De 4 oorspronkelijke vormen blijven dit allemaal gewoon NULL laten (hun
+-- color_id/color_name blijven zoals nu gevuld) — voer onderstaande zes
+-- regels ÉÉNMALIG uit in hetzelfde SQL-scherm om de tabel bij te werken:
+
+ALTER TABLE configurations MODIFY COLUMN color_id VARCHAR(64) NULL;
+ALTER TABLE configurations MODIFY COLUMN color_name VARCHAR(100) NULL;
+ALTER TABLE configurations ADD COLUMN ear_color_id VARCHAR(64) NULL AFTER color_name;
+ALTER TABLE configurations ADD COLUMN ear_color_name VARCHAR(100) NULL AFTER ear_color_id;
+ALTER TABLE configurations ADD COLUMN plate_color_id VARCHAR(64) NULL AFTER ear_color_name;
+ALTER TABLE configurations ADD COLUMN plate_color_name VARCHAR(100) NULL AFTER plate_color_id;
+
+-- custom_text (VARCHAR(10), zie de CREATE TABLE hierboven) hoeft NIET
+-- gewijzigd te worden: de nieuwe "oren"-vormen staan maximaal 7 tekens toe
+-- (zie houseNumberEarsSchema in lib/validation/text-input.schema.ts), dat
+-- past ruim binnen de bestaande kolombreedte.

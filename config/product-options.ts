@@ -16,6 +16,13 @@ export const productShapes: ProductShape[] = [
     imageSrc: "/images/shapes/01 Bordje Huisnummer.jpg",
     active: true,
     createdAt: "",
+    // Capability-vlaggen (zie types/product.ts) — expliciet ingevuld met het
+    // bestaande gedrag van deze vorm, niets impliciet gelaten.
+    hasSizeChoice: true,
+    hasFinishChoice: true,
+    hasFontChoice: true,
+    hasFrameChoice: true,
+    colorMode: "single",
   },
   {
     id: "nummer-1regel",
@@ -28,6 +35,11 @@ export const productShapes: ProductShape[] = [
     imageSrc: "/images/shapes/02 Bordje Huisnummer met 1 regel.jpg",
     active: true,
     createdAt: "",
+    hasSizeChoice: true,
+    hasFinishChoice: true,
+    hasFontChoice: true,
+    hasFrameChoice: true,
+    colorMode: "single",
   },
   {
     id: "nummer-2regels",
@@ -40,6 +52,11 @@ export const productShapes: ProductShape[] = [
     imageSrc: "/images/shapes/03 Bordje Huisnummer met 2 regel.jpg",
     active: true,
     createdAt: "",
+    hasSizeChoice: true,
+    hasFinishChoice: true,
+    hasFontChoice: true,
+    hasFrameChoice: true,
+    colorMode: "single",
   },
   {
     id: "ovaal",
@@ -51,6 +68,85 @@ export const productShapes: ProductShape[] = [
     imageSrc: "/images/shapes/04 Bordje ovaal.jpg",
     active: true,
     createdAt: "",
+    hasSizeChoice: true,
+    hasFinishChoice: true,
+    hasFontChoice: true,
+    hasFrameChoice: true,
+    colorMode: "single",
+  },
+
+  // -------------------------------------------------------------------
+  // Nieuw 9-9-2026: 3 vormen in jaren-30-stijl met bevestigingsogen
+  // ("oren"). Structureel anders dan de 4 vormen hierboven: precies 1
+  // vaste maat, geen vlak/gewelfd-keuze, geen lettertypekeuze, geen
+  // kaderoptie, en 2 losse verplichte kleuren (oren + vlak) uit een
+  // volledig aparte kleurenlijst (productColorsOren, zie verderop in dit
+  // bestand). Zie types/product.ts (capability-vlaggen) en
+  // lib/configuration/shape-helpers.ts.
+  //
+  // `availableFinishes: []`: deze vormen kennen het begrip vlak/gewelfd
+  // niet — een lege lijst is de meest neutrale invulling van dit
+  // (voor deze vormen ongebruikte) veld. Bestaande code die
+  // `availableFinishes` leest (bv. de SET_SHAPE-reducer in
+  // ConfiguratorContext.tsx: "lengte 1 → die ene afwerking, anders null")
+  // komt hierdoor vanzelf op `finish: null` uit — precies wat
+  // `hasFinishChoice: false` voor deze vormen vereist. FinishSelector.tsx
+  // en de "afwerking"-stap worden hoe dan ook nooit getoond voor deze
+  // vormen (zie lib/configuration/steps.ts, visibleFor).
+  //
+  // Basisprijs (priceFlatCents/priceCurvedCents) van de bijbehorende maten
+  // hieronder staat bewust op `null` ("prijs op aanvraag") totdat
+  // Christiaan deze 3 producten zelf in de prijsbeheeromgeving aanmaakt.
+  {
+    id: "oren-2-horizontaal",
+    name: "Huisnummer met 2 oren",
+    slug: "oren-2-horizontaal",
+    description:
+      "Huisnummerbordje in jaren-30-stijl met bevestigingsogen links en rechts. Vaste maat 130 × 100 mm. Huisnummer: 1-4 cijfers, optioneel max. 3 letters.",
+    extraLines: 0,
+    availableFinishes: [],
+    imageSrc: "/images/shapes/05 Bordje Huisnummer 2 oren.jpg",
+    active: true,
+    createdAt: "",
+    hasSizeChoice: false,
+    hasFinishChoice: false,
+    hasFontChoice: false,
+    hasFrameChoice: false,
+    colorMode: "ears-and-plate",
+  },
+  {
+    id: "oren-2-verticaal",
+    name: "Huisnummer met 2 oren verticaal",
+    slug: "oren-2-verticaal",
+    description:
+      "Huisnummerbordje in jaren-30-stijl met bevestigingsogen boven en onder. Vaste maat 100 × 130 mm. Huisnummer: 1-4 cijfers, optioneel max. 3 letters.",
+    extraLines: 0,
+    availableFinishes: [],
+    imageSrc: "/images/shapes/06 Bordje Huisnummer 2 oren verticaal.jpg",
+    active: true,
+    createdAt: "",
+    hasSizeChoice: false,
+    hasFinishChoice: false,
+    hasFontChoice: false,
+    hasFrameChoice: false,
+    colorMode: "ears-and-plate",
+  },
+  {
+    id: "oren-4-hoeken",
+    name: "Huisnummer met 4 oren",
+    slug: "oren-4-hoeken",
+    description:
+      "Huisnummerbordje in jaren-30-stijl met bevestiging op de vier hoeken. Vaste maat 160 × 160 mm. Huisnummer: 1-4 cijfers, optioneel max. 3 letters.",
+    extraLines: 0,
+    availableFinishes: [],
+    imageSrc: "/images/shapes/07 Bordje Huisnummer 4 oren.jpg",
+    active: true,
+    createdAt: "",
+    hasSizeChoice: false,
+    hasFinishChoice: false,
+    hasFontChoice: false,
+    hasFrameChoice: false,
+    colorMode: "ears-and-plate",
   },
 ];
 
@@ -61,6 +157,31 @@ export const productColors: ProductColor[] = [
   { id: "cream", name: "Crème", slug: "cream", hex: "#EFE6D8", ralCode: "RAL 1013", active: true, createdAt: "" },
   { id: "green", name: "Groen", slug: "green", hex: "#2F4B3C", ralCode: "RAL 6012", active: true, createdAt: "" },
   { id: "red", name: "Rood", slug: "red", hex: "#7A2020", ralCode: "RAL 3004", active: true, createdAt: "" },
+];
+
+/**
+ * Aparte, volledig losstaande kleurenlijst voor de 3 "oren"-vormen (zie
+ * productShapes hierboven, colorMode "ears-and-plate") — toegevoegd
+ * 9-9-2026. Bewust NIET gemengd met `productColors` hierboven: geen enkele
+ * id overlapt (allemaal met het voorvoegsel "oren-"), ook niet als een
+ * kleurnaam/RAL-code toevallig lijkt op een bestaande kleur.
+ *
+ * Wordt bij deze vormen gebruikt voor TWEE losse, allebei verplichte
+ * kleurkeuzes (oren + vlak, zie ConfiguratorSelection.earColorId /
+ * plateColorId in types/configuration.ts) — nooit voor de gewone,
+ * enkelvoudige `colorId`.
+ *
+ * LET OP: de hex-waarden hieronder zijn een visuele BENADERING van de
+ * genoemde RAL-code, bedoeld voor het scherm-voorbeeld in de configurator —
+ * niet de exacte drukkleur van het geëmailleerde bordje zelf.
+ */
+export const productColorsOren: ProductColor[] = [
+  { id: "oren-zwart", name: "Zwart", slug: "oren-zwart", hex: "#111111", ralCode: "RAL 9005", active: true, createdAt: "" },
+  { id: "oren-wit", name: "Wit", slug: "oren-wit", hex: "#F7F5F0", ralCode: "RAL 9016", active: true, createdAt: "" },
+  { id: "oren-donkerblauw", name: "Donkerblauw", slug: "oren-donkerblauw", hex: "#1E2A4A", ralCode: "RAL 5013", active: true, createdAt: "" },
+  { id: "oren-creme", name: "Crème", slug: "oren-creme", hex: "#E9E0CB", ralCode: "RAL 9001", active: true, createdAt: "" },
+  { id: "oren-groen", name: "Groen", slug: "oren-groen", hex: "#27392C", ralCode: "RAL 6009", active: true, createdAt: "" },
+  { id: "oren-rood", name: "Rood", slug: "oren-rood", hex: "#7E292C", ralCode: "RAL 3011", active: true, createdAt: "" },
 ];
 
 /**
@@ -104,6 +225,32 @@ export const productSizes: ProductSize[] = [
   { id: "ovaal-143x183", shapeId: "ovaal", name: "143 × 183 mm", width: 183, height: 143, unit: "mm", priceFlatCents: null, priceCurvedCents: 3595, defaultMaxChars: 2, active: true, createdAt: "" },
   { id: "ovaal-160x210", shapeId: "ovaal", name: "160 × 210 mm", width: 210, height: 160, unit: "mm", priceFlatCents: null, priceCurvedCents: 4517, defaultMaxChars: 2, active: true, createdAt: "" },
   { id: "ovaal-220x300", shapeId: "ovaal", name: "220 × 300 mm", width: 300, height: 220, unit: "mm", priceFlatCents: null, priceCurvedCents: 8110, defaultMaxChars: 2, active: true, createdAt: "" },
+
+  // Nieuw 9-9-2026: de 3 "oren"-vormen hebben elk precies 1 vaste maat (zie
+  // ProductShape.hasSizeChoice) — de klant kiest hier dus niets, zie
+  // ConfiguratorContext.tsx (SET_SHAPE zet sizeId meteen op deze ene maat).
+  //
+  // priceFlatCents/priceCurvedCents staan BEWUST op `null` ("prijs op
+  // aanvraag") — de basisprijs van deze 3 nieuwe producten is nog niet
+  // vastgesteld door Christiaan. Hij vult die zelf in via de bestaande
+  // prijsbeheertool, net als bij alle andere producten (zie ook de
+  // toelichting bij PRIJSTOOL_ID_NAAR_WEBSHOP_ID in
+  // lib/configuration/livePricing.ts). calculatePrice() valt zolang dat niet
+  // gebeurd is terug op hetzelfde "prijs op aanvraag"-pad als nu al bestaat
+  // voor bv. "ovaal-105x150" hierboven.
+  //
+  // defaultMaxChars: 7 = 4 cijfers + 3 letters, het maximum van de eigen
+  // validatie voor deze vormen (zie lib/validation/text-input.schema.ts,
+  // houseNumberEarsSchema). Dit veld speelt voor deze vormen eigenlijk geen
+  // rol in de prijsberekening: doordat de validatie al een harde grens van
+  // 7 tekens afdwingt, kan de tekst nooit langer worden dan defaultMaxChars
+  // — er kunnen dus nooit "extra tekens" bovenop dit aantal zijn (zie
+  // lib/configuration/pricing.ts). Het veld staat hier toch consistent
+  // ingevuld voor het type, en zodat een eventuele toekomstige verruiming
+  // van de validatie niet per ongeluk een `undefined` tegenkomt.
+  { id: "oren-2-horizontaal-130x100", shapeId: "oren-2-horizontaal", name: "130 × 100 mm", width: 130, height: 100, unit: "mm", priceFlatCents: null, priceCurvedCents: null, defaultMaxChars: 7, active: true, createdAt: "" },
+  { id: "oren-2-verticaal-100x130", shapeId: "oren-2-verticaal", name: "100 × 130 mm", width: 100, height: 130, unit: "mm", priceFlatCents: null, priceCurvedCents: null, defaultMaxChars: 7, active: true, createdAt: "" },
+  { id: "oren-4-hoeken-160x160", shapeId: "oren-4-hoeken", name: "160 × 160 mm", width: 160, height: 160, unit: "mm", priceFlatCents: null, priceCurvedCents: null, defaultMaxChars: 7, active: true, createdAt: "" },
 ];
 
 // De oorspronkelijke 4 lettertypes (Klassiek/Georgia, Modern/Helvetica,
@@ -152,4 +299,14 @@ export const globalPricingOptions = {
   colorSurchargeCents: 1505,
   frameSurchargeCents: 1000,
   standardColorIds: ["black", "white", "navy"] as string[],
+  // NIEUW — toegevoegd voor de 3 jaren-30-vormen met oren (9-9-2026). Deze
+  // vormen hebben een eigen, aparte kleurenlijst (productColorsOren) en 2
+  // losse, verplichte kleurkeuzes (oren + vlak). Christiaan heeft bevestigd
+  // dat de toeslag voor een meerprijskleur bij deze vormen exact hetzelfde
+  // bedrag is als de bestaande `colorSurchargeCents` hierboven (dezelfde
+  // instelling als "Meerprijs andere kleur" in de prijstool — er is geen
+  // apart, nieuw instelbaar bedrag nodig) en dat de toeslag PER ONDERDEEL
+  // geldt: als zowel de oren als het vlak een meerprijskleur krijgen, telt
+  // colorSurchargeCents dus 2x mee (zie lib/configuration/pricing.ts).
+  orenStandardColorIds: ["oren-zwart", "oren-wit", "oren-donkerblauw"] as string[],
 };

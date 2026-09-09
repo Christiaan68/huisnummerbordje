@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
-import { configuratorSteps, getStepIndex } from "@/lib/configuration/steps";
+import { configuratorSteps, getVisibleSteps } from "@/lib/configuration/steps";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { cn } from "@/lib/utils";
 
@@ -15,10 +15,17 @@ export function ConfiguratorNav({ stepId }: ConfiguratorNavProps) {
   const router = useRouter();
   const { selection, dispatch } = useConfigurator();
 
-  const currentIndex = configuratorSteps.findIndex((s) => s.id === stepId);
-  const currentStep = configuratorSteps[currentIndex];
-  const previousStep = configuratorSteps[currentIndex - 1];
-  const nextStep = configuratorSteps[currentIndex + 1];
+  // Sinds 9-9-2026 (7 vormen): "Terug"/"Verder" navigeren binnen de
+  // stappenlijst die voor de HUIDIG GEKOZEN vorm van toepassing is (zie
+  // lib/configuration/steps.ts, getVisibleSteps) — zo slaan "oren"-vormen
+  // bv. de stappen "Afwerking"/"Maat"/"Opties" gewoon over. Voor de 4
+  // oorspronkelijke vormen bevat deze lijst nog steeds alle stappen, dus
+  // daar verandert er niets.
+  const visibleSteps = getVisibleSteps(selection);
+  const currentIndex = visibleSteps.findIndex((s) => s.id === stepId);
+  const currentStep = visibleSteps[currentIndex];
+  const previousStep = visibleSteps[currentIndex - 1];
+  const nextStep = visibleSteps[currentIndex + 1];
 
   const canProceed = currentStep ? currentStep.isComplete(selection) : false;
 

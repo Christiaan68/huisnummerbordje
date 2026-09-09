@@ -7,24 +7,30 @@ import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { ConfigurationSummary } from "@/components/configurator/ConfigurationSummary";
 import { ContactDetailsForm } from "@/components/configurator/ContactDetailsForm";
 import { QuestionModal } from "@/components/configurator/QuestionModal";
-import { configuratorSteps } from "@/lib/configuration/steps";
+import { getVisibleSteps } from "@/lib/configuration/steps";
+import { productShapes } from "@/config/product-options";
+import { isEarsShape } from "@/lib/configuration/shape-helpers";
 import type { CreateConfigurationInput } from "@/types/configuration";
 import type { ContactDetails } from "@/lib/validation/contact.schema";
 
 type Stage = "summary" | "contact";
 
-// De stap vóór "Controle" — op dit moment "Opties" — wordt hier uit
-// steps.ts opgezocht in plaats van hardcoded, zodat dit vanzelf blijft
-// kloppen als de volgorde van de configurator-stappen ooit wijzigt. Zelfde
-// bron als ConfiguratorNav.tsx (de "Terug"-knop op alle andere stappen)
-// gebruikt.
-const CONTROLE_STEP_INDEX = configuratorSteps.findIndex((s) => s.id === "controle");
-const PREVIOUS_STEP_PATH =
-  configuratorSteps[CONTROLE_STEP_INDEX - 1]?.path ?? "/configurator/opties";
-
 export default function ControlePage() {
   const router = useRouter();
   const { selection } = useConfigurator();
+
+  // De stap vóór "Controle" — voor de 4 oorspronkelijke vormen is dat
+  // "Opties", maar sinds 9-9-2026 (7 vormen) slaan de "oren"-vormen die stap
+  // over (geen kaderoptie, zie lib/configuration/steps.ts), dus daar is de
+  // vorige stap "Tekst". Daarom hier, net als in ConfiguratorNav.tsx,
+  // berekend op basis van de stappenlijst die voor de HUIDIG GEKOZEN vorm
+  // van toepassing is (getVisibleSteps) in plaats van hardcoded of op basis
+  // van de volledige, ongefilterde lijst.
+  const visibleSteps = getVisibleSteps(selection);
+  const controleStepIndex = visibleSteps.findIndex((s) => s.id === "controle");
+  const previousStepPath =
+    visibleSteps[controleStepIndex - 1]?.path ?? "/configurator/opties";
+
   const [stage, setStage] = useState<Stage>("summary");
   const [status, setStatus] = useState<"idle" | "submitting" | "error" | "notice">(
     "idle"
@@ -37,17 +43,30 @@ export default function ControlePage() {
   // die net als op alle andere stappen maar één stap terug gaat (naar
   // "Opties"), in plaats van de hele configuratie kwijt te raken.
   function handleTerug() {
-    router.push(PREVIOUS_STEP_PATH);
+    router.push(previousStepPath);
+  }
+
+  // Sinds 9-9-2026 (7 vormen) is welke velden verplicht zijn afhankelijk van
+  // de gekozen vorm: de "oren"-vormen (colorMode "ears-and-plate") kennen
+  // geen afwerking-, kleur- (in de enkelvoudige zin) of lettertypekeuze en
+  // hebben in plaats daarvan 2 losse verplichte kleuren (oren + vlak) — zie
+  // types/product.ts (capability-vlaggen) en lib/validation/
+  // configuration.schema.ts (dezelfde conditionele opbouw, daar met zod).
+  // `incomplete` wordt per vorm-type apart bepaald; `selection.shapeId`/
+  // `selection.sizeId` worden hieronder in de gecombineerde `if` gecheckt
+  // (voor BEIDE vorm-types verplicht) zodat ze na deze guard narrowed zijn
+  // naar niet-`null` voor de payload verderop.
+  function isConfiguratieCompleet(): boolean {
+    const shape = productShapes.find((s) => s.id === selection.shapeId);
+    const incomplete = isEarsShape(shape)
+      ? !selection.earColorId || !selection.plateColorId
+      : !selection.finish || !selection.colorId || !selection.numberFontId;
+
+    return Boolean(selection.shapeId) && Boolean(selection.sizeId) && !incomplete;
   }
 
   function handleConfiguratieBevestigen() {
-    if (
-      !selection.shapeId ||
-      !selection.finish ||
-      !selection.colorId ||
-      !selection.sizeId ||
-      !selection.numberFontId
-    ) {
+    if (!isConfiguratieCompleet()) {
       setStatus("error");
       setMessage("Niet alle keuzes zijn compleet. Ga terug en vul ze aan.");
       return;
@@ -58,13 +77,7 @@ export default function ControlePage() {
   }
 
   async function handleContactSubmit(contact: ContactDetails) {
-    if (
-      !selection.shapeId ||
-      !selection.finish ||
-      !selection.colorId ||
-      !selection.sizeId ||
-      !selection.numberFontId
-    ) {
+    if (!selection.shapeId || !selection.sizeId || !isConfiguratieCompleet()) {
       setStatus("error");
       setMessage("Niet alle keuzes zijn compleet. Ga terug en vul ze aan.");
       setStage("summary");
@@ -74,12 +87,25 @@ export default function ControlePage() {
     setStatus("submitting");
     setMessage(null);
 
+    const shape = productShapes.find((s) => s.id === selection.shapeId);
+    const earsShape = isEarsShape(shape);
+
     const payload: CreateConfigurationInput & ContactDetails = {
       shapeId: selection.shapeId,
       finish: selection.finish,
-      colorId: selection.colorId,
+      // colorMode "ears-and-plate" (de "oren"-vormen): earColorId/
+      // plateColorId meesturen i.p.v. de enkelvoudige colorId — zie
+      // types/configuration.ts en lib/validation/configuration.schema.ts.
+      // BEWUST `|| undefined` i.p.v. `null`: createConfigurationSchema
+      // valideert deze velden met zods `.optional()` zonder `.nullable()`,
+      // dus een niet-toepasselijk veld moet hier ONTBREKEN (`undefined`,
+      // waardoor JSON.stringify de key weglaat) — een letterlijke `null`
+      // zou de server-validatie laten falen (zie types/configuration.ts).
+      colorId: earsShape ? undefined : selection.colorId || undefined,
+      earColorId: earsShape ? selection.earColorId || undefined : undefined,
+      plateColorId: earsShape ? selection.plateColorId || undefined : undefined,
       sizeId: selection.sizeId,
-      numberFontId: selection.numberFontId,
+      numberFontId: earsShape ? undefined : selection.numberFontId || undefined,
       line1FontId: selection.line1FontId || undefined,
       line2FontId: selection.line2FontId || undefined,
       customText: selection.customText,

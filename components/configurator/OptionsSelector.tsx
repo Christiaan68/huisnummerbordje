@@ -1,8 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { usePricingData } from "@/lib/configuration/PricingDataContext";
+import { productShapes } from "@/config/product-options";
+import { configuratorSteps, getVisibleSteps } from "@/lib/configuration/steps";
 import { formatPriceCents } from "@/lib/configuration/pricing";
 import { cn } from "@/lib/utils";
 
@@ -17,12 +21,42 @@ import { cn } from "@/lib/utils";
 const FRAME_IMAGE_SRC = "/images/optie-kader.jpg";
 
 export function OptionsSelector() {
+  const router = useRouter();
   const { selection, dispatch } = useConfigurator();
   const pricingData = usePricingData();
+  const shape = productShapes.find((s) => s.id === selection.shapeId);
 
   const frameSurchargeCents = pricingData.globalPricingOptions.frameSurchargeCents;
 
   const isSelected = selection.hasFrame;
+
+  // Vormen zonder kaderoptie (hasFrameChoice: false — de 3 "oren"-vormen,
+  // nieuw 9-9-2026) slaan deze stap al over in de normale klik-door-
+  // navigatie (zie lib/configuration/steps.ts, getVisibleSteps). Deze guard
+  // vangt alleen rechtstreekse navigatie naar deze URL bij zo'n vorm op
+  // (bv. "/configurator/opties" handmatig intypen), zodat de klant nooit
+  // een (voor die vorm zinloze) kaderkeuze te zien krijgt — hij wordt
+  // meteen doorgestuurd naar de eerstvolgende stap die voor zijn vorm wél
+  // van toepassing is.
+  const skipThisStep = Boolean(shape && !shape.hasFrameChoice);
+
+  useEffect(() => {
+    if (!skipThisStep) return;
+    const ownIndex = configuratorSteps.findIndex((s) => s.id === "opties");
+    const nextStep = getVisibleSteps(selection).find(
+      (s) => configuratorSteps.findIndex((cs) => cs.id === s.id) > ownIndex
+    );
+    router.replace(nextStep?.path ?? "/configurator/controle");
+  }, [skipThisStep, selection, router]);
+
+  if (skipThisStep) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Deze vorm heeft geen kaderoptie. Je wordt doorgestuurd naar de
+        volgende stap...
+      </p>
+    );
+  }
 
   return (
     <div className="max-w-xs">

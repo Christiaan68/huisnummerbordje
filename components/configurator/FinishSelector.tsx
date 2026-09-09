@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { productShapes } from "@/config/product-options";
+import { configuratorSteps, getVisibleSteps } from "@/lib/configuration/steps";
 import type { PlateFinish } from "@/types/product";
 import { cn } from "@/lib/utils";
 
@@ -37,8 +40,36 @@ const FINISH_OPTIONS: {
 ];
 
 export function FinishSelector() {
+  const router = useRouter();
   const { selection, dispatch } = useConfigurator();
   const shape = productShapes.find((s) => s.id === selection.shapeId);
+
+  // Vormen zonder afwerkingskeuze (hasFinishChoice: false — de 3 "oren"-
+  // vormen, nieuw 9-9-2026) slaan deze stap al over in de normale klik-door-
+  // navigatie (zie lib/configuration/steps.ts, getVisibleSteps). Deze guard
+  // vangt alleen rechtstreekse navigatie naar deze URL bij zo'n vorm op
+  // (bv. "/configurator/afwerking" handmatig intypen), zodat er nooit een
+  // lege keuzelijst getoond wordt — de klant wordt meteen doorgestuurd naar
+  // de eerstvolgende stap die voor zijn vorm wél van toepassing is.
+  const skipThisStep = Boolean(shape && !shape.hasFinishChoice);
+
+  useEffect(() => {
+    if (!skipThisStep) return;
+    const ownIndex = configuratorSteps.findIndex((s) => s.id === "afwerking");
+    const nextStep = getVisibleSteps(selection).find(
+      (s) => configuratorSteps.findIndex((cs) => cs.id === s.id) > ownIndex
+    );
+    router.replace(nextStep?.path ?? "/configurator/controle");
+  }, [skipThisStep, selection, router]);
+
+  if (skipThisStep) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Deze vorm heeft geen afwerkingskeuze. Je wordt doorgestuurd naar de
+        volgende stap...
+      </p>
+    );
+  }
 
   if (!shape) {
     return (

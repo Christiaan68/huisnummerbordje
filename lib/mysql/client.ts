@@ -58,8 +58,28 @@ export interface NewOrderRow {
   shapeId: string;
   shapeName: string;
   finish: "vlak" | "gewelfd";
-  colorId: string;
-  colorName: string;
+  // colorId/colorName: de ENE kleur voor de 4 oorspronkelijke vormen
+  // (colorMode "single"). Sinds 9-9-2026 (uitbreiding naar 7 vormen, zie
+  // config/product-options.ts) `string | null` in plaats van verplicht
+  // `string`: voor de 3 nieuwe "oren"-vormen (colorMode "ears-and-plate")
+  // worden deze twee juist NULL meegegeven, en zijn earColorId/earColorName/
+  // plateColorId/plateColorName hieronder gevuld — nooit allebei tegelijk.
+  // Zie database/mysql/orders-schema.sql (migratie 9-9-2026) voor de
+  // bijbehorende ALTER TABLE die color_id/color_name NULL-baar maakt.
+  colorId: string | null;
+  colorName: string | null;
+  // earColorId/earColorName/plateColorId/plateColorName: TWEE losse,
+  // allebei verplichte kleuren (oren + vlak) voor de 3 nieuwe "oren"-vormen
+  // (colorMode "ears-and-plate", toegevoegd 9-9-2026) — uit de aparte
+  // kleurenlijst productColorsOren (config/product-options.ts), nooit uit
+  // dezelfde lijst als colorId/colorName. Blijven `null` voor de 4
+  // oorspronkelijke vormen. Zie database/mysql/orders-schema.sql (migratie
+  // 9-9-2026) voor de eenmalige ALTER TABLE die deze 4 nieuwe, optionele
+  // kolommen toevoegt.
+  earColorId: string | null;
+  earColorName: string | null;
+  plateColorId: string | null;
+  plateColorName: string | null;
   sizeId: string;
   sizeName: string;
   // Sinds 28-8-2026 heeft elk tekstveld zijn eigen lettertype (zie
@@ -71,6 +91,14 @@ export interface NewOrderRow {
   // zijn nieuwe, optionele kolommen (alleen gevuld als de gekozen vorm die
   // tekstregel heeft) — zie database/mysql/orders-schema.sql voor de
   // eenmalige ALTER TABLE-migratie die daarvoor nodig was.
+  //
+  // De 3 "oren"-vormen (toegevoegd 9-9-2026) kennen geen lettertypekeuze
+  // (hasFontChoice: false, zie types/product.ts) — numberFontId/
+  // numberFontName blijven voor die vormen bewust `""` (leeg), in plaats
+  // van deze twee kolommen ook NULL-baar te maken: dat zou de bestaande
+  // NOT NULL-eis op font_id/font_name voor alle andere (bestaande) vormen
+  // onnodig verzwakken voor een verandering die alleen de 3 nieuwe vormen
+  // raakt. Eigen keuze — zie het rapport van deze wijziging.
   numberFontId: string;
   numberFontName: string;
   line1FontId: string | null;
@@ -116,7 +144,9 @@ export async function saveOrderToDatabase(order: NewOrderRow): Promise<number> {
   const db = getPool();
   const [result] = (await db.execute(
     `INSERT INTO configurations (
-      shape_id, shape_name, finish, color_id, color_name, size_id, size_name,
+      shape_id, shape_name, finish, color_id, color_name,
+      ear_color_id, ear_color_name, plate_color_id, plate_color_name,
+      size_id, size_name,
       font_id, font_name, line1_font_id, line1_font_name, line2_font_id, line2_font_name,
       custom_text, extra_line_1, extra_line_2, number_position,
       has_frame,
@@ -124,13 +154,17 @@ export async function saveOrderToDatabase(order: NewOrderRow): Promise<number> {
       price_extra_chars_count, price_frame_surcharge_cents, price_source,
       contact_name, contact_address, contact_postal_code, contact_city,
       contact_email, contact_phone, quantity
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       order.shapeId,
       order.shapeName,
       order.finish,
       order.colorId,
       order.colorName,
+      order.earColorId,
+      order.earColorName,
+      order.plateColorId,
+      order.plateColorName,
       order.sizeId,
       order.sizeName,
       order.numberFontId,
@@ -216,8 +250,16 @@ export interface OrderRow {
   shape_id: string;
   shape_name: string;
   finish: "vlak" | "gewelfd";
-  color_id: string;
-  color_name: string;
+  // Sinds 9-9-2026 (uitbreiding naar 7 vormen) `string | null` — zie
+  // NewOrderRow hierboven voor de volledige toelichting: NULL voor de 3
+  // "oren"-vormen (colorMode "ears-and-plate"), die in plaats daarvan
+  // ear_color_id/ear_color_name/plate_color_id/plate_color_name gebruiken.
+  color_id: string | null;
+  color_name: string | null;
+  ear_color_id: string | null;
+  ear_color_name: string | null;
+  plate_color_id: string | null;
+  plate_color_name: string | null;
   size_id: string;
   size_name: string;
   font_id: string;

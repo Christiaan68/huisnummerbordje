@@ -8,7 +8,15 @@ interface CustomerConfirmationData {
   contactName: string;
   shapeName: string;
   finish: "vlak" | "gewelfd";
-  colorName: string;
+  // colorName: verplicht voor colorMode "single"-vormen (de 4
+  // oorspronkelijke vormen). Sinds 9-9-2026 (uitbreiding naar 7 vormen)
+  // optioneel: voor colorMode "ears-and-plate"-vormen (de 3 nieuwe
+  // "oren"-vormen) blijft dit veld leeg, en zijn juist earColorName +
+  // plateColorName hieronder gevuld (nooit beide tegelijk) — zelfde opzet
+  // als lib/email/templates/configuration-confirmation.ts.
+  colorName?: string;
+  earColorName?: string;
+  plateColorName?: string;
   sizeName: string;
   customText: string;
   extraLine1?: string;
@@ -50,6 +58,11 @@ interface CustomerConfirmationData {
 export function renderCustomerConfirmationEmail(
   data: CustomerConfirmationData
 ): string {
+  // Zie de toelichting bij isEarsOrder in
+  // lib/email/templates/configuration-confirmation.ts — zelfde afleiding,
+  // zelfde reden (geen afwerking/lettertype/kader voor deze vormen).
+  const isEarsOrder = Boolean(data.earColorName && data.plateColorName);
+
   const row = (label: string, value: string) => `
     <tr>
       <td style="padding:10px 0;border-bottom:1px solid #e5e0d5;color:#6b6558;font-size:14px;">${label}</td>
@@ -120,26 +133,36 @@ export function renderCustomerConfirmationEmail(
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                     ${data.orderNumber ? row("Bestelnummer", data.orderNumber) : ""}
                     ${row("Vorm", data.shapeName)}
-                    ${row("Afwerking", data.finish === "vlak" ? "Vlak" : "Gewelfd")}
-                    ${row("Kleur", data.colorName)}
+                    ${isEarsOrder ? "" : row("Afwerking", data.finish === "vlak" ? "Vlak" : "Gewelfd")}
+                    ${
+                      isEarsOrder
+                        ? row("Kleur oren", data.earColorName!) + row("Kleur vlak", data.plateColorName!)
+                        : data.colorName
+                          ? row("Kleur", data.colorName)
+                          : ""
+                    }
                     ${row("Maat", data.sizeName)}
                     ${row("Huisnummer", data.customText)}
                     ${data.extraLine1 ? row("Tekstregel 1", data.extraLine1) : ""}
                     ${data.extraLine2 ? row("Tekstregel 2", data.extraLine2) : ""}
                     ${data.orderLabel ? row("Volgorde", data.orderLabel) : ""}
-                    ${row("Lettertype huisnummer", data.numberFontName)}
+                    ${isEarsOrder ? "" : row("Lettertype huisnummer", data.numberFontName)}
                     ${data.line1FontName ? row("Lettertype tekstregel 1", data.line1FontName) : ""}
                     ${data.line2FontName ? row("Lettertype tekstregel 2", data.line2FontName) : ""}
-                    ${row(
-                      "Kader",
-                      data.hasFrame
-                        ? `Ja – ${
-                            data.priceFrameSurchargeCents != null
-                              ? formatPriceCents(data.priceFrameSurchargeCents)
-                              : "prijs op aanvraag"
-                          }`
-                        : "Nee"
-                    )}
+                    ${
+                      isEarsOrder
+                        ? ""
+                        : row(
+                            "Kader",
+                            data.hasFrame
+                              ? `Ja – ${
+                                  data.priceFrameSurchargeCents != null
+                                    ? formatPriceCents(data.priceFrameSurchargeCents)
+                                    : "prijs op aanvraag"
+                                }`
+                              : "Nee"
+                          )
+                    }
                     ${row("Aantal", data.quantity)}
                     ${
                       data.priceColorSurchargeCents

@@ -3,14 +3,19 @@ import { computeAutoFit } from "@/lib/configuration/text-fit";
 import { loadGoogleFont } from "@/lib/email/google-fonts";
 import {
   DEFAULT_LINE_GAP_RATIO,
+  EARS_AUTOFIT_FONT_KEY,
+  EARS_NUMBER_FONT_STACK,
+  EARS_NUMBER_FONT_WEIGHT,
   FRAME_STROKE_WIDTH_RATIO,
   LINE_GAP_RATIO_BY_FONT,
   getContrastTextColor,
+  getEarsGeometry,
   getFrameBorderPath,
   getOvalFrameBorderPath,
   getScrewClearanceMarginsMm,
   getScrewPositions,
   getScrewRadiusMm,
+  type EarsStyle,
 } from "@/lib/configuration/plate-visual";
 
 // Welk (vrij te gebruiken) Google Font er voor elk lettertype-optie in de
@@ -52,15 +57,42 @@ const FONT_CONFIG_BY_ID: Record<
 const FALLBACK_FONT_WEIGHT: SatoriFontWeight = 700;
 
 export interface PlatePreviewImageInput {
+  // `isOval` blijft bestaan voor achterwaartse compatibiliteit met de
+  // bestaande aanroep (sendOrderEmails.ts) en bepaalt, als `shapeKind` niet
+  // is meegegeven, of dit een ovaal of rechthoekig bordje is — precies het
+  // gedrag van vóór 9-9-2026. `shapeKind` (nieuw, 9-9-2026) is de eigenlijke
+  // bron van waarheid en voegt een 3e mogelijkheid toe: "ears" voor de 3
+  // nieuwe "oren"-vormen (colorMode "ears-and-plate", zie
+  // types/product.ts). Nooit allebei tegenstrijdig invullen; als
+  // `shapeKind` ontbreekt, wordt hij hieronder afgeleid uit `isOval`.
   isOval: boolean;
+  shapeKind?: "rect" | "oval" | "ears";
+  // Verplicht als shapeKind "ears" is — welke van de 3 "oren"-varianten
+  // (zie getEarsGeometry in lib/configuration/plate-visual.ts).
+  earsStyle?: EarsStyle;
   isCurved: boolean;
   isFramed: boolean;
   widthMm: number;
   heightMm: number;
+  // Kleur van het bordje bij shapeKind "rect"/"oval" (bestaand gedrag). Bij
+  // shapeKind "ears" is dit een fallback: als earColorHex/plateColorHex
+  // hieronder niet zijn meegegeven, wordt colorHex voor beide gebruikt —
+  // zodat een aanroeper die deze 2 nieuwe velden nog niet doorgeeft (bv.
+  // omdat de bestel-/e-mailpijplijn voor de "oren"-vormen nog niet volledig
+  // is aangesloten) toch een bruikbare (eenkleurige) afbeelding krijgt in
+  // plaats van een crash of een lege plek.
   colorHex: string;
+  // Losse kleuren voor shapeKind "ears" (colorMode "ears-and-plate", zie
+  // types/configuration.ts: earColorId/plateColorId). Zie colorHex
+  // hierboven voor het terugvalgedrag als deze ontbreken.
+  earColorHex?: string;
+  plateColorHex?: string;
   // Sinds 28-8-2026 heeft elk tekstveld zijn eigen lettertype (zie
   // lib/configuration/text-fit.ts / ProductPreview.tsx) — dus 3 losse
-  // velden in plaats van 1 fontId voor het hele bordje.
+  // velden in plaats van 1 fontId voor het hele bordje. Bij shapeKind
+  // "ears" wordt numberFontId genegeerd (er is bewust geen lettertypekeuze
+  // voor deze vormen, zie EARS_NUMBER_FONT_STACK in plate-visual.ts) — mag
+  // dus voor die vormen leeg blijven.
   numberFontId: string;
   line1FontId?: string | null;
   line2FontId?: string | null;
@@ -104,11 +136,13 @@ export async function renderPlatePreviewPng(
 ): Promise<Buffer> {
   const {
     isOval,
-    isCurved,
+    isCurved: isCurvedInput,
     isFramed,
     widthMm,
     heightMm,
     colorHex,
+    earColorHex,
+    plateColorHex,
     numberFontId,
     line1FontId,
     line2FontId,
@@ -118,14 +152,46 @@ export async function renderPlatePreviewPng(
     numberPosition,
   } = input;
 
+  // shapeKind is de eigenlijke bron van waarheid (zie PlatePreviewImageInput
+  // hierboven) — als een aanroeper 'm (nog) niet meegeeft, afgeleid uit het
+  // bestaande `isOval` (achterwaartse compatibiliteit, exact het gedrag van
+  // vóór 9-9-2026).
+  const shapeKind = input.shapeKind ?? (isOval ? "oval" : "rect");
+  const isEars = shapeKind === "ears";
+  // Kleur van het middenvlak/oren bij een "oren"-bordje — valt terug op
+  // colorHex (zie de toelichting bij PlatePreviewImageInput) als de
+  // aanroeper de 2 losse kleuren nog niet doorgeeft.
+  const plateFillHex = isEars ? plateColorHex ?? colorHex : colorHex;
+  const earFillHex = isEars ? earColorHex ?? colorHex : colorHex;
+
   const ratio = widthMm / heightMm;
   const plateWidthPx = PLATE_PX_WIDTH;
   const plateHeightPx = Math.round(PLATE_PX_WIDTH / ratio);
   const pxPerMm = plateWidthPx / widthMm;
 
-  const textColor = getContrastTextColor(colorHex);
-  const screwPositions = getScrewPositions(isOval, widthMm, heightMm);
+  // Tekstkleur: bij een "oren"-bordje altijd op basis van de PLAAT-kleur
+  // (niet de oren-kleur, zelfde afspraak als in ProductPreview.tsx).
+  const textColor = getContrastTextColor(plateFillHex);
+  const screwPositions = isEars ? [] : getScrewPositions(isOval, widthMm, heightMm);
   const screwRadiusPx = getScrewRadiusMm(widthMm, heightMm) * pxPerMm;
+
+  // Net als in ProductPreview.tsx (9-9-2026): de "gewelfd"-glansoverlay
+  // hoort niet bij de "oren"-vormen (die kennen geen vlak/gewelfd-begrip) —
+  // ongeacht wat de aanroeper voor `isCurved` meegeeft, hier altijd `false`
+  // voor shapeKind "ears".
+  const isCurved = isEars ? false : isCurvedInput;
+
+  // Geometrie van het middenvlak + oren/hoekgaten (alleen bij shapeKind
+  // "ears") — dezelfde functie als de live preview (ProductPreview.tsx),
+  // zie lib/configuration/plate-visual.ts. `input.earsStyle` MOET gezet
+  // zijn als shapeKind "ears" is (de aanroeper bepaalt welke van de 3
+  // varianten dit is); zonder geldige earsStyle wordt er, defensief, geen
+  // oren-tekening gemaakt (dan blijft het bordje leeg i.p.v. te crashen —
+  // zie de aanroeper voor hoe earsStyle wordt meegegeven).
+  const earsGeometry =
+    isEars && input.earsStyle
+      ? getEarsGeometry(input.earsStyle, widthMm, heightMm)
+      : null;
 
   const hasLine1 = Boolean(line1Text && line1Text.length > 0);
   const hasLine2 = Boolean(line2Text && line2Text.length > 0);
@@ -133,21 +199,44 @@ export async function renderPlatePreviewPng(
   // Vierde argument (hasFrame): als het optionele kader aan staat, houdt
   // getScrewClearanceMarginsMm er ook rekening mee dat de tekst niet krap
   // tegen de kaderlijn aan mag komen (29-8-2026).
-  const { minMarginXMm, minMarginYMm } = getScrewClearanceMarginsMm(
-    isOval,
-    widthMm,
-    heightMm,
-    isFramed
-  );
+  //
+  // "Oren"-vormen (9-9-2026): zelfde aanpak als ProductPreview.tsx — de
+  // tekst wordt gecentreerd in het (bij "horizontaal"/"verticaal" smallere/
+  // lagere) middenvlak, niet in het volledige widthMm×heightMm-canvas, en
+  // alleen "vier-hoeken" (waar de hoekgaten IN het middenvlak zitten, zie
+  // getEarsGeometry) hergebruikt de bestaande getScrewClearanceMarginsMm-
+  // marge; bij "horizontaal"/"verticaal" zitten de gaten in de oren, dus
+  // buiten het middenvlak, en volstaat computeAutoFit's eigen basismarge.
+  let fitWidthMm = widthMm;
+  let fitHeightMm = heightMm;
+  let minMarginXMm = 0;
+  let minMarginYMm = 0;
+  let autoFitNumberFontId: string = numberFontId;
+
+  if (isEars && earsGeometry) {
+    fitWidthMm = earsGeometry.mainRect.widthMm;
+    fitHeightMm = earsGeometry.mainRect.heightMm;
+    autoFitNumberFontId = EARS_AUTOFIT_FONT_KEY;
+    if (input.earsStyle === "vier-hoeken") {
+      const margins = getScrewClearanceMarginsMm(false, widthMm, heightMm, false);
+      minMarginXMm = margins.minMarginXMm;
+      minMarginYMm = margins.minMarginYMm;
+    }
+  } else {
+    const margins = getScrewClearanceMarginsMm(isOval, widthMm, heightMm, isFramed);
+    minMarginXMm = margins.minMarginXMm;
+    minMarginYMm = margins.minMarginYMm;
+  }
+
   const fit = computeAutoFit({
-    widthMm,
-    heightMm,
+    widthMm: fitWidthMm,
+    heightMm: fitHeightMm,
     numberChars: numberText.length,
     line1Chars: hasLine1 ? (line1Text as string).length : null,
     line2Chars: hasLine2 ? (line2Text as string).length : null,
     minMarginXMm,
     minMarginYMm,
-    numberFontId,
+    numberFontId: autoFitNumberFontId,
     line1FontId,
     line2FontId,
   });
@@ -162,13 +251,21 @@ export async function renderPlatePreviewPng(
   // niet, dan valt ALLEEN dat tekstveld terug op het standaardlettertype
   // van de renderer, de rest van de afbeelding blijft gewoon kloppen — zie
   // de toelichting bovenaan dit bestand.
-  const uniqueFontIds = Array.from(
-    new Set(
-      [numberFontId, hasLine1 ? line1FontId : null, hasLine2 ? line2FontId : null].filter(
-        (id): id is string => Boolean(id)
-      )
-    )
-  );
+  //
+  // Bij shapeKind "ears" (9-9-2026) is er bewust GEEN door de klant
+  // kiesbaar lettertype (vaste typografie, zie EARS_NUMBER_FONT_STACK in
+  // plate-visual.ts) — dus hier expliciet GEEN Google Font ophalen voor het
+  // huisnummer (geen onnodige netwerkcall; die 3 vormen hebben ook geen
+  // tekstregels, dus hasLine1/hasLine2 zijn voor hen altijd false).
+  const uniqueFontIds = isEars
+    ? []
+    : Array.from(
+        new Set(
+          [numberFontId, hasLine1 ? line1FontId : null, hasLine2 ? line2FontId : null].filter(
+            (id): id is string => Boolean(id)
+          )
+        )
+      );
 
   const fonts: {
     name: string;
@@ -228,12 +325,25 @@ export async function renderPlatePreviewPng(
     // ProductPreview.tsx.
     gapRatio: number;
   };
-  const numberLine: Line = {
-    text: numberText,
-    sizePx: numberSizePx,
-    ...resolveFont(numberFontId),
-    gapRatio: gapRatioFor(numberFontId),
-  };
+  // Bij shapeKind "ears" (9-9-2026) altijd de vaste typografie
+  // (EARS_NUMBER_FONT_STACK/EARS_NUMBER_FONT_WEIGHT, plate-visual.ts) i.p.v.
+  // een via Google Fonts opgehaald, door de klant gekozen lettertype — er is
+  // hierboven ook bewust geen font voor opgehaald (uniqueFontIds is dan
+  // leeg), dus resolveFont(numberFontId) zou hier toch niets vinden.
+  const numberLine: Line = isEars
+    ? {
+        text: numberText,
+        sizePx: numberSizePx,
+        fontFamily: EARS_NUMBER_FONT_STACK,
+        fontWeight: EARS_NUMBER_FONT_WEIGHT as SatoriFontWeight,
+        gapRatio: gapRatioFor(EARS_AUTOFIT_FONT_KEY),
+      }
+    : {
+        text: numberText,
+        sizePx: numberSizePx,
+        ...resolveFont(numberFontId),
+        gapRatio: gapRatioFor(numberFontId),
+      };
   const line1: Line | null = hasLine1
     ? {
         text: line1Text as string,
@@ -292,10 +402,47 @@ export async function renderPlatePreviewPng(
             height: plateHeightPx,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: colorHex,
+            // Bij shapeKind "ears" komt de kleur NIET van deze ene
+            // achtergrond (er zijn 2 losse kleuren, oren + vlak) maar van de
+            // overlay-SVG hieronder (mainRect + oor-paden) — deze
+            // achtergrond blijft dan transparant, zodat CANVAS_BG er "achter
+            // vandaan" zichtbaar blijft op de plekken waar geen middenvlak/
+            // oor getekend wordt (bv. de hoeken van het canvas bij
+            // "horizontaal"/"verticaal", zie getEarsGeometry).
+            backgroundColor: isEars ? "transparent" : plateFillHex,
             borderRadius: plateBorderRadius,
           }}
         >
+          {isEars && earsGeometry && (
+            // "Oren"-vormen (9-9-2026): middenvlak (plateFillHex) + oren
+            // (earFillHex), getekend met dezelfde getEarsGeometry-functie en
+            // dus dezelfde (bewust schematische) geometrie als de live
+            // preview (components/configurator/ProductPreview.tsx) — zie
+            // lib/configuration/plate-visual.ts.
+            <svg
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: plateWidthPx,
+                height: plateHeightPx,
+              }}
+              viewBox={`0 0 ${widthMm} ${heightMm}`}
+            >
+              <rect
+                x={earsGeometry.mainRect.xMm}
+                y={earsGeometry.mainRect.yMm}
+                width={earsGeometry.mainRect.widthMm}
+                height={earsGeometry.mainRect.heightMm}
+                rx={earsGeometry.mainRect.radiusMm}
+                fill={plateFillHex}
+              />
+              {earsGeometry.ears.map((ear, index) => (
+                <path key={index} d={ear.path} fill={earFillHex} />
+              ))}
+            </svg>
+          )}
+
           {screwPositions.map(([xr, yr], index) => (
             <div
               key={index}
@@ -324,7 +471,42 @@ export async function renderPlatePreviewPng(
             </div>
           ))}
 
-          {isFramed && (
+          {isEars &&
+            earsGeometry &&
+            [...earsGeometry.ears.map((ear) => ear.hole), ...earsGeometry.cornerHoles].map(
+              (hole, index) => {
+                const holeRadiusPx = hole.radiusMm * pxPerMm;
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      position: "absolute",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      left: hole.xMm * pxPerMm - holeRadiusPx,
+                      top: hole.yMm * pxPerMm - holeRadiusPx,
+                      width: holeRadiusPx * 2,
+                      height: holeRadiusPx * 2,
+                      borderRadius: "50%",
+                      backgroundColor: "#8f8f8f",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        width: holeRadiusPx * 1.1,
+                        height: holeRadiusPx * 1.1,
+                        borderRadius: "50%",
+                        backgroundColor: "#c9c9c9",
+                      }}
+                    />
+                  </div>
+                );
+              }
+            )}
+
+          {isFramed && !isEars && (
             <svg
               style={{
                 position: "absolute",

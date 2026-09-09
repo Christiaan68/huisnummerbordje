@@ -8,22 +8,30 @@ import {
   productShapes,
   productColors,
   productFonts,
+  productSizes as staticProductSizes,
 } from "@/config/product-options";
+import { isEarsShape, getEarsColorOptions } from "@/lib/configuration/shape-helpers";
 import { computeAutoFit } from "@/lib/configuration/text-fit";
 import { calculatePrice, formatPriceCents } from "@/lib/configuration/pricing";
 import {
   DEFAULT_OVAL_RATIO,
   DEFAULT_LINE_GAP_RATIO,
   DEFAULT_FONT_WEIGHT,
+  EARS_AUTOFIT_FONT_KEY,
+  EARS_NUMBER_FONT_STACK,
+  EARS_NUMBER_FONT_WEIGHT,
   FONT_WEIGHT_BY_ID,
   FRAME_STROKE_WIDTH_RATIO,
   LINE_GAP_RATIO_BY_FONT,
   getContrastTextColor,
+  getEarsGeometry,
+  getEarsStyleForShapeId,
   getFrameBorderPath,
   getOvalFrameBorderPath,
   getScrewClearanceMarginsMm,
   getScrewPositions,
   getScrewRadiusMm,
+  type EarsGeometry,
 } from "@/lib/configuration/plate-visual";
 
 const PREVIEW_WIDTH_PX = 260;
@@ -52,6 +60,33 @@ export function ProductPreview() {
   const size = pricingData.productSizes.find((s) => s.id === selection.sizeId);
   const price = calculatePrice(selection, pricingData);
 
+  // "Oren"-vormen (colorMode "ears-and-plate", toegevoegd 9-9-2026) — zie
+  // lib/configuration/shape-helpers.ts en lib/configuration/plate-visual.ts.
+  // earColor/plateColor blijven `undefined` zolang de klant nog niets
+  // gekozen heeft (bewust geen vooraf geselecteerde kleur, zie
+  // ColorSelector.tsx) — de tekening hieronder valt in dat geval terug op
+  // een neutrale placeholderkleur, net als de bestaande enkelvoudige
+  // kleurkeuze dat al deed (`color?.hex ?? "hsl(var(--secondary))"`).
+  const earsShape = isEarsShape(shape);
+  const earsStyle = getEarsStyleForShapeId(shape?.id);
+  const earColor = earsShape
+    ? getEarsColorOptions().find((c) => c.id === selection.earColorId)
+    : undefined;
+  const plateColor = earsShape
+    ? getEarsColorOptions().find((c) => c.id === selection.plateColorId)
+    : undefined;
+  // Zolang er nog geen (live-opgehaalde) maat gevonden is — voor de
+  // "oren"-vormen zou dat alleen heel kort na het kiezen van de vorm kunnen
+  // gebeuren, ze hebben immers maar 1 vaste maat die de reducer meteen zet,
+  // zie ConfiguratorContext.tsx — valt de tekening terug op diezelfde vaste
+  // maat uit de statische configuratie (niet de live-opgehaalde prijsdata),
+  // puur om nooit met een verkeerde (bijv. vierkante) placeholderverhouding
+  // te hoeven tekenen.
+  const fallbackEarsSize =
+    earsShape && shape
+      ? staticProductSizes.find((s) => s.shapeId === shape.id)
+      : undefined;
+
   // Sinds 28-8-2026 heeft elk tekstveld zijn eigen lettertype (op verzoek
   // van Christiaan — de losse stap "Lettertype" is vervallen, dat wordt nu
   // in stap 5 ("Tekst") per veld gekozen, zie TextInput.tsx). Zolang de
@@ -72,25 +107,54 @@ export function ProductPreview() {
     previewFallbackFont;
 
   const isOval = shape?.id === "ovaal";
-  const ratio = size ? size.width / size.height : isOval ? DEFAULT_OVAL_RATIO : 1;
-  const textColor = color ? getContrastTextColor(color.hex) : undefined;
   const fallbackFontFamily = "var(--font-fraunces), Georgia, serif";
-  const numberFontFamily = numberFont?.cssFamily ?? fallbackFontFamily;
+  // Vaste typografie voor de "oren"-vormen (geen lettertypekeuze, zie
+  // EARS_NUMBER_FONT_STACK in plate-visual.ts) — overschrijft de
+  // klant-gekozen/placeholder-lettertypes hieronder voor die 3 vormen.
+  const numberFontFamily = earsShape
+    ? EARS_NUMBER_FONT_STACK
+    : numberFont?.cssFamily ?? fallbackFontFamily;
   const line1FontFamily = line1Font?.cssFamily ?? fallbackFontFamily;
   const line2FontFamily = line2Font?.cssFamily ?? fallbackFontFamily;
 
   const hasLine1 = (shape?.extraLines ?? 0) >= 1;
   const hasLine2 = (shape?.extraLines ?? 0) >= 2;
-  const isCurved = selection.finish !== "vlak";
+  // De "gewelfd"-glansoverlay hieronder hoort alleen bij vormen die
+  // daadwerkelijk een vlak/gewelfd-keuze kennen (ProductShape.hasFinishChoice).
+  // Voor de "oren"-vormen (hasFinishChoice: false) is `selection.finish`
+  // altijd `null` — `null !== "vlak"` zou hier zonder deze voorwaarde ten
+  // onrechte als "gewelfd" gelezen worden, dus voor die vormen expliciet
+  // `false`.
+  const isCurved = shape?.hasFinishChoice ? selection.finish !== "vlak" : false;
 
   // Afmetingen van het bordje (in mm, zoals gekozen bij "Maat"). Nog geen
   // maat gekozen? Dan een neutrale placeholder — voor een ovaal bordje al
-  // met de juiste ovale verhouding (zie DEFAULT_OVAL_RATIO hierboven),
-  // voor de andere vormen gewoon 100×100, puur om de preview al iets te
-  // laten tonen.
-  const plateWidth = size?.width ?? (isOval ? 100 * DEFAULT_OVAL_RATIO : 100);
-  const plateHeight = size?.height ?? 100;
-  const plateFill = color?.hex ?? "hsl(var(--secondary))";
+  // met de juiste ovale verhouding (zie DEFAULT_OVAL_RATIO hierboven), voor
+  // een "oren"-vorm de vaste maat van die vorm (fallbackEarsSize
+  // hierboven), voor de andere vormen gewoon 100×100, puur om de preview al
+  // iets te laten tonen.
+  const plateWidth =
+    size?.width ?? fallbackEarsSize?.width ?? (isOval ? 100 * DEFAULT_OVAL_RATIO : 100);
+  const plateHeight = size?.height ?? fallbackEarsSize?.height ?? 100;
+  const ratio = plateWidth / plateHeight;
+
+  const PLACEHOLDER_FILL = "hsl(var(--secondary))";
+  // Bij de "oren"-vormen zijn er 2 losse kleuren (oren + vlak) — de
+  // tekstkleur wordt, op verzoek, altijd op basis van de PLAAT-kleur bepaald
+  // (niet de oren-kleur), zie getEarsGeometry-toelichting/instructie.
+  const plateFill = earsShape
+    ? plateColor?.hex ?? PLACEHOLDER_FILL
+    : color?.hex ?? PLACEHOLDER_FILL;
+  const earFill = earColor?.hex ?? PLACEHOLDER_FILL;
+  const textColor = earsShape
+    ? plateColor
+      ? getContrastTextColor(plateColor.hex)
+      : undefined
+    : color
+      ? getContrastTextColor(color.hex)
+      : undefined;
+  const earsGeometry: EarsGeometry | null =
+    earsShape && earsStyle ? getEarsGeometry(earsStyle, plateWidth, plateHeight) : null;
 
   const numberText = selection.customText || "12";
   const line1Text = selection.extraLine1 || "Voorbeeldtekst";
@@ -124,25 +188,59 @@ export function ProductPreview() {
     // Vierde argument (hasFrame): als het optionele kader aan staat, houdt
     // getScrewClearanceMarginsMm er ook rekening mee dat de tekst niet krap
     // tegen de kaderlijn aan mag komen (29-8-2026).
-    const { minMarginXMm, minMarginYMm } = getScrewClearanceMarginsMm(
-      isOval,
-      plateWidth,
-      plateHeight,
-      selection.hasFrame
-    );
+    //
+    // "Oren"-vormen (9-9-2026) rekenen dit anders uit: de tekst staat
+    // gecentreerd in het MIDDENVLAK (earsGeometry.mainRect), niet in het
+    // volledige (bredere/hogere) canvas — bij "horizontaal"/"verticaal" is
+    // dat middenvlak dus smaller/lager dan plateWidth/plateHeight (de oren
+    // zelf steken erbuiten uit). Bevestigingsgaten zitten bij die twee
+    // stijlen IN de oren, dus buiten het middenvlak — er is dan geen aparte
+    // schroef-marge nodig, computeAutoFit's eigen basismarge volstaat. Bij
+    // "vier-hoeken" zit het middenvlak wél vol met hoekgaten die dezelfde
+    // positie/straal hebben als de bestaande 4 hoekschroeven van een
+    // rechthoekig bordje (zie getEarsGeometry) — daarom wordt daar dezelfde
+    // getScrewClearanceMarginsMm(false, ...)-berekening hergebruikt.
+    let fitWidthMm = plateWidth;
+    let fitHeightMm = plateHeight;
+    let minMarginXMm = 0;
+    let minMarginYMm = 0;
+    let autoFitNumberFontId: string | null | undefined = numberFont?.id;
+
+    if (earsShape && earsGeometry) {
+      fitWidthMm = earsGeometry.mainRect.widthMm;
+      fitHeightMm = earsGeometry.mainRect.heightMm;
+      autoFitNumberFontId = EARS_AUTOFIT_FONT_KEY;
+      if (earsStyle === "vier-hoeken") {
+        const margins = getScrewClearanceMarginsMm(false, plateWidth, plateHeight, false);
+        minMarginXMm = margins.minMarginXMm;
+        minMarginYMm = margins.minMarginYMm;
+      }
+    } else {
+      const margins = getScrewClearanceMarginsMm(
+        isOval,
+        plateWidth,
+        plateHeight,
+        selection.hasFrame
+      );
+      minMarginXMm = margins.minMarginXMm;
+      minMarginYMm = margins.minMarginYMm;
+    }
 
     const fit = computeAutoFit({
-      widthMm: plateWidth,
-      heightMm: plateHeight,
+      widthMm: fitWidthMm,
+      heightMm: fitHeightMm,
       numberChars: numberText.length,
       line1Chars: hasLine1 ? line1Text.length : null,
       line2Chars: hasLine2 ? line2Text.length : null,
       minMarginXMm,
       minMarginYMm,
-      numberFontId: numberFont?.id,
+      numberFontId: autoFitNumberFontId,
       line1FontId: line1Font?.id,
       line2FontId: line2Font?.id,
     });
+    // pxPerMm blijft gebaseerd op de volledige plaatbreedte (plateWidth) —
+    // dat is de schaal van de viewBox/canvas hieronder, waar zowel het
+    // middenvlak als de oren in dezelfde mm-coördinaten getekend worden.
     const pxPerMm = PREVIEW_WIDTH_PX / plateWidth;
     numberFontSize = fit.numberSizeMm * pxPerMm;
     line1FontSize = fit.line1SizeMm ? fit.line1SizeMm * pxPerMm : line1FontSize;
@@ -156,8 +254,9 @@ export function ProductPreview() {
   // plate-visual.ts). Hieronder per node vastgelegd welk lettertype-id
   // erbij hoort, zodat de juiste regelafstand-verhouding gebruikt kan
   // worden bij het samenstellen van de uiteindelijke volgorde hieronder.
-  const numberGapRatio =
-    LINE_GAP_RATIO_BY_FONT[numberFont?.id ?? ""] ?? DEFAULT_LINE_GAP_RATIO;
+  const numberGapRatio = earsShape
+    ? LINE_GAP_RATIO_BY_FONT[EARS_AUTOFIT_FONT_KEY] ?? DEFAULT_LINE_GAP_RATIO
+    : LINE_GAP_RATIO_BY_FONT[numberFont?.id ?? ""] ?? DEFAULT_LINE_GAP_RATIO;
   const line1GapRatio =
     LINE_GAP_RATIO_BY_FONT[line1Font?.id ?? ""] ?? DEFAULT_LINE_GAP_RATIO;
   const line2GapRatio =
@@ -188,7 +287,9 @@ export function ProductPreview() {
       style={{
         fontFamily: numberFontFamily,
         fontSize: `${numberFontSize}px`,
-        fontWeight: FONT_WEIGHT_BY_ID[numberFont?.id ?? ""] ?? DEFAULT_FONT_WEIGHT,
+        fontWeight: earsShape
+          ? EARS_NUMBER_FONT_WEIGHT
+          : FONT_WEIGHT_BY_ID[numberFont?.id ?? ""] ?? DEFAULT_FONT_WEIGHT,
         whiteSpace: "nowrap",
       }}
     >
@@ -324,65 +425,116 @@ export function ProductPreview() {
             preserveAspectRatio="none"
             aria-hidden="true"
           >
-            {isOval ? (
-              <ellipse
-                cx={plateWidth / 2}
-                cy={plateHeight / 2}
-                rx={plateWidth / 2}
-                ry={plateHeight / 2}
-                fill={plateFill}
-              />
+            {earsShape && earsGeometry ? (
+              // "Oren"-vormen (9-9-2026): middenvlak (kleur = plateColor) +
+              // 2 uitstekende oren (kleur = earColor) of, bij "vier-hoeken",
+              // gewoon het volledige middenvlak met 4 hoekgaten — zie
+              // getEarsGeometry (lib/configuration/plate-visual.ts) voor de
+              // (bewust schematische) geometrie. De bevestigingsgaten
+              // hieronder zijn met opzet dezelfde "schroefje"-tekening
+              // (cirkel + kleiner cirkeltje + streepje) als de bestaande
+              // rechthoekige/ovale vormen verderop in dit bestand, voor een
+              // consistente uitstraling.
+              <>
+                <rect
+                  x={earsGeometry.mainRect.xMm}
+                  y={earsGeometry.mainRect.yMm}
+                  width={earsGeometry.mainRect.widthMm}
+                  height={earsGeometry.mainRect.heightMm}
+                  rx={earsGeometry.mainRect.radiusMm}
+                  fill={plateFill}
+                />
+                {earsGeometry.ears.map((ear, index) => (
+                  <path key={`ear-${index}`} d={ear.path} fill={earFill} />
+                ))}
+                {[...earsGeometry.ears.map((ear) => ear.hole), ...earsGeometry.cornerHoles].map(
+                  (hole, index) => (
+                    <g key={`hole-${index}`}>
+                      <circle
+                        cx={hole.xMm}
+                        cy={hole.yMm}
+                        r={hole.radiusMm}
+                        fill="#8f8f8f"
+                        stroke="#4d4d4d"
+                        strokeWidth={hole.radiusMm * 0.14}
+                      />
+                      <circle cx={hole.xMm} cy={hole.yMm} r={hole.radiusMm * 0.55} fill="#c9c9c9" />
+                      <line
+                        x1={hole.xMm - hole.radiusMm * 0.4}
+                        y1={hole.yMm}
+                        x2={hole.xMm + hole.radiusMm * 0.4}
+                        y2={hole.yMm}
+                        stroke="#4d4d4d"
+                        strokeWidth={hole.radiusMm * 0.18}
+                        transform={`rotate(${(index * 37) % 90} ${hole.xMm} ${hole.yMm})`}
+                      />
+                    </g>
+                  )
+                )}
+              </>
             ) : (
-              <rect
-                x={0}
-                y={0}
-                width={plateWidth}
-                height={plateHeight}
-                rx={plateWidth * 0.04}
-                fill={plateFill}
-              />
-            )}
-
-            {screwPositions.map(([xr, yr], index) => {
-              const cx = plateWidth * xr;
-              const cy = plateHeight * yr;
-              return (
-                <g key={index}>
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={screwRadius}
-                    fill="#8f8f8f"
-                    stroke="#4d4d4d"
-                    strokeWidth={screwRadius * 0.14}
+              <>
+                {isOval ? (
+                  <ellipse
+                    cx={plateWidth / 2}
+                    cy={plateHeight / 2}
+                    rx={plateWidth / 2}
+                    ry={plateHeight / 2}
+                    fill={plateFill}
                   />
-                  <circle cx={cx} cy={cy} r={screwRadius * 0.55} fill="#c9c9c9" />
-                  <line
-                    x1={cx - screwRadius * 0.4}
-                    y1={cy}
-                    x2={cx + screwRadius * 0.4}
-                    y2={cy}
-                    stroke="#4d4d4d"
-                    strokeWidth={screwRadius * 0.18}
-                    transform={`rotate(${(index * 37) % 90} ${cx} ${cy})`}
+                ) : (
+                  <rect
+                    x={0}
+                    y={0}
+                    width={plateWidth}
+                    height={plateHeight}
+                    rx={plateWidth * 0.04}
+                    fill={plateFill}
                   />
-                </g>
-              );
-            })}
+                )}
 
-            {selection.hasFrame && (
-              <path
-                d={
-                  isOval
-                    ? getOvalFrameBorderPath(plateWidth, plateHeight)
-                    : getFrameBorderPath(plateWidth, plateHeight)
-                }
-                fill="none"
-                stroke={textColor}
-                strokeWidth={
-                  Math.min(plateWidth, plateHeight) * FRAME_STROKE_WIDTH_RATIO
-                }
-              />
+                {screwPositions.map(([xr, yr], index) => {
+                  const cx = plateWidth * xr;
+                  const cy = plateHeight * yr;
+                  return (
+                    <g key={index}>
+                      <circle
+                        cx={cx}
+                        cy={cy}
+                        r={screwRadius}
+                        fill="#8f8f8f"
+                        stroke="#4d4d4d"
+                        strokeWidth={screwRadius * 0.14}
+                      />
+                      <circle cx={cx} cy={cy} r={screwRadius * 0.55} fill="#c9c9c9" />
+                      <line
+                        x1={cx - screwRadius * 0.4}
+                        y1={cy}
+                        x2={cx + screwRadius * 0.4}
+                        y2={cy}
+                        stroke="#4d4d4d"
+                        strokeWidth={screwRadius * 0.18}
+                        transform={`rotate(${(index * 37) % 90} ${cx} ${cy})`}
+                      />
+                    </g>
+                  );
+                })}
+
+                {selection.hasFrame && (
+                  <path
+                    d={
+                      isOval
+                        ? getOvalFrameBorderPath(plateWidth, plateHeight)
+                        : getFrameBorderPath(plateWidth, plateHeight)
+                    }
+                    fill="none"
+                    stroke={textColor}
+                    strokeWidth={
+                      Math.min(plateWidth, plateHeight) * FRAME_STROKE_WIDTH_RATIO
+                    }
+                  />
+                )}
+              </>
             )}
           </svg>
 
@@ -411,24 +563,48 @@ export function ProductPreview() {
             <dt className="text-muted-foreground">Vorm</dt>
             <dd className="text-foreground">{shape?.name ?? "—"}</dd>
           </div>
-          <div className="flex justify-between border-b border-border/60 pb-1.5">
-            <dt className="text-muted-foreground">Afwerking</dt>
-            <dd className="capitalize text-foreground">{selection.finish ?? "—"}</dd>
-          </div>
-          <div className="flex justify-between border-b border-border/60 pb-1.5">
-            <dt className="text-muted-foreground">Kleur</dt>
-            <dd className="text-foreground">{color?.name ?? "—"}</dd>
-          </div>
+          {shape?.hasFinishChoice && (
+            <div className="flex justify-between border-b border-border/60 pb-1.5">
+              <dt className="text-muted-foreground">Afwerking</dt>
+              <dd className="capitalize text-foreground">{selection.finish ?? "—"}</dd>
+            </div>
+          )}
+          {/* "Oren"-vormen (colorMode "ears-and-plate", 9-9-2026) hebben 2
+              losse kleuren (oren + vlak) in plaats van de ene "Kleur"-rij
+              van de 4 oorspronkelijke vormen — zie ColorSelector.tsx. */}
+          {earsShape ? (
+            <>
+              <div className="flex justify-between border-b border-border/60 pb-1.5">
+                <dt className="text-muted-foreground">Kleur oren</dt>
+                <dd className="text-foreground">{earColor?.name ?? "—"}</dd>
+              </div>
+              <div className="flex justify-between border-b border-border/60 pb-1.5">
+                <dt className="text-muted-foreground">Kleur vlak</dt>
+                <dd className="text-foreground">{plateColor?.name ?? "—"}</dd>
+              </div>
+            </>
+          ) : (
+            <div className="flex justify-between border-b border-border/60 pb-1.5">
+              <dt className="text-muted-foreground">Kleur</dt>
+              <dd className="text-foreground">{color?.name ?? "—"}</dd>
+            </div>
+          )}
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Maat</dt>
             <dd className="text-foreground">{size?.name ?? "—"}</dd>
           </div>
-          <div className="flex justify-between border-t border-border/60 pt-1.5">
-            <dt className="text-muted-foreground">Lettertype huisnummer</dt>
-            <dd className="text-foreground">
-              {productFonts.find((f) => f.id === previewNumberFontId)?.name ?? "—"}
-            </dd>
-          </div>
+          {/* Lettertype huisnummer: alleen tonen bij vormen mét
+              lettertypekeuze (ProductShape.hasFontChoice) — de 3
+              "oren"-vormen kennen bewust geen lettertypekeuze (vaste
+              typografie, zie EARS_NUMBER_FONT_STACK in plate-visual.ts). */}
+          {shape?.hasFontChoice && (
+            <div className="flex justify-between border-t border-border/60 pt-1.5">
+              <dt className="text-muted-foreground">Lettertype huisnummer</dt>
+              <dd className="text-foreground">
+                {productFonts.find((f) => f.id === previewNumberFontId)?.name ?? "—"}
+              </dd>
+            </div>
+          )}
           {hasLine1 && (
             <div className="flex justify-between">
               <dt className="text-muted-foreground">Lettertype tekstregel 1</dt>

@@ -5,7 +5,12 @@ import { Check, ChevronDown } from "lucide-react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { useFontPreview, type FontPreviewField } from "@/lib/configuration/FontPreviewContext";
 import { productShapes, productFonts } from "@/config/product-options";
-import { houseNumberSchema, extraLineSchema } from "@/lib/validation/text-input.schema";
+import { isEarsShape } from "@/lib/configuration/shape-helpers";
+import {
+  houseNumberSchema,
+  houseNumberEarsSchema,
+  extraLineSchema,
+} from "@/lib/validation/text-input.schema";
 import { cn } from "@/lib/utils";
 
 function fieldClass(hasError: boolean) {
@@ -147,9 +152,21 @@ export function TextInput() {
     );
   }
 
+  // "Oren"-vormen (colorMode "ears-and-plate", nieuw 9-9-2026) hebben een
+  // eigen validatieregel voor het huisnummer (1-4 cijfers, optioneel
+  // aangevuld met max. 3 letters, zie houseNumberEarsSchema) en geen
+  // lettertypekeuze (hasFontChoice: false) — zie config/product-options.ts /
+  // types/product.ts. Voor de 4 oorspronkelijke vormen verandert hier niets.
+  const earsShape = isEarsShape(shape);
+  const numberSchema = earsShape ? houseNumberEarsSchema : houseNumberSchema;
+  const numberMaxLength = earsShape ? 7 : 5;
+  const numberHint = earsShape
+    ? "1 tot 4 cijfers, eventueel gevolgd door maximaal 3 letters (bv. 12, 1234 of 12A)."
+    : "Letters en cijfers, maximaal 5 tekens (bv. 7, 12, 12A, A12, 123AB).";
+
   const numberCheck =
     selection.customText.length > 0
-      ? houseNumberSchema.safeParse(selection.customText)
+      ? numberSchema.safeParse(selection.customText)
       : null;
   const line1Check =
     selection.extraLine1.length > 0
@@ -171,7 +188,7 @@ export function TextInput() {
             <input
               id="customText"
               type="text"
-              maxLength={5}
+              maxLength={numberMaxLength}
               value={selection.customText}
               onChange={(e) =>
                 dispatch({ type: "SET_TEXT", customText: e.target.value })
@@ -180,16 +197,18 @@ export function TextInput() {
               className={fieldClass(!!numberCheck && !numberCheck.success)}
             />
           </div>
-          <FontDropdown
-            id="numberFontId"
-            field="numberFontId"
-            selectedFontId={selection.numberFontId}
-            onSelect={(fontId) => dispatch({ type: "SET_NUMBER_FONT", fontId })}
-          />
+          {/* Lettertypekeuze bestaat niet voor "oren"-vormen (hasFontChoice:
+              false, vaste typografie) — zie types/product.ts. */}
+          {!earsShape && (
+            <FontDropdown
+              id="numberFontId"
+              field="numberFontId"
+              selectedFontId={selection.numberFontId}
+              onSelect={(fontId) => dispatch({ type: "SET_NUMBER_FONT", fontId })}
+            />
+          )}
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Letters en cijfers, maximaal 5 tekens (bv. 7, 12, 12A, A12, 123AB).
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{numberHint}</p>
         {numberCheck && !numberCheck.success && (
           <p className="mt-1 text-sm text-destructive">
             {numberCheck.error.issues[0]?.message}

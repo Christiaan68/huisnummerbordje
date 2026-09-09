@@ -12,6 +12,8 @@ import { getNotificationEmail } from "@/lib/email/settings";
 import { getShapeLanguage } from "@/lib/email/shapeLanguage";
 import { productShapes, productColors } from "@/config/product-options";
 import { buildOrderLabel } from "@/lib/configuration/orderLabel";
+import { isEarsShape, getEarsColorOptions } from "@/lib/configuration/shape-helpers";
+import { getEarsStyleForShapeId } from "@/lib/configuration/plate-visual";
 
 /**
  * Ontvangt Mollie's betaalbevestigingen ("webhook"), toegevoegd 29-8-2026.
@@ -111,15 +113,47 @@ export async function POST(request: Request) {
     // kleur-ID's als bij het bestellen.
     try {
       const shape = productShapes.find((s) => s.id === order.shape_id);
-      const color = productColors.find((c) => c.id === order.color_id);
       const pricingData = await getLivePricingData();
       const size = pricingData.productSizes.find((s) => s.id === order.size_id);
 
-      if (!shape || !color || !size) {
+      if (!shape || !size) {
         console.error(
-          `Mollie-webhook: bestelling #${orderId} is betaald, maar vorm/kleur/maat (${order.shape_id}/${order.color_id}/${order.size_id}) kon niet meer teruggevonden worden — mails NIET verstuurd. Handmatig navragen bij de klant is nodig.`
+          `Mollie-webhook: bestelling #${orderId} is betaald, maar vorm/maat (${order.shape_id}/${order.size_id}) kon niet meer teruggevonden worden — mails NIET verstuurd. Handmatig navragen bij de klant is nodig.`
         );
         return NextResponse.json({ received: true, warning: "product-lookup-failed" });
+      }
+
+      // Sinds 9-9-2026 (uitbreiding naar 7 vormen, zie
+      // config/product-options.ts) heeft een bestelling óf één kleur
+      // (color_id/color_name, de 4 oorspronkelijke vormen) óf twee losse
+      // kleuren (ear_color_id/plate_color_id, de 3 nieuwe "oren"-vormen) —
+      // zie lib/configuration/shape-helpers.ts (isEarsShape) en
+      // types/configuration.ts.
+      const earsShape = isEarsShape(shape);
+      let color: (typeof productColors)[number] | undefined;
+      let earColor: ReturnType<typeof getEarsColorOptions>[number] | undefined;
+      let plateColor: ReturnType<typeof getEarsColorOptions>[number] | undefined;
+
+      if (earsShape) {
+        const earsColors = getEarsColorOptions();
+        earColor = earsColors.find((c) => c.id === order.ear_color_id);
+        plateColor = earsColors.find((c) => c.id === order.plate_color_id);
+
+        if (!earColor || !plateColor) {
+          console.error(
+            `Mollie-webhook: bestelling #${orderId} is betaald, maar de oren-/vlakkleur (${order.ear_color_id}/${order.plate_color_id}) kon niet meer teruggevonden worden — mails NIET verstuurd. Handmatig navragen bij de klant is nodig.`
+          );
+          return NextResponse.json({ received: true, warning: "product-lookup-failed" });
+        }
+      } else {
+        color = productColors.find((c) => c.id === order.color_id);
+
+        if (!color) {
+          console.error(
+            `Mollie-webhook: bestelling #${orderId} is betaald, maar de kleur (${order.color_id}) kon niet meer teruggevonden worden — mails NIET verstuurd. Handmatig navragen bij de klant is nodig.`
+          );
+          return NextResponse.json({ received: true, warning: "product-lookup-failed" });
+        }
       }
 
       const fallbackAdminEmail = process.env.ADMIN_EMAIL;
@@ -153,8 +187,26 @@ export async function POST(request: Request) {
         orderId,
         shape: { id: shape.id, name: shape.name, extraLines: shape.extraLines },
         finish: order.finish,
-        colorName: color.name,
-        colorHex: color.hex,
+        // colorName (colorMode "single") vs. earColorName/plateColorName
+        // (colorMode "ears-and-plate") — nooit allebei tegelijk gevuld, zie
+        // lib/email/sendOrderEmails.ts.
+        colorName: earsShape ? undefined : color!.name,
+        earColorName: earsShape ? earColor!.name : undefined,
+        plateColorName: earsShape ? plateColor!.name : undefined,
+        // colorHex: kleur bij colorMode "single" (bestaand gedrag). Bij
+        // colorMode "ears-and-plate" ("oren"-vormen) is dit een fallback
+        // (zie lib/email/sendOrderEmails.ts/plate-preview-image.tsx) —
+        // gevuld met de kleur van het VLAK (het grootste, meest bepalende
+        // kleurvlak) zodat een eventuele toekomstige aanroeper die
+        // earColorHex/plateColorHex niet leest, alsnog een bruikbare
+        // (eenkleurige) afbeelding krijgt. De voorbeeldafbeelding zelf
+        // gebruikt hieronder wél de 2 losse kleuren, via earColorHex/
+        // plateColorHex + shapeKind/earsStyle.
+        colorHex: earsShape ? plateColor!.hex : color!.hex,
+        earColorHex: earsShape ? earColor!.hex : undefined,
+        plateColorHex: earsShape ? plateColor!.hex : undefined,
+        shapeKind: earsShape ? "ears" : shape.id === "ovaal" ? "oval" : "rect",
+        earsStyle: earsShape ? getEarsStyleForShapeId(shape.id) ?? undefined : undefined,
         isOval: shape.id === "ovaal",
         widthMm: size.width,
         heightMm: size.height,

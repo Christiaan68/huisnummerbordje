@@ -10,6 +10,7 @@ import {
   productColors,
   productFonts,
 } from "@/config/product-options";
+import { isEarsShape, getEarsColorOptions } from "@/lib/configuration/shape-helpers";
 
 /**
  * Verwerkt een vraag die een bezoeker stelt via de pop-up in de
@@ -62,9 +63,7 @@ export async function POST(request: Request) {
   const pricingData = await getLivePricingData();
 
   const shape = productShapes.find((s) => s.id === data.shapeId);
-  const color = productColors.find((c) => c.id === data.colorId);
   const size = pricingData.productSizes.find((s) => s.id === data.sizeId);
-  const numberFont = productFonts.find((f) => f.id === data.numberFontId);
   // Elk tekstveld heeft sinds 28-8-2026 zijn eigen lettertype (zie
   // types/configuration.ts) — line1Font/line2Font zijn alleen relevant als
   // de gekozen vorm die tekstregel ook echt heeft.
@@ -75,13 +74,36 @@ export async function POST(request: Request) {
     ? productFonts.find((f) => f.id === data.line2FontId)
     : undefined;
 
+  // Sinds 9-9-2026 (uitbreiding naar 7 vormen): de 3 "oren"-vormen
+  // (colorMode "ears-and-plate") kennen geen enkelvoudige `colorId` en geen
+  // lettertypekeuze — zij hebben in plaats daarvan 2 losse verplichte
+  // kleuren (oren + vlak), uit de aparte lijst productColorsOren. Zie
+  // types/product.ts / lib/configuration/shape-helpers.ts en dezelfde
+  // conditionele aanpak in components/configurator/ConfigurationSummary.tsx.
+  const earsShape = isEarsShape(shape);
+  const color = earsShape
+    ? undefined
+    : productColors.find((c) => c.id === data.colorId);
+  const numberFont = earsShape
+    ? undefined
+    : productFonts.find((f) => f.id === data.numberFontId);
+  const earsColors = earsShape ? getEarsColorOptions() : [];
+  const earColor = earsShape
+    ? earsColors.find((c) => c.id === data.earColorId)
+    : undefined;
+  const plateColor = earsShape
+    ? earsColors.find((c) => c.id === data.plateColorId)
+    : undefined;
+
   if (
     !shape ||
-    !color ||
     !size ||
-    !numberFont ||
-    (shape.extraLines >= 1 && !line1Font) ||
-    (shape.extraLines >= 2 && !line2Font)
+    (earsShape
+      ? !earColor || !plateColor
+      : !color ||
+        !numberFont ||
+        (shape.extraLines >= 1 && !line1Font) ||
+        (shape.extraLines >= 2 && !line2Font))
   ) {
     return NextResponse.json(
       { error: "Onbekende vorm, kleur, maat of lettertype." },
@@ -107,13 +129,20 @@ export async function POST(request: Request) {
 
   const html = renderQuestionNotificationEmail({
     shapeName: shape.name,
-    finish: data.finish,
-    colorName: color.name,
+    // "Oren"-vormen kennen geen afwerking-, enkelvoudige kleur- of
+    // lettertypekeuze — deze velden blijven voor hen bewust `undefined`
+    // (in plaats van een misleidende waarde), zie renderQuestionNotificationEmail
+    // (lib/email/templates/question-notification.ts) voor hoe elke rij
+    // afzonderlijk alleen getoond wordt als het bijbehorende veld gezet is.
+    finish: earsShape ? undefined : data.finish ?? undefined,
+    colorName: earsShape ? undefined : color?.name,
+    earColorName: earsShape ? earColor?.name : undefined,
+    plateColorName: earsShape ? plateColor?.name : undefined,
     sizeName: size.name,
     customText: data.customText,
     extraLine1: data.extraLine1,
     extraLine2: data.extraLine2,
-    numberFontName: numberFont.name,
+    numberFontName: earsShape ? undefined : numberFont?.name,
     line1FontName: line1Font?.name,
     line2FontName: line2Font?.name,
     askerName: question.name,

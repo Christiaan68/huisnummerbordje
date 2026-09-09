@@ -35,5 +35,39 @@ export const extraLineSchema = z
     "Dit teken is niet toegestaan."
   );
 
+/**
+ * Validatie voor het huisnummerveld van de 3 nieuwe "oren"-vormen (jaren-30-
+ * stijl met bevestigingsogen, toegevoegd 9-9-2026 — zie
+ * config/product-options.ts, colorMode "ears-and-plate"). Andere regels dan
+ * `houseNumberSchema` hierboven (die voor de 4 oorspronkelijke vormen
+ * volledig ongewijzigd blijft):
+ *
+ * - Verplicht (mag niet leeg zijn).
+ * - Minimaal 1, maximaal 4 CIJFERS.
+ * - Optioneel aansluitend maximaal 3 extra LETTERS, die niet meetellen in
+ *   de cijferlimiet van 4.
+ *
+ * Geldig: "1", "12", "1234", "12A", "176ABC". Ongeldig: "" (leeg), "12345"
+ * (5 cijfers), "1ABCD" (4 letters).
+ *
+ * AANNAME (niet expliciet gespecificeerd door de klant, dus hier
+ * gedocumenteerd zodat Christiaan dit kan corrigeren als hij een andere
+ * volgorde/positie bedoelde): de regex hieronder eist "cijfers eerst, dan
+ * letters" (bv. "12A"), niet "letters eerst" (bv. "A12") en niet losse
+ * letters vóór én na de cijfers. Dit is de meest voor de hand liggende
+ * lezing voor een huisnummer met een toevoeging (zoals "12A" in plaats van
+ * "A12"), en is analoog aan hoe huisnummertoevoegingen in Nederlandse
+ * adressen gebruikelijk genoteerd worden.
+ */
+export const houseNumberEarsSchema = z
+  .string()
+  .trim()
+  .min(1, "Vul een huisnummer in.")
+  .regex(
+    /^[0-9]{1,4}[a-zA-Z]{0,3}$/,
+    "Vul 1 t/m 4 cijfers in, eventueel gevolgd door maximaal 3 letters (bv. 12, 1234 of 12A)."
+  );
+
 export type HouseNumberValue = z.infer<typeof houseNumberSchema>;
+export type HouseNumberEarsValue = z.infer<typeof houseNumberEarsSchema>;
 export type ExtraLineValue = z.infer<typeof extraLineSchema>;

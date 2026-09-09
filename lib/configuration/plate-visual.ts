@@ -312,6 +312,12 @@ export const LINE_GAP_RATIO_BY_FONT: Record<string, number> = {
   times: 0.1,
   "schwitserland-schmal": 0.06,
   "commercial-script": 0.22,
+  // "ears-fixed-serif" (toegevoegd 9-9-2026): geen door de klant kiesbaar
+  // lettertype, zie EARS_AUTOFIT_FONT_KEY verderop in dit bestand — zelfde
+  // waarde als "times" (ook een compacte schreefletter, Tinos), want
+  // EARS_NUMBER_FONT_STACK (Georgia/Times New Roman) is vergelijkbaar
+  // compact.
+  "ears-fixed-serif": 0.1,
 };
 export const DEFAULT_LINE_GAP_RATIO = 0.08;
 
@@ -328,3 +334,264 @@ export const FONT_WEIGHT_BY_ID: Record<string, number> = {
   "commercial-script": 400,
 };
 export const DEFAULT_FONT_WEIGHT = 700;
+
+// ---------------------------------------------------------------------
+// "Oren"-vormen (colorMode "ears-and-plate", toegevoegd 9-9-2026) — zie
+// types/product.ts en config/product-options.ts voor de achtergrond: 3
+// vormen in jaren-30-stijl met bevestigingsogen ("oren-2-horizontaal",
+// "oren-2-verticaal", "oren-4-hoeken"), elk met een eigen vaste maat, geen
+// lettertypekeuze en 2 losse verplichte kleuren (oren + vlak).
+//
+// BEWUSTE VEREENVOUDIGING: de geometrie hieronder is GEEN pixel-exacte
+// reproductie van de aangeleverde productfoto's (die hebben sierlijke,
+// organische oor-contouren, vergelijkbaar met een klassiek gietijzeren
+// naamplaatje). Net zoals de rest van dit bestand voor de 4 oorspronkelijke
+// vormen al een vereenvoudigd schema tekent (een rechthoek/ellips met
+// effen schroefstipjes, geen fotorealistische reliëftekening), tekenen de
+// functies hieronder de oren als een net, herkenbaar trapezium met een rond
+// bevestigingsgat erin — géén poging tot een exacte contour. Dat is
+// voldoende voor een live voorbeeld/bevestigingsmail; het echte, definitieve
+// uiterlijk zit in de fysieke productfoto's elders op de site.
+// ---------------------------------------------------------------------
+
+export type EarsStyle = "horizontaal" | "verticaal" | "vier-hoeken";
+
+// Koppelt een vorm-id (zie config/product-options.ts) aan de bijbehorende
+// EarsStyle — op één plek gehouden zodat zowel de live preview
+// (ProductPreview.tsx, die alleen het vorm-object bij de hand heeft) als de
+// e-mailafbeelding (plate-preview-image.tsx / de code die renderPlatePreviewPng
+// aanroept, die zelf niet per se het vorm-object importeert) dezelfde
+// koppeling gebruiken.
+export const EARS_STYLE_BY_SHAPE_ID: Record<string, EarsStyle> = {
+  "oren-2-horizontaal": "horizontaal",
+  "oren-2-verticaal": "verticaal",
+  "oren-4-hoeken": "vier-hoeken",
+};
+
+export function getEarsStyleForShapeId(
+  shapeId: string | null | undefined
+): EarsStyle | null {
+  if (!shapeId) return null;
+  return EARS_STYLE_BY_SHAPE_ID[shapeId] ?? null;
+}
+
+// Hoever een oor voorbij de hoofdrechthoek uitsteekt, als fractie van
+// min(breedte, hoogte) van het HELE bordje (dus incl. de oren zelf — de
+// vaste maten uit config/product-options.ts, bijv. 130×100mm, zijn de
+// buitenmaat van het complete bordje MET oren, niet van het middenvlak
+// alleen). Bij "vier-hoeken" wordt deze waarde niet gebruikt (geen
+// uitstekende oren daar, zie getEarsGeometry).
+const EARS_PROTRUSION_RATIO = 0.22;
+
+// Breedte van een oor waar het de hoofdrechthoek raakt ("basis"), als
+// fractie van de DWARSAFMETING (bij horizontale oren: de hoogte van het
+// bordje; bij verticale oren: de breedte).
+const EARS_BASE_WIDTH_RATIO = 0.34;
+
+// Het oor loopt taps toe naar de punt — breedte bij de punt als fractie van
+// de basisbreedte hierboven (dus < 1: smaller bij de punt dan bij de
+// hoofdrechthoek, als een eenvoudige bevestigingslip).
+const EARS_TIP_WIDTH_RATIO = 0.55;
+
+// Afstand van het bevestigingsgat tot de PUNT van het oor, als fractie van
+// de uitsteeklengte (EARS_PROTRUSION_RATIO hierboven) — "op een vaste
+// afstand van de punt", zoals gevraagd.
+const EARS_HOLE_TIP_INSET_RATIO = 0.45;
+
+// Radius van de afgeronde hoeken van de hoofdrechthoek — zelfde verhouding
+// als de bestaande rechthoekige vorm gebruikt (zie ProductPreview.tsx,
+// `rx={plateWidth * 0.04}` bij de vormen "nummer"/"nummer-1regel"/
+// "nummer-2regels"), zodat het middenvlak van een "oren"-bordje er
+// consistent met die vormen uitziet.
+const EARS_MAIN_RECT_CORNER_RADIUS_RATIO = 0.04;
+
+export interface EarHoleGeometry {
+  xMm: number;
+  yMm: number;
+  radiusMm: number;
+}
+
+export interface EarGeometry {
+  /** SVG-pad (trapezium) van dit ene oor, in dezelfde mm-coördinaten als de rest van de bordjestekening. */
+  path: string;
+  /** Bevestigingsgat in dit oor. */
+  hole: EarHoleGeometry;
+}
+
+export interface EarsGeometry {
+  /** Het middenvlak — een rechthoek met licht afgeronde hoeken, net als de bestaande rechthoekige vorm. */
+  mainRect: {
+    xMm: number;
+    yMm: number;
+    widthMm: number;
+    heightMm: number;
+    radiusMm: number;
+  };
+  /** De uitstekende oren (2 stuks bij "horizontaal"/"verticaal"). Leeg bij "vier-hoeken". */
+  ears: EarGeometry[];
+  /** Bevestigingsgaten direct in het middenvlak, dicht bij de hoeken. Alleen gevuld bij "vier-hoeken" (bij de andere twee stijlen zit het gat in het oor zelf, zie `ears`). */
+  cornerHoles: EarHoleGeometry[];
+}
+
+/**
+ * Bouwt de schematische geometrie (middenvlak + oren, of middenvlak +
+ * hoekgaten) voor één van de 3 "oren"-vormen, in dezelfde mm-coördinaten als
+ * de rest van dit bestand (viewBox/canvas van 0 tot widthMm/heightMm — zie
+ * ProductPreview.tsx en plate-preview-image.tsx). Wordt door beide
+ * gebruikt, zodat de live preview en de e-mailafbeelding nooit uit elkaar
+ * kunnen lopen (zie de toelichting bovenaan dit bestand).
+ *
+ * - "horizontaal"/"verticaal": 2 oren die symmetrisch rond het midden van de
+ *   linker/rechter- resp. boven/onderrand van het bordje naar buiten steken.
+ *   Omdat widthMm/heightMm de buitenmaat van het HELE bordje (incl. oren)
+ *   zijn, ligt het middenvlak (mainRect) hier smaller/lager dan de volledige
+ *   canvas — precies zo veel ingesprongen als de oren uitsteken
+ *   (EARS_PROTRUSION_RATIO) — zodat de oren binnen dezelfde vaste canvas
+ *   passen zonder dat er coördinaten buiten 0..widthMm/0..heightMm nodig
+ *   zijn (die zouden in de SVG-viewBox anders afgesneden worden).
+ * - "vier-hoeken": GEEN uitstekende oren. Het middenvlak is dan gewoon de
+ *   volledige rechthoek (widthMm × heightMm, met dezelfde afgeronde hoeken
+ *   als de bestaande rechthoekige vorm), met 4 bevestigingsgaten dicht bij
+ *   de hoeken — hiervoor wordt bewust dezelfde `getScrewPositions`/
+ *   `getScrewRadiusMm` hergebruikt die de 4 hoekschroefjes van de bestaande
+ *   rechthoekige vorm bepaalt (zelfde `SCREW_INSET_RATIO`), in plaats van
+ *   een eigen, aparte hoekverhouding te verzinnen.
+ */
+export function getEarsGeometry(
+  earsStyle: EarsStyle,
+  widthMm: number,
+  heightMm: number
+): EarsGeometry {
+  const mainRectRadiusMm =
+    Math.min(widthMm, heightMm) * EARS_MAIN_RECT_CORNER_RADIUS_RATIO;
+
+  if (earsStyle === "vier-hoeken") {
+    const radiusMm = getScrewRadiusMm(widthMm, heightMm);
+    const cornerHoles = getScrewPositions(false, widthMm, heightMm).map(
+      ([xr, yr]) => ({ xMm: widthMm * xr, yMm: heightMm * yr, radiusMm })
+    );
+    return {
+      mainRect: {
+        xMm: 0,
+        yMm: 0,
+        widthMm,
+        heightMm,
+        radiusMm: mainRectRadiusMm,
+      },
+      ears: [],
+      cornerHoles,
+    };
+  }
+
+  const protrusionMm = Math.min(widthMm, heightMm) * EARS_PROTRUSION_RATIO;
+  const holeRadiusMm = getScrewRadiusMm(widthMm, heightMm);
+  const holeDistanceFromTipMm = protrusionMm * EARS_HOLE_TIP_INSET_RATIO;
+
+  if (earsStyle === "horizontaal") {
+    // Oren links/rechts, in het midden van de linker-/rechterrand.
+    const baseWidthMm = heightMm * EARS_BASE_WIDTH_RATIO;
+    const tipWidthMm = baseWidthMm * EARS_TIP_WIDTH_RATIO;
+    const midY = heightMm / 2;
+
+    const leftEar: EarGeometry = {
+      path: [
+        `M ${protrusionMm} ${midY - baseWidthMm / 2}`,
+        `L 0 ${midY - tipWidthMm / 2}`,
+        `L 0 ${midY + tipWidthMm / 2}`,
+        `L ${protrusionMm} ${midY + baseWidthMm / 2}`,
+        `Z`,
+      ].join(" "),
+      hole: { xMm: holeDistanceFromTipMm, yMm: midY, radiusMm: holeRadiusMm },
+    };
+    const rightEar: EarGeometry = {
+      path: [
+        `M ${widthMm - protrusionMm} ${midY - baseWidthMm / 2}`,
+        `L ${widthMm} ${midY - tipWidthMm / 2}`,
+        `L ${widthMm} ${midY + tipWidthMm / 2}`,
+        `L ${widthMm - protrusionMm} ${midY + baseWidthMm / 2}`,
+        `Z`,
+      ].join(" "),
+      hole: {
+        xMm: widthMm - holeDistanceFromTipMm,
+        yMm: midY,
+        radiusMm: holeRadiusMm,
+      },
+    };
+
+    return {
+      mainRect: {
+        xMm: protrusionMm,
+        yMm: 0,
+        widthMm: widthMm - 2 * protrusionMm,
+        heightMm,
+        radiusMm: mainRectRadiusMm,
+      },
+      ears: [leftEar, rightEar],
+      cornerHoles: [],
+    };
+  }
+
+  // "verticaal" — oren boven/onder, in het midden van de boven-/onderrand.
+  const baseWidthMm = widthMm * EARS_BASE_WIDTH_RATIO;
+  const tipWidthMm = baseWidthMm * EARS_TIP_WIDTH_RATIO;
+  const midX = widthMm / 2;
+
+  const topEar: EarGeometry = {
+    path: [
+      `M ${midX - baseWidthMm / 2} ${protrusionMm}`,
+      `L ${midX - tipWidthMm / 2} 0`,
+      `L ${midX + tipWidthMm / 2} 0`,
+      `L ${midX + baseWidthMm / 2} ${protrusionMm}`,
+      `Z`,
+    ].join(" "),
+    hole: { xMm: midX, yMm: holeDistanceFromTipMm, radiusMm: holeRadiusMm },
+  };
+  const bottomEar: EarGeometry = {
+    path: [
+      `M ${midX - baseWidthMm / 2} ${heightMm - protrusionMm}`,
+      `L ${midX - tipWidthMm / 2} ${heightMm}`,
+      `L ${midX + tipWidthMm / 2} ${heightMm}`,
+      `L ${midX + baseWidthMm / 2} ${heightMm - protrusionMm}`,
+      `Z`,
+    ].join(" "),
+    hole: {
+      xMm: midX,
+      yMm: heightMm - holeDistanceFromTipMm,
+      radiusMm: holeRadiusMm,
+    },
+  };
+
+  return {
+    mainRect: {
+      xMm: 0,
+      yMm: protrusionMm,
+      widthMm,
+      heightMm: heightMm - 2 * protrusionMm,
+      radiusMm: mainRectRadiusMm,
+    },
+    ears: [topEar, bottomEar],
+    cornerHoles: [],
+  };
+}
+
+// Vaste typografie voor de 3 "oren"-vormen — er is voor deze vormen bewust
+// GEEN lettertypekeuze voor de klant (ProductShape.hasFontChoice: false,
+// zie types/product.ts/config/product-options.ts), dus in tegenstelling tot
+// de 4 oorspronkelijke vormen wordt hier NIET een van de 6 custom Google
+// Fonts (fette-fraktur/bodoni/colonel/times/schwitserland-schmal/
+// commercial-script uit productFonts) gebruikt — die horen bij de
+// klant-kiesbare lettertypes van de andere vormen. In plaats daarvan een
+// simpele, stevige systeem-schreefletterstack, passend bij de sobere
+// jaren-30-uitstraling van deze vormen.
+export const EARS_NUMBER_FONT_STACK = "Georgia, 'Times New Roman', serif";
+export const EARS_NUMBER_FONT_WEIGHT = 700;
+
+// Synthetische "lettertype-id" — bestaat niet in productFonts (dat zou een
+// door de klant kiesbaar lettertype suggereren) — puur om computeAutoFit
+// (text-fit.ts) en de regelafstand hieronder een op EARS_NUMBER_FONT_STACK
+// afgestemde teken-/regelverhouding te laten gebruiken in plaats van de
+// algemene standaardwaarde. Zie CHAR_WIDTH_RATIO_BY_FONT in text-fit.ts
+// (teken-breedteverhouding) en LINE_GAP_RATIO_BY_FONT hieronder
+// (regelafstand) voor de bijbehorende, op "times" (ook een compacte
+// schreefletter, Tinos) gebaseerde inschatting.
+export const EARS_AUTOFIT_FONT_KEY = "ears-fixed-serif";

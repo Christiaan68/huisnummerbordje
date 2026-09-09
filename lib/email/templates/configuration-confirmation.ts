@@ -14,7 +14,16 @@ interface ConfigurationEmailData {
   // functie).
   shapeId?: string;
   finish: "vlak" | "gewelfd";
-  colorName: string;
+  // colorName: verplicht voor colorMode "single"-vormen (de 4
+  // oorspronkelijke vormen). Sinds 9-9-2026 (uitbreiding naar 7 vormen)
+  // optioneel: voor colorMode "ears-and-plate"-vormen (de 3 nieuwe
+  // "oren"-vormen) blijft dit veld leeg, en zijn juist earColorName +
+  // plateColorName hieronder gevuld (nooit beide tegelijk) — zie
+  // render-functie hieronder (2 losse "Kleur oren"/"Kleur vlak"-regels in
+  // plaats van de ene "Kleur"-regel) en lib/email/sendOrderEmails.ts.
+  colorName?: string;
+  earColorName?: string;
+  plateColorName?: string;
   sizeName: string;
   customText: string;
   extraLine1?: string;
@@ -91,6 +100,11 @@ const TRANSLATIONS = {
     finishFlat: "Vlak",
     finishCurved: "Gewelfd",
     labelColor: "Kleur",
+    // labelEarColor/labelPlateColor: toegevoegd 9-9-2026 voor de 3 nieuwe
+    // "oren"-vormen (colorMode "ears-and-plate") — vervangen dan sámen de
+    // ene labelColor-regel hierboven (zie render-functie).
+    labelEarColor: "Kleur oren",
+    labelPlateColor: "Kleur vlak",
     labelSize: "Maat",
     labelHouseNumber: "Huisnummer",
     labelExtraLine1: "Tekstregel 1",
@@ -121,6 +135,13 @@ const TRANSLATIONS = {
       "nummer-1regel": "Huisnummer vierhoek + 1 regel",
       "nummer-2regels": "Huisnummer vierhoek + 2 regels",
       ovaal: "Huisnummer ovaal",
+      // Toegevoegd 9-9-2026 (uitbreiding naar 7 vormen) — identiek aan de
+      // namen in config/product-options.ts, hier alleen voor symmetrie met
+      // de Duitse vertaling hieronder (zelfde toelichting als bij de 4
+      // namen hierboven).
+      "oren-2-horizontaal": "Huisnummer met 2 oren",
+      "oren-2-verticaal": "Huisnummer met 2 oren verticaal",
+      "oren-4-hoeken": "Huisnummer met 4 oren",
     } as Record<string, string>,
   },
   de: {
@@ -142,6 +163,11 @@ const TRANSLATIONS = {
     finishFlat: "Flach",
     finishCurved: "Gewölbt",
     labelColor: "Farbe",
+    // Toegevoegd 9-9-2026, samen met de Nederlandse labels hierboven —
+    // eigen (niet door Christiaan geverifieerde) vertaling, zie het
+    // rapport van deze wijziging.
+    labelEarColor: "Farbe Ösen",
+    labelPlateColor: "Farbe Platte",
     labelSize: "Größe",
     labelHouseNumber: "Hausnummer",
     labelExtraLine1: "Textzeile 1",
@@ -175,6 +201,13 @@ const TRANSLATIONS = {
       "nummer-1regel": "Hausnummer viereckig + 1 Zeile",
       "nummer-2regels": "Hausnummer viereckig + 2 Zeilen",
       ovaal: "Hausnummer oval",
+      // Toegevoegd 9-9-2026 (uitbreiding naar 7 vormen) — eigen, redelijke
+      // letterlijke vertaling (niet door Christiaan geverifieerd, net als
+      // labelEarColor/labelPlateColor hierboven) — zie het rapport van deze
+      // wijziging. Christiaan kan dit laten corrigeren.
+      "oren-2-horizontaal": "Hausnummer mit 2 Ösen",
+      "oren-2-verticaal": "Hausnummer mit 2 Ösen vertikal",
+      "oren-4-hoeken": "Hausnummer mit 4 Ösen",
     } as Record<string, string>,
   },
 } as const;
@@ -206,6 +239,16 @@ export function translateShapeName(
  */
 export function renderConfigurationEmail(data: ConfigurationEmailData): string {
   const t = TRANSLATIONS[data.language ?? "nl"];
+
+  // Toegevoegd 9-9-2026 (uitbreiding naar 7 vormen): of dit een "oren"-
+  // bestelling is (colorMode "ears-and-plate", 2 losse kleuren) wordt hier
+  // afgeleid uit de aan-/afwezigheid van earColorName+plateColorName zelf,
+  // in plaats van shapeId opnieuw tegen productShapes op te zoeken — zo
+  // blijft deze render-functie een pure functie van de meegegeven data.
+  // Voor zo'n bestelling bestaat er geen afwerking-, lettertype- of
+  // kaderkeuze (zie types/product.ts) — die regels worden hieronder dan ook
+  // overgeslagen; de maat-regel blijft wel gewoon getoond.
+  const isEarsOrder = Boolean(data.earColorName && data.plateColorName);
 
   const row = (label: string, value: string) => `
     <tr>
@@ -294,26 +337,41 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
                       t.labelShape,
                       translateShapeName(data.shapeId, data.language, data.shapeName)
                     )}
-                    ${row(t.labelFinish, data.finish === "vlak" ? t.finishFlat : t.finishCurved)}
-                    ${row(t.labelColor, data.colorName)}
+                    ${
+                      isEarsOrder
+                        ? ""
+                        : row(t.labelFinish, data.finish === "vlak" ? t.finishFlat : t.finishCurved)
+                    }
+                    ${
+                      isEarsOrder
+                        ? row(t.labelEarColor, data.earColorName!) +
+                          row(t.labelPlateColor, data.plateColorName!)
+                        : data.colorName
+                          ? row(t.labelColor, data.colorName)
+                          : ""
+                    }
                     ${row(t.labelSize, data.sizeName)}
                     ${row(t.labelHouseNumber, data.customText)}
                     ${data.extraLine1 ? row(t.labelExtraLine1, data.extraLine1) : ""}
                     ${data.extraLine2 ? row(t.labelExtraLine2, data.extraLine2) : ""}
                     ${data.orderLabel ? row(t.labelOrderLabel, data.orderLabel) : ""}
-                    ${row(t.labelNumberFont, data.numberFontName)}
+                    ${isEarsOrder ? "" : row(t.labelNumberFont, data.numberFontName)}
                     ${data.line1FontName ? row(t.labelLine1Font, data.line1FontName) : ""}
                     ${data.line2FontName ? row(t.labelLine2Font, data.line2FontName) : ""}
-                    ${row(
-                      t.labelFrame,
-                      data.hasFrame
-                        ? `${t.frameYes} – ${
-                            data.priceFrameSurchargeCents != null
-                              ? formatPriceCents(data.priceFrameSurchargeCents)
-                              : t.priceOnRequest
-                          }`
-                        : t.frameNo
-                    )}
+                    ${
+                      isEarsOrder
+                        ? ""
+                        : row(
+                            t.labelFrame,
+                            data.hasFrame
+                              ? `${t.frameYes} – ${
+                                  data.priceFrameSurchargeCents != null
+                                    ? formatPriceCents(data.priceFrameSurchargeCents)
+                                    : t.priceOnRequest
+                                }`
+                              : t.frameNo
+                          )
+                    }
                     ${
                       data.priceColorSurchargeCents
                         ? row(t.labelColorSurcharge, formatPriceCents(data.priceColorSurchargeCents))

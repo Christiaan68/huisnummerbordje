@@ -1,5 +1,22 @@
 export type PlateFinish = "vlak" | "gewelfd";
 
+/**
+ * Hoe de kleurkeuze van een vorm werkt.
+ *
+ * "single"          — het bestaande gedrag: één kleurkeuze
+ *                      (ConfiguratorSelection.colorId), uit `productColors`.
+ *                      Gebruikt door alle 4 oorspronkelijke vormen.
+ * "ears-and-plate"   — toegevoegd 9-9-2026 voor de 3 nieuwe jaren-30-vormen
+ *                      met bevestigingsogen: TWEE losse, allebei verplichte
+ *                      kleurkeuzes (ConfiguratorSelection.earColorId +
+ *                      plateColorId), uit de aparte lijst `productColorsOren`
+ *                      (nooit uit `productColors`). Zie
+ *                      lib/configuration/shape-helpers.ts voor de helpers die
+ *                      hierop filteren, zodat dit onderscheid niet overal
+ *                      opnieuw uitgeschreven hoeft te worden.
+ */
+export type ColorMode = "single" | "ears-and-plate";
+
 export interface ProductShape {
   id: string;
   name: string;
@@ -10,6 +27,26 @@ export interface ProductShape {
   imageSrc: string;
   active: boolean;
   createdAt: string;
+
+  // ---------------------------------------------------------------------
+  // Capability-vlaggen — toegevoegd 9-9-2026 bij de uitbreiding naar 7
+  // vormen. De 4 oorspronkelijke vormen krijgen hieronder overal expliciet
+  // de waarde die hun bestaande gedrag beschrijft (niets impliciet), de 3
+  // nieuwe "oren"-vormen krijgen de afwijkende waarden. Zie
+  // config/product-options.ts voor de daadwerkelijke invulling per vorm en
+  // lib/configuration/shape-helpers.ts voor de bijbehorende helperfuncties.
+  // ---------------------------------------------------------------------
+
+  /** false = geen maatkeuze, er is precies 1 vaste maat (zie productSizes). */
+  hasSizeChoice: boolean;
+  /** false = geen vlak/gewelfd-keuze (gebruikt dan ook `availableFinishes` niet). */
+  hasFinishChoice: boolean;
+  /** false = geen lettertypekeuze, vaste typografie. */
+  hasFontChoice: boolean;
+  /** false = geen kaderoptie. */
+  hasFrameChoice: boolean;
+  /** Zie ColorMode hierboven. */
+  colorMode: ColorMode;
 }
 
 export interface ProductColor {

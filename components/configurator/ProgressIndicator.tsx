@@ -2,18 +2,25 @@
 
 import { usePathname } from "next/navigation";
 import { Check } from "lucide-react";
-import { configuratorSteps, getStepIndex } from "@/lib/configuration/steps";
+import { getVisibleSteps } from "@/lib/configuration/steps";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { cn } from "@/lib/utils";
 
 export function ProgressIndicator() {
   const pathname = usePathname();
   const { selection } = useConfigurator();
-  const currentIndex = getStepIndex(pathname);
+  // Sinds 9-9-2026 (7 vormen): toont alleen de stappen die voor de huidig
+  // gekozen vorm van toepassing zijn (zie lib/configuration/steps.ts,
+  // getVisibleSteps) — zo krijgt een klant met een "oren"-vorm bv. geen
+  // voortgangsbolletje voor "Afwerking"/"Maat"/"Opties" te zien. Voor de 4
+  // oorspronkelijke vormen bevat deze lijst nog steeds alle stappen, dus
+  // daar verandert er niets.
+  const visibleSteps = getVisibleSteps(selection);
+  const currentIndex = visibleSteps.findIndex((step) => step.path === pathname);
 
   return (
     <ol className="flex items-center gap-1 sm:gap-2">
-      {configuratorSteps.map((step, index) => {
+      {visibleSteps.map((step, index) => {
         const isCurrent = index === currentIndex;
         const isDone = index < currentIndex && step.isComplete(selection);
 
@@ -50,7 +57,7 @@ export function ProgressIndicator() {
               </span>
             </div>
 
-            {index < configuratorSteps.length - 1 && (
+            {index < visibleSteps.length - 1 && (
               <div
                 className={cn(
                   "mb-5 h-px flex-1 sm:mb-6",
