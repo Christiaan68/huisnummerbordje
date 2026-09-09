@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 // Zachte overgang naar langcat.nl (toegevoegd 27-8-2026, n.a.v. Christiaans
 // opmerking over het grote contrast tussen deze donkere webshop en het
@@ -55,6 +56,25 @@ export function LangcatTransitionLink({
     return () => {
       timers.current.forEach((id) => window.clearTimeout(id));
     };
+  }, []);
+
+  // De decoratieve overlay hieronder is fixed/full-screen (aria-hidden,
+  // pointer-events-none) en hoort dus eigenlijk nooit een DOM-kind te zijn
+  // van waar dit component toevallig gebruikt wordt — op de plekken waar
+  // dat een <p> is (bv. components/layout/Footer.tsx: "... onderdeel van
+  // <LangcatTransitionLink>...") gaf dat ongeldige HTML (een <div> mag
+  // niet in een <p> zitten), waardoor de browser de <p> zelf voortijdig
+  // afsloot en React een hydration-fout gaf (gemeld door Christiaan,
+  // 9-9-2026: "Hydration failed... <div> cannot be a descendant of <p>").
+  // Fix: de overlay via een portal direct in <body> renderen, los van waar
+  // de link zelf staat. "mounted" zorgt dat de portal pas ná de eerste,
+  // met de server identieke render verschijnt (document bestaat niet
+  // server-side) — zo blijft de HTML die de server stuurt exact gelijk aan
+  // wat de browser aanvankelijk tekent, en treedt er geen nieuwe hydration-
+  // mismatch op.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   function handleClick(event: React.MouseEvent<HTMLAnchorElement>) {
@@ -195,31 +215,37 @@ export function LangcatTransitionLink({
 
       {/* Puur decoratieve overlay — de link hierboven is en blijft een
           gewone, direct werkende link, dus voor toetsenbord/screenreader
-          verandert er niets. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-[100]"
-        style={{
-          opacity: overlayVisible ? 1 : 0,
-          backgroundColor: overlayColor,
-          transition: `opacity ${phase === "fading" ? FADE_BACK_MS : DIM_MS}ms ease-in-out, background-color ${overlayDurationMs}ms ease-in-out`,
-        }}
-      >
-        <div
-          className="flex h-full items-center justify-center"
-          style={{
-            opacity: phase === "rising" || phase === "hold" ? 1 : 0,
-            transition: `opacity ${RISE_MS}ms ease-in-out`,
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={LANGCAT_LOGO_SRC}
-            alt=""
-            className="w-48 rounded-sm shadow-[0_10px_25px_rgba(0,0,0,0.35)] sm:w-56"
-          />
-        </div>
-      </div>
+          verandert er niets. Via een portal in <body> gerenderd (zie
+          toelichting bij "mounted" hierboven), niet als DOM-kind van de
+          link/component zelf. */}
+      {mounted &&
+        createPortal(
+          <div
+            aria-hidden="true"
+            className="pointer-events-none fixed inset-0 z-[100]"
+            style={{
+              opacity: overlayVisible ? 1 : 0,
+              backgroundColor: overlayColor,
+              transition: `opacity ${phase === "fading" ? FADE_BACK_MS : DIM_MS}ms ease-in-out, background-color ${overlayDurationMs}ms ease-in-out`,
+            }}
+          >
+            <div
+              className="flex h-full items-center justify-center"
+              style={{
+                opacity: phase === "rising" || phase === "hold" ? 1 : 0,
+                transition: `opacity ${RISE_MS}ms ease-in-out`,
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={LANGCAT_LOGO_SRC}
+                alt=""
+                className="w-48 rounded-sm shadow-[0_10px_25px_rgba(0,0,0,0.35)] sm:w-56"
+              />
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 }
