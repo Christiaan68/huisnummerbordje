@@ -151,7 +151,7 @@ export async function POST(request: Request) {
 
       const result = await sendOrderEmails({
         orderId,
-        shape: { name: shape.name, extraLines: shape.extraLines },
+        shape: { id: shape.id, name: shape.name, extraLines: shape.extraLines },
         finish: order.finish,
         colorName: color.name,
         colorHex: color.hex,

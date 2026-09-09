@@ -1,5 +1,8 @@
 import { createResendClient } from "@/lib/email/resend";
-import { renderConfigurationEmail } from "@/lib/email/templates/configuration-confirmation";
+import {
+  renderConfigurationEmail,
+  translateShapeName,
+} from "@/lib/email/templates/configuration-confirmation";
 import { renderCustomerConfirmationEmail } from "@/lib/email/templates/customer-confirmation";
 import { renderPlatePreviewPng } from "@/lib/email/plate-preview-image";
 import { computeAutoFit } from "@/lib/configuration/text-fit";
@@ -36,7 +39,11 @@ export interface SendOrderEmailsInput {
   // "Verrekeningen"-overzicht, waar dezelfde nummering al in de
   // betaalomschrijving stond — zie app/api/create-payment/route.ts).
   orderId: number;
-  shape: { name: string; extraLines: number };
+  // id toegevoegd 9-9-2026, samen met emailLanguage — nodig om de Duitse
+  // vertaling van de vormnaam op te kunnen zoeken (zie shapeNames in
+  // lib/email/templates/configuration-confirmation.ts) op basis van een
+  // stabiel id in plaats van de Nederlandse naam-tekst zelf.
+  shape: { id: string; name: string; extraLines: number };
   finish: "vlak" | "gewelfd";
   colorName: string;
   colorHex: string;
@@ -159,6 +166,7 @@ export async function sendOrderEmails(
     const html = renderConfigurationEmail({
       orderNumber: `#${input.orderId}`,
       shapeName: input.shape.name,
+      shapeId: input.shape.id,
       finish: input.finish,
       colorName: input.colorName,
       sizeName: input.sizeName,
@@ -191,13 +199,20 @@ export async function sendOrderEmails(
 
     // Onderwerp van de interne meldingsmail volgt dezelfde, per vorm
     // ingestelde taal als de rest van de mail (zie
-    // lib/email/templates/configuration-confirmation.ts) — de configuratie-
-    // en bestelgegevens zelf (naam, vorm, tekst) blijven ongewijzigd, alleen
-    // de vaste tekst eromheen wisselt van taal.
+    // lib/email/templates/configuration-confirmation.ts) — de bestelgegevens
+    // zelf (naam, tekst) blijven ongewijzigd. De vormnaam wordt, net als in
+    // de body, wél vertaald (translateShapeName) — dat is een vaste tekst
+    // uit een bekende, beperkte lijst, geen vrije klantinvoer (toegevoegd
+    // 9-9-2026, samen met de vertaling in de mail-body zelf).
+    const translatedShapeName = translateShapeName(
+      input.shape.id,
+      input.emailLanguage,
+      input.shape.name
+    );
     const internalSubject =
       input.emailLanguage === "de"
-        ? `Neue (bezahlte) Bestellung von ${input.contact.name}: ${input.shape.name} — ${input.customText}`
-        : `Nieuwe (betaalde) bestelling van ${input.contact.name}: ${input.shape.name} — ${input.customText}`;
+        ? `Neue (bezahlte) Bestellung von ${input.contact.name}: ${translatedShapeName} — ${input.customText}`
+        : `Nieuwe (betaalde) bestelling van ${input.contact.name}: ${translatedShapeName} — ${input.customText}`;
 
     const { error } = await resend.emails.send({
       from: `Huisnummerbordjes configurator <${fromAddress}>`,

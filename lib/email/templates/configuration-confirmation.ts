@@ -6,6 +6,13 @@ interface ConfigurationEmailData {
   // doorgegeven, zie lib/email/sendOrderEmails.ts.
   orderNumber?: string;
   shapeName: string;
+  // Id van de vorm (bv. "nummer", "ovaal" — zie config/product-options.ts),
+  // toegevoegd 9-9-2026 zodat de vaste vormnaam (zie shapeNames hieronder
+  // bij TRANSLATIONS) voor het Duits vertaald kan worden op basis van een
+  // stabiel id, in plaats van te moeten matchen op de Nederlandse tekst.
+  // Onbekend/ontbreekt → shapeName wordt ongewijzigd getoond (zie render-
+  // functie).
+  shapeId?: string;
   finish: "vlak" | "gewelfd";
   colorName: string;
   sizeName: string;
@@ -55,9 +62,12 @@ interface ConfigurationEmailData {
   // Taal van deze (interne) meldingsmail, per vorm ingesteld in de prijstool
   // (zie lib/email/shapeLanguage.ts en lib/email/sendOrderEmails.ts) —
   // standaard "nl" wanneer er voor de vorm nog niets is ingesteld. Vertaalt
-  // alleen de vaste teksten/labels hieronder; de configuratie- en
-  // bestelgegevens zelf (namen, vorm, tekst, kleur, enz.) komen ongewijzigd
-  // binnen en worden niet vertaald.
+  // de vaste teksten/labels hieronder, én (via shapeNames, zie TRANSLATIONS)
+  // de naam van de vorm zelf — dat is namelijk ook een vaste tekst uit een
+  // bekende, beperkte lijst (config/product-options.ts), geen vrije
+  // klantinvoer. De overige configuratie- en bestelgegevens (kleur, maat,
+  // ingevoerde tekst, contactgegevens, enz.) komen ongewijzigd binnen en
+  // worden niet vertaald.
   language?: "nl" | "de";
 }
 
@@ -101,6 +111,17 @@ const TRANSLATIONS = {
     labelPaidAt: "Betaald op",
     footer: "Deze e-mail is automatisch gegenereerd vanuit de configurator.",
     dateLocale: "nl-NL",
+    // Nederlandse vormnamen — identiek aan config/product-options.ts, hier
+    // alleen genoteerd voor symmetrie met de Duitse vertaling hieronder.
+    // Wijzigt zo'n naam ooit in product-options.ts, dan hoeft dit hier niet
+    // per se mee te veranderen: bij een onbekend/ontbrekend shapeId valt de
+    // render-functie sowieso terug op de meegegeven shapeName zelf.
+    shapeNames: {
+      nummer: "Huisnummer vierhoek",
+      "nummer-1regel": "Huisnummer vierhoek + 1 regel",
+      "nummer-2regels": "Huisnummer vierhoek + 2 regels",
+      ovaal: "Huisnummer ovaal",
+    } as Record<string, string>,
   },
   de: {
     htmlLang: "de",
@@ -141,8 +162,43 @@ const TRANSLATIONS = {
     labelPaidAt: "Bezahlt am",
     footer: "Diese E-Mail wurde automatisch vom Konfigurator generiert.",
     dateLocale: "de-DE",
+    // Vertaling van de vaste vormnamen (zie shapeId hierboven bij
+    // ConfigurationEmailData en config/product-options.ts voor de bron-
+    // waarden/id's) — toegevoegd 9-9-2026 op verzoek van Christiaan, nadat
+    // bleek dat "Huisnummer vierhoek"/"vierhoek"/"1 regel"/"2 regels" nog
+    // onvertaald in de Duitse mail stonden. Komt er ooit een nieuwe vorm
+    // bij in product-options.ts, dan moet die hier ook toegevoegd worden —
+    // zolang dat niet gebeurt, valt de render-functie terug op de
+    // (Nederlandse) shapeName zelf, dus niets breekt.
+    shapeNames: {
+      nummer: "Hausnummer viereckig",
+      "nummer-1regel": "Hausnummer viereckig + 1 Zeile",
+      "nummer-2regels": "Hausnummer viereckig + 2 Zeilen",
+      ovaal: "Hausnummer oval",
+    } as Record<string, string>,
   },
 } as const;
+
+/**
+ * Vertaalt een vormnaam (bv. "Huisnummer vierhoek + 1 regel") naar de
+ * opgegeven taal, via het shapeId (zie shapeNames hierboven). Onbekend
+ * shapeId, of geen vertaling voor dat id → geeft fallbackName ongewijzigd
+ * terug, zodat een ontbrekende/verouderde vertaling nooit een lege of
+ * kapotte tekst oplevert.
+ *
+ * Los geëxporteerd (naast renderConfigurationEmail) omdat ook het onderwerp
+ * van de mail (zie lib/email/sendOrderEmails.ts) dezelfde vertaalde
+ * vormnaam moet tonen als de mail-inhoud zelf — anders staat de body in het
+ * Duits maar het onderwerp nog in het Nederlands.
+ */
+export function translateShapeName(
+  shapeId: string | undefined,
+  language: "nl" | "de" | undefined,
+  fallbackName: string
+): string {
+  const t = TRANSLATIONS[language ?? "nl"];
+  return (shapeId && t.shapeNames[shapeId]) || fallbackName;
+}
 
 /**
  * Bouwt de HTML-inhoud van de bevestigingsmail. E-mailclients ondersteunen
@@ -234,7 +290,10 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
                 <td style="padding:12px 32px 24px;">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                     ${data.orderNumber ? row(t.labelOrderNumber, data.orderNumber) : ""}
-                    ${row(t.labelShape, data.shapeName)}
+                    ${row(
+                      t.labelShape,
+                      translateShapeName(data.shapeId, data.language, data.shapeName)
+                    )}
                     ${row(t.labelFinish, data.finish === "vlak" ? t.finishFlat : t.finishCurved)}
                     ${row(t.labelColor, data.colorName)}
                     ${row(t.labelSize, data.sizeName)}
