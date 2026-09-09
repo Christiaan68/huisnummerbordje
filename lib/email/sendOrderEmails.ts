@@ -71,6 +71,12 @@ export interface SendOrderEmailsInput {
     quantity: string;
   };
   adminEmail: string;
+  // Taal van de interne meldingsmail ("Configuratie bestelling webshop"),
+  // per vorm ingesteld in de prijstool (zie lib/email/shapeLanguage.ts) —
+  // "nl" als er voor deze vorm nog niets is ingesteld. Geldt uitsluitend
+  // voor deze interne mail; de bevestigingsmail aan de klant
+  // (renderCustomerConfirmationEmail hieronder) blijft altijd Nederlands.
+  emailLanguage: "nl" | "de";
   // Betaalgegevens (toegevoegd 29-8-2026, na de eerste live test): al
   // opgezocht/geformatteerd bij Mollie vandaan gehaald door de aanroeper
   // (zie app/api/mollie-webhook/route.ts, getPaymentMethodLabel/
@@ -179,13 +185,24 @@ export async function sendOrderEmails(
       previewImageCid: previewImageBuffer ? PREVIEW_IMAGE_CID : undefined,
       paymentMethodName: input.paymentMethodName,
       paidAt: input.paidAtFormatted,
+      language: input.emailLanguage,
       ...priceFields,
     });
+
+    // Onderwerp van de interne meldingsmail volgt dezelfde, per vorm
+    // ingestelde taal als de rest van de mail (zie
+    // lib/email/templates/configuration-confirmation.ts) — de configuratie-
+    // en bestelgegevens zelf (naam, vorm, tekst) blijven ongewijzigd, alleen
+    // de vaste tekst eromheen wisselt van taal.
+    const internalSubject =
+      input.emailLanguage === "de"
+        ? `Neue (bezahlte) Bestellung von ${input.contact.name}: ${input.shape.name} — ${input.customText}`
+        : `Nieuwe (betaalde) bestelling van ${input.contact.name}: ${input.shape.name} — ${input.customText}`;
 
     const { error } = await resend.emails.send({
       from: `Huisnummerbordjes configurator <${fromAddress}>`,
       to: input.adminEmail,
-      subject: `Nieuwe (betaalde) bestelling van ${input.contact.name}: ${input.shape.name} — ${input.customText}`,
+      subject: internalSubject,
       html,
       attachments,
     });

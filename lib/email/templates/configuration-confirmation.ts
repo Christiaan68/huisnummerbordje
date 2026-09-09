@@ -52,13 +52,105 @@ interface ConfigurationEmailData {
   // lib/mollie/client.ts (getPaymentMethodLabel) en lib/formatDate.ts.
   paymentMethodName?: string;
   paidAt?: string;
+  // Taal van deze (interne) meldingsmail, per vorm ingesteld in de prijstool
+  // (zie lib/email/shapeLanguage.ts en lib/email/sendOrderEmails.ts) —
+  // standaard "nl" wanneer er voor de vorm nog niets is ingesteld. Vertaalt
+  // alleen de vaste teksten/labels hieronder; de configuratie- en
+  // bestelgegevens zelf (namen, vorm, tekst, kleur, enz.) komen ongewijzigd
+  // binnen en worden niet vertaald.
+  language?: "nl" | "de";
 }
+
+const TRANSLATIONS = {
+  nl: {
+    htmlLang: "nl",
+    heading: "Nieuwe configuratie huisnummerbordje",
+    receivedOn: "Ontvangen op",
+    contactHeading: "Contactgegevens",
+    labelName: "Naam",
+    labelAddress: "Adres",
+    labelPostalCode: "Postcode",
+    labelCity: "Woonplaats",
+    labelEmail: "E-mail",
+    labelPhone: "Telefoon",
+    labelQuantity: "Aantal",
+    configHeading: "Configuratie",
+    labelOrderNumber: "Bestelnummer",
+    labelShape: "Vorm",
+    labelFinish: "Afwerking",
+    finishFlat: "Vlak",
+    finishCurved: "Gewelfd",
+    labelColor: "Kleur",
+    labelSize: "Maat",
+    labelHouseNumber: "Huisnummer",
+    labelExtraLine1: "Tekstregel 1",
+    labelExtraLine2: "Tekstregel 2",
+    labelOrderLabel: "Volgorde",
+    labelNumberFont: "Lettertype huisnummer",
+    labelLine1Font: "Lettertype tekstregel 1",
+    labelLine2Font: "Lettertype tekstregel 2",
+    labelFrame: "Kader",
+    frameYes: "Ja",
+    frameNo: "Nee",
+    priceOnRequest: "prijs op aanvraag",
+    labelColorSurcharge: "Meerprijs kleur",
+    labelExtraCharsSurcharge: "Meerprijs extra tekens",
+    labelTotalPrice: "Totaalprijs",
+    totalPriceOnRequest: "Prijs op aanvraag",
+    labelPaymentMethod: "Betaalmethode",
+    labelPaidAt: "Betaald op",
+    footer: "Deze e-mail is automatisch gegenereerd vanuit de configurator.",
+    dateLocale: "nl-NL",
+  },
+  de: {
+    htmlLang: "de",
+    heading: "Neue Konfiguration Hausnummernschild",
+    receivedOn: "Empfangen am",
+    contactHeading: "Kontaktdaten",
+    labelName: "Name",
+    labelAddress: "Adresse",
+    labelPostalCode: "Postleitzahl",
+    labelCity: "Wohnort",
+    labelEmail: "E-Mail",
+    labelPhone: "Telefon",
+    labelQuantity: "Anzahl",
+    configHeading: "Konfiguration",
+    labelOrderNumber: "Bestellnummer",
+    labelShape: "Form",
+    labelFinish: "Ausführung",
+    finishFlat: "Flach",
+    finishCurved: "Gewölbt",
+    labelColor: "Farbe",
+    labelSize: "Größe",
+    labelHouseNumber: "Hausnummer",
+    labelExtraLine1: "Textzeile 1",
+    labelExtraLine2: "Textzeile 2",
+    labelOrderLabel: "Reihenfolge",
+    labelNumberFont: "Schriftart Hausnummer",
+    labelLine1Font: "Schriftart Textzeile 1",
+    labelLine2Font: "Schriftart Textzeile 2",
+    labelFrame: "Rahmen",
+    frameYes: "Ja",
+    frameNo: "Nein",
+    priceOnRequest: "Preis auf Anfrage",
+    labelColorSurcharge: "Aufpreis Farbe",
+    labelExtraCharsSurcharge: "Aufpreis Extrazeichen",
+    labelTotalPrice: "Gesamtpreis",
+    totalPriceOnRequest: "Preis auf Anfrage",
+    labelPaymentMethod: "Zahlungsmethode",
+    labelPaidAt: "Bezahlt am",
+    footer: "Diese E-Mail wurde automatisch vom Konfigurator generiert.",
+    dateLocale: "de-DE",
+  },
+} as const;
 
 /**
  * Bouwt de HTML-inhoud van de bevestigingsmail. E-mailclients ondersteunen
  * geen Tailwind/externe CSS, dus alle styling staat bewust inline.
  */
 export function renderConfigurationEmail(data: ConfigurationEmailData): string {
+  const t = TRANSLATIONS[data.language ?? "nl"];
+
   const row = (label: string, value: string) => `
     <tr>
       <td style="padding:10px 0;border-bottom:1px solid #e5e0d5;color:#6b6558;font-size:14px;">${label}</td>
@@ -72,8 +164,10 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
   // 2 uur (zomertijd) en in de winter 1 uur (wintertijd) achterliep op de
   // daadwerkelijke Nederlandse tijd (gemeld door Christiaan, 29-8-2026).
   // "Europe/Amsterdam" rekent dat verschil automatisch mee, het hele jaar
-  // door, inclusief de overgang tussen zomer- en wintertijd.
-  const date = new Date().toLocaleString("nl-NL", {
+  // door, inclusief de overgang tussen zomer- en wintertijd. De locale
+  // (t.dateLocale) volgt sindsdien de taal van deze mail — nl-NL of de-DE —
+  // zodat bijvoorbeeld de maandnaam ook in de juiste taal staat.
+  const date = new Date().toLocaleString(t.dateLocale, {
     dateStyle: "long",
     timeStyle: "short",
     timeZone: "Europe/Amsterdam",
@@ -81,7 +175,7 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
 
   return `
   <!DOCTYPE html>
-  <html lang="nl">
+  <html lang="${t.htmlLang}">
     <body style="margin:0;padding:0;background-color:#f4f1ea;font-family:Georgia, 'Times New Roman', serif;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f1ea;padding:32px 0;">
         <tr>
@@ -89,8 +183,8 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
             <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:6px;overflow:hidden;border:1px solid #e5e0d5;">
               <tr>
                 <td style="background-color:#1B2A41;padding:24px 32px;">
-                  <span style="color:#f7f5f0;font-size:18px;font-weight:600;">Nieuwe configuratie huisnummerbordje</span>
-                  <div style="color:#a9b0bd;font-size:13px;margin-top:4px;">Ontvangen op ${date}</div>
+                  <span style="color:#f7f5f0;font-size:18px;font-weight:600;">${t.heading}</span>
+                  <div style="color:#a9b0bd;font-size:13px;margin-top:4px;">${t.receivedOn} ${date}</div>
                 </td>
               </tr>
               ${
@@ -112,78 +206,78 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
               <tr>
                 <td style="padding:24px 32px 0;">
                   <span style="color:#1B2A41;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">
-                    Contactgegevens
+                    ${t.contactHeading}
                   </span>
                 </td>
               </tr>
               <tr>
                 <td style="padding:12px 32px 0;">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                    ${row("Naam", data.contact.name)}
-                    ${row("Adres", data.contact.address)}
-                    ${row("Postcode", data.contact.postalCode)}
-                    ${row("Woonplaats", data.contact.city)}
-                    ${row("E-mail", data.contact.email)}
-                    ${data.contact.phone ? row("Telefoon", data.contact.phone) : ""}
-                    ${row("Aantal", data.contact.quantity)}
+                    ${row(t.labelName, data.contact.name)}
+                    ${row(t.labelAddress, data.contact.address)}
+                    ${row(t.labelPostalCode, data.contact.postalCode)}
+                    ${row(t.labelCity, data.contact.city)}
+                    ${row(t.labelEmail, data.contact.email)}
+                    ${data.contact.phone ? row(t.labelPhone, data.contact.phone) : ""}
+                    ${row(t.labelQuantity, data.contact.quantity)}
                   </table>
                 </td>
               </tr>
               <tr>
                 <td style="padding:24px 32px 0;">
                   <span style="color:#1B2A41;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">
-                    Configuratie
+                    ${t.configHeading}
                   </span>
                 </td>
               </tr>
               <tr>
                 <td style="padding:12px 32px 24px;">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                    ${data.orderNumber ? row("Bestelnummer", data.orderNumber) : ""}
-                    ${row("Vorm", data.shapeName)}
-                    ${row("Afwerking", data.finish === "vlak" ? "Vlak" : "Gewelfd")}
-                    ${row("Kleur", data.colorName)}
-                    ${row("Maat", data.sizeName)}
-                    ${row("Huisnummer", data.customText)}
-                    ${data.extraLine1 ? row("Tekstregel 1", data.extraLine1) : ""}
-                    ${data.extraLine2 ? row("Tekstregel 2", data.extraLine2) : ""}
-                    ${data.orderLabel ? row("Volgorde", data.orderLabel) : ""}
-                    ${row("Lettertype huisnummer", data.numberFontName)}
-                    ${data.line1FontName ? row("Lettertype tekstregel 1", data.line1FontName) : ""}
-                    ${data.line2FontName ? row("Lettertype tekstregel 2", data.line2FontName) : ""}
+                    ${data.orderNumber ? row(t.labelOrderNumber, data.orderNumber) : ""}
+                    ${row(t.labelShape, data.shapeName)}
+                    ${row(t.labelFinish, data.finish === "vlak" ? t.finishFlat : t.finishCurved)}
+                    ${row(t.labelColor, data.colorName)}
+                    ${row(t.labelSize, data.sizeName)}
+                    ${row(t.labelHouseNumber, data.customText)}
+                    ${data.extraLine1 ? row(t.labelExtraLine1, data.extraLine1) : ""}
+                    ${data.extraLine2 ? row(t.labelExtraLine2, data.extraLine2) : ""}
+                    ${data.orderLabel ? row(t.labelOrderLabel, data.orderLabel) : ""}
+                    ${row(t.labelNumberFont, data.numberFontName)}
+                    ${data.line1FontName ? row(t.labelLine1Font, data.line1FontName) : ""}
+                    ${data.line2FontName ? row(t.labelLine2Font, data.line2FontName) : ""}
                     ${row(
-                      "Kader",
+                      t.labelFrame,
                       data.hasFrame
-                        ? `Ja – ${
+                        ? `${t.frameYes} – ${
                             data.priceFrameSurchargeCents != null
                               ? formatPriceCents(data.priceFrameSurchargeCents)
-                              : "prijs op aanvraag"
+                              : t.priceOnRequest
                           }`
-                        : "Nee"
+                        : t.frameNo
                     )}
                     ${
                       data.priceColorSurchargeCents
-                        ? row("Meerprijs kleur", formatPriceCents(data.priceColorSurchargeCents))
+                        ? row(t.labelColorSurcharge, formatPriceCents(data.priceColorSurchargeCents))
                         : ""
                     }
                     ${
                       data.priceExtraCharsCents
                         ? row(
-                            `Meerprijs extra tekens (${data.priceExtraCharsCount}×)`,
+                            `${t.labelExtraCharsSurcharge} (${data.priceExtraCharsCount}×)`,
                             formatPriceCents(data.priceExtraCharsCents)
                           )
                         : ""
                     }
                     ${row(
-                      "Totaalprijs",
+                      t.labelTotalPrice,
                       data.priceTotalCents != null
                         ? formatPriceCents(data.priceTotalCents)
-                        : "Prijs op aanvraag"
+                        : t.totalPriceOnRequest
                     )}
                     ${
                       data.paymentMethodName && data.paidAt
-                        ? row("Betaalmethode", data.paymentMethodName) +
-                          row("Betaald op", data.paidAt)
+                        ? row(t.labelPaymentMethod, data.paymentMethodName) +
+                          row(t.labelPaidAt, data.paidAt)
                         : ""
                     }
                   </table>
@@ -192,7 +286,7 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
               <tr>
                 <td style="padding:16px 32px 28px;">
                   <span style="color:#9a9384;font-size:12px;">
-                    Deze e-mail is automatisch gegenereerd vanuit de configurator.
+                    ${t.footer}
                   </span>
                 </td>
               </tr>

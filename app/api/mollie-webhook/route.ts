@@ -9,6 +9,7 @@ import {
 import { sendOrderEmails } from "@/lib/email/sendOrderEmails";
 import { getLivePricingData } from "@/lib/configuration/livePricing";
 import { getNotificationEmail } from "@/lib/email/settings";
+import { getShapeLanguage } from "@/lib/email/shapeLanguage";
 import { productShapes, productColors } from "@/config/product-options";
 import { buildOrderLabel } from "@/lib/configuration/orderLabel";
 
@@ -130,6 +131,13 @@ export async function POST(request: Request) {
       }
       const adminEmail = await getNotificationEmail("order_notification", fallbackAdminEmail);
 
+      // Taal van de interne meldingsmail ("Configuratie bestelling
+      // webshop") — per vorm ingesteld in de prijstool ("Taal per vorm"),
+      // Nederlands als er nog niets ingesteld is. Alleen deze interne mail
+      // wordt vertaald; de bevestigingsmail aan de klant zelf blijft altijd
+      // Nederlands.
+      const emailLanguage = await getShapeLanguage(shape.id);
+
       const orderLabel = buildOrderLabel(shape, order.number_position);
 
       // Op verzoek van Christiaan (29-8-2026, na de eerste test) laten de
@@ -178,6 +186,7 @@ export async function POST(request: Request) {
           quantity: order.quantity,
         },
         adminEmail,
+        emailLanguage,
         paymentMethodName,
         paidAtFormatted,
       });
