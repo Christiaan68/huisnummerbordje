@@ -125,6 +125,13 @@ export function renderCustomerConfirmationEmail(
                   />
                 </td>
               </tr>
+              <tr>
+                <td style="padding:6px 32px 4px;" align="center">
+                  <span style="display:block;max-width:320px;margin:0 auto;color:#b5ae9d;font-size:10px;font-style:italic;line-height:1.5;">
+                    Elk exemplaar wordt met de hand vervaardigd. Tijdens dit proces verfijnen onze makers uw ontwerp op basis van hun vakkennis en de mogelijkheden van het materiaal en gereedschap. Daarbij zorgen zij voor een nauwkeurige uitlijning van het eindresultaat.
+                  </span>
+                </td>
+              </tr>
               `
                   : ""
               }
