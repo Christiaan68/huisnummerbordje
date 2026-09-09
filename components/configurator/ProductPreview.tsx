@@ -558,20 +558,6 @@ export function ProductPreview() {
           )}
         </div>
 
-        {/* Subtiele disclaimer onder de live preview, op verzoek van
-            Christiaan (9-9-2026): elk bordje wordt met de hand gemaakt, dus
-            het eindresultaat kan op detailniveau licht afwijken van deze
-            (digitale) preview — bewust klein/gedempt gehouden, geen
-            waarschuwing die de aandacht trekt. Zelfde tekst als in de
-            klantbevestigingsmail, zie
-            lib/email/templates/customer-confirmation.ts. */}
-        <p className="mt-3 text-center text-[10px] italic leading-snug text-muted-foreground/70">
-          Elk exemplaar wordt met de hand vervaardigd. Tijdens dit proces
-          verfijnen onze makers uw ontwerp op basis van hun vakkennis en de
-          mogelijkheden van het materiaal en gereedschap. Daarbij zorgen zij
-          voor een nauwkeurige uitlijning van het eindresultaat.
-        </p>
-
         <dl className="mt-5 space-y-1.5 text-xs">
           <div className="flex justify-between border-b border-border/60 pb-1.5">
             <dt className="text-muted-foreground">Vorm</dt>
@@ -651,6 +637,21 @@ export function ProductPreview() {
             {price ? formatPriceCents(price.totalCents) : "—"}
           </span>
         </div>
+
+        {/* Subtiele disclaimer, op verzoek van Christiaan (9-9-2026, later
+            diezelfde dag verplaatst naar hier — helemaal onder de prijs — in
+            plaats van direct onder de live preview): elk bordje wordt met de
+            hand gemaakt, dus het eindresultaat kan op detailniveau licht
+            afwijken van deze (digitale) preview — bewust klein/gedempt
+            gehouden, geen waarschuwing die de aandacht trekt. Zelfde tekst
+            als in de klantbevestigingsmail, zie
+            lib/email/templates/customer-confirmation.ts. */}
+        <p className="mt-3 text-center text-[10px] italic leading-snug text-muted-foreground/70">
+          Elk exemplaar wordt met de hand vervaardigd. Tijdens dit proces
+          verfijnen onze makers uw ontwerp op basis van hun vakkennis en de
+          mogelijkheden van het materiaal en gereedschap. Daarbij zorgen zij
+          voor een nauwkeurige uitlijning van het eindresultaat.
+        </p>
       </div>
     </div>
   );
