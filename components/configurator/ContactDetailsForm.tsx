@@ -97,7 +97,15 @@ export function ContactDetailsForm({
   // postcode + huisnummer samen.
   const [street, setStreet] = useState("");
   const [houseNumber, setHouseNumber] = useState("");
-  const [isLookingUpAddress, setIsLookingUpAddress] = useState(false);
+  // "idle": nog niet (genoeg) ingevuld om iets op te zoeken. "loading":
+  // opzoekactie loopt. "found"/"not-found": laatste opzoekactie is klaar en
+  // heeft wel/niet iets gevonden — expliciet bijgehouden (in plaats van
+  // alleen een simpele aan/uit-spinner) zodat Christiaan/de klant ook ziet
+  // wanneer een opzoekactie NIETS heeft gevonden, in plaats van dat het
+  // stil niets lijkt te doen (feedback n.a.v. test 9-9-2026).
+  const [lookupStatus, setLookupStatus] = useState<
+    "idle" | "loading" | "found" | "not-found"
+  >("idle");
   // Voorkomt een dubbele opzoekactie voor dezelfde postcode+huisnummer (bv.
   // als de klant nog even doortypt/de cursor verplaatst zonder de waarden
   // zelf te wijzigen) en voorkomt dat een trage, oude opzoekactie een
@@ -116,7 +124,10 @@ export function ContactDetailsForm({
     // zo in het samengestelde adres terecht (zie de effect hieronder).
     const houseNumberDigits = houseNumber.match(/^\d+/)?.[0];
 
-    if (!NL_POSTCODE_REGEX.test(postalCodeValue) || !houseNumberDigits) return;
+    if (!NL_POSTCODE_REGEX.test(postalCodeValue) || !houseNumberDigits) {
+      setLookupStatus("idle");
+      return;
+    }
 
     const key = `${normalizedPostcode}|${houseNumberDigits}`;
     if (key === lastLookedUpKey.current) return;
@@ -125,7 +136,7 @@ export function ContactDetailsForm({
     // met typen, niet bij elke toetsaanslag.
     const timeoutId = setTimeout(async () => {
       lastLookedUpKey.current = key;
-      setIsLookingUpAddress(true);
+      setLookupStatus("loading");
       try {
         const res = await fetch(
           `/api/postcode-lookup?postcode=${encodeURIComponent(normalizedPostcode)}&huisnummer=${encodeURIComponent(houseNumberDigits)}`
@@ -140,15 +151,17 @@ export function ContactDetailsForm({
         if (data.found && data.street && data.city) {
           setStreet(data.street);
           setValue("city", data.city, { shouldValidate: false });
+          setLookupStatus("found");
+        } else {
+          // Niet gevonden (onbekende combinatie, opzoekdienst niet
+          // bereikbaar): straat/plaats blijven gewoon zoals ze waren — de
+          // klant typt ze dan zelf in, exact zoals vóór deze wijziging. Wel
+          // duidelijk maken dát er niets gevonden is (zie "not-found"
+          // hieronder in de JSX), in plaats van stil niets te doen.
+          setLookupStatus("not-found");
         }
-        // Niet gevonden (onbekende combinatie, opzoekdienst niet bereikbaar):
-        // straat/plaats blijven gewoon zoals ze waren — de klant typt ze
-        // dan zelf in, exact zoals vóór deze wijziging.
       } catch {
-        // Stil negeren — zie toelichting hierboven, dit mag nooit de rest
-        // van het formulier blokkeren.
-      } finally {
-        setIsLookingUpAddress(false);
+        if (lastLookedUpKey.current === key) setLookupStatus("not-found");
       }
     }, 500);
 
@@ -190,6 +203,14 @@ export function ContactDetailsForm({
           <p className="mt-1 text-sm text-destructive">{errors.name.message}</p>
         )}
       </div>
+
+      {/* Uitleg vooraf, op verzoek van Christiaan (9-9-2026): moet vooraf
+          duidelijk zijn dát postcode + huisnummer de straat/plaats
+          automatisch invullen, niet iets dat de klant per ongeluk moet
+          ontdekken. */}
+      <p className="-mb-1 text-xs text-muted-foreground">
+        Vul je postcode en huisnummer in — straat en plaats vullen we dan automatisch voor je in.
+      </p>
 
       <div className="grid grid-cols-[1fr_auto] gap-4">
         <div>
@@ -233,9 +254,14 @@ export function ContactDetailsForm({
         <div>
           <label htmlFor="street" className="mb-1.5 block text-sm font-medium text-foreground">
             Straat
-            {isLookingUpAddress && (
+            {lookupStatus === "loading" && (
               <span className="ml-2 text-xs font-normal text-muted-foreground">
                 bezig met opzoeken…
+              </span>
+            )}
+            {lookupStatus === "not-found" && (
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                niet gevonden — vul zelf in
               </span>
             )}
           </label>
