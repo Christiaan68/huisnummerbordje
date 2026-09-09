@@ -79,9 +79,7 @@ export function ContactDetailsForm({
   const canSubmit = isFormComplete && agreed;
 
   // Straat + huisnummer opgesplitst in de UI (op verzoek van Christiaan,
-  // 9-9-2026: bij het intypen van de postcode moeten straat + plaats al
-  // zichtbaar worden, zodat alleen het huisnummer nog getypt hoeft te
-  // worden) — maar het onderliggende formulierveld blijft gewoon het
+  // 9-9-2026) — maar het onderliggende formulierveld blijft gewoon het
   // bestaande, enkelvoudige "address" (straat + huisnummer samen), zodat er
   // verder NERGENS anders iets hoeft te veranderen (validatie, opslag,
   // e-mails, beheertool blijven één "adres"-veld verwachten, precies zoals
@@ -89,46 +87,63 @@ export function ContactDetailsForm({
   // niet rechtstreeks een formuliervel — bij elke wijziging van straat of
   // huisnummer wordt het samengestelde geheel via setValue("address", …)
   // in het echte formulierveld gezet (zie de twee useEffects verderop).
+  //
+  // De automatische opzoekactie zelf gaat op basis van postcode ÉN
+  // huisnummer sámen (niet postcode alleen, zoals de eerste versie deze dag
+  // deed) — zie app/api/postcode-lookup/route.ts voor de reden: de eerst
+  // gekozen dienst bleek ongeschikt (betaald + geen postcode-alleen
+  // opzoeken meer, plus een waarschuwing over een onveilige verbinding), en
+  // vrijwel alle huidige postcode-diensten werken sowieso op basis van
+  // postcode + huisnummer samen.
   const [street, setStreet] = useState("");
   const [houseNumber, setHouseNumber] = useState("");
   const [isLookingUpAddress, setIsLookingUpAddress] = useState(false);
-  // Voorkomt een dubbele opzoekactie voor dezelfde postcode (bv. als de
-  // klant nog even doortypt/de cursor verplaatst zonder de postcode zelf te
-  // wijzigen) en voorkomt dat een trage, oude opzoekactie een inmiddels
-  // ingetypte, nieuwere postcode overschrijft (zie de "genegeerd"-check in
-  // de effect hieronder).
-  const lastLookedUpPostcode = useRef<string | null>(null);
+  // Voorkomt een dubbele opzoekactie voor dezelfde postcode+huisnummer (bv.
+  // als de klant nog even doortypt/de cursor verplaatst zonder de waarden
+  // zelf te wijzigen) en voorkomt dat een trage, oude opzoekactie een
+  // inmiddels ingetypte, nieuwere postcode/huisnummer overschrijft (zie de
+  // "genegeerd"-check in de effect hieronder).
+  const lastLookedUpKey = useRef<string | null>(null);
 
   const postalCodeValue = watch("postalCode");
 
   useEffect(() => {
-    const normalized = postalCodeValue.replace(/\s+/g, "").toUpperCase();
-    if (!NL_POSTCODE_REGEX.test(postalCodeValue)) return;
-    if (normalized === lastLookedUpPostcode.current) return;
+    const normalizedPostcode = postalCodeValue.replace(/\s+/g, "").toUpperCase();
+    // Alleen het voorste, numerieke deel van het huisnummer gebruikt voor de
+    // opzoekactie (bv. "12A" -> "12") — een toevoeging verandert de straat/
+    // plaats niet. Het volledige, zelf ingetypte huisnummer (mét eventuele
+    // toevoeging) blijft gewoon staan in het "Huisnummer"-vakje en komt ook
+    // zo in het samengestelde adres terecht (zie de effect hieronder).
+    const houseNumberDigits = houseNumber.match(/^\d+/)?.[0];
+
+    if (!NL_POSTCODE_REGEX.test(postalCodeValue) || !houseNumberDigits) return;
+
+    const key = `${normalizedPostcode}|${houseNumberDigits}`;
+    if (key === lastLookedUpKey.current) return;
 
     // Klein debounce-moment: pas opzoeken nadat de klant heeft opgehouden
     // met typen, niet bij elke toetsaanslag.
     const timeoutId = setTimeout(async () => {
-      lastLookedUpPostcode.current = normalized;
+      lastLookedUpKey.current = key;
       setIsLookingUpAddress(true);
       try {
         const res = await fetch(
-          `/api/postcode-lookup?postcode=${encodeURIComponent(normalized)}`
+          `/api/postcode-lookup?postcode=${encodeURIComponent(normalizedPostcode)}&huisnummer=${encodeURIComponent(houseNumberDigits)}`
         );
         const data: { found: boolean; street?: string; city?: string } =
           await res.json();
-        // Als de postcode intussen alweer gewijzigd is (klant typte door
-        // terwijl dit verzoek liep), dit resultaat negeren — anders zou een
-        // trage, verouderde opzoekactie de inmiddels nieuwere postcode-
-        // gegevens kunnen overschrijven.
-        if (lastLookedUpPostcode.current !== normalized) return;
+        // Als de postcode/het huisnummer intussen alweer gewijzigd is
+        // (klant typte door terwijl dit verzoek liep), dit resultaat
+        // negeren — anders zou een trage, verouderde opzoekactie de
+        // inmiddels nieuwere gegevens kunnen overschrijven.
+        if (lastLookedUpKey.current !== key) return;
         if (data.found && data.street && data.city) {
           setStreet(data.street);
           setValue("city", data.city, { shouldValidate: false });
         }
-        // Niet gevonden (onbekende postcode, opzoekdienst niet ingesteld of
-        // niet bereikbaar): straat/plaats blijven gewoon zoals ze waren —
-        // de klant typt ze dan zelf in, exact zoals vóór deze wijziging.
+        // Niet gevonden (onbekende combinatie, opzoekdienst niet bereikbaar):
+        // straat/plaats blijven gewoon zoals ze waren — de klant typt ze
+        // dan zelf in, exact zoals vóór deze wijziging.
       } catch {
         // Stil negeren — zie toelichting hierboven, dit mag nooit de rest
         // van het formulier blokkeren.
@@ -139,7 +154,7 @@ export function ContactDetailsForm({
 
     return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [postalCodeValue]);
+  }, [postalCodeValue, houseNumber]);
 
   // Straat + huisnummer samenvoegen tot het bestaande "address"-veld, bij
   // elke wijziging van één van beide (zowel handmatig getypt als
@@ -209,10 +224,11 @@ export function ContactDetailsForm({
       </div>
 
       {/* Straat + woonplaats: worden automatisch ingevuld zodra hierboven
-          een geldige postcode is getypt (zie de opzoekactie hogerop in dit
-          bestand) — blijven altijd gewoon zelf aan te passen, voor het
-          (zeldzame) geval dat de opzoekactie niets/iets verkeerds vindt, of
-          wanneer de opzoekdienst niet beschikbaar is. */}
+          zowel een geldige postcode als een huisnummer zijn getypt (zie de
+          opzoekactie hogerop in dit bestand) — blijven altijd gewoon zelf
+          aan te passen, voor het (zeldzame) geval dat de opzoekactie niets/
+          iets verkeerds vindt, of wanneer de opzoekdienst niet beschikbaar
+          is. */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="street" className="mb-1.5 block text-sm font-medium text-foreground">
