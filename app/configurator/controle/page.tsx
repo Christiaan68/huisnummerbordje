@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
@@ -37,6 +37,26 @@ export default function ControlePage() {
   );
   const [message, setMessage] = useState<string | null>(null);
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
+
+  // Vangnet tegen terugnavigeren na het betalen (toegevoegd 9-9-2026, n.a.v.
+  // een vraag van Christiaan aan Mollie's support-chat — Mollie heeft hier
+  // zelf geen instelling voor, het risico zit in onze eigen pagina's). De
+  // `Cache-Control: no-store`-headers in next.config.mjs voorkomen in alle
+  // huidige browsers al dat déze pagina in de bfcache ("terug-cache")
+  // belandt, maar dit is een extra, browser-onafhankelijk vangnet: mocht
+  // deze pagina toch ooit uit een cache worden getoond (event.persisted),
+  // dan forceren we een volledig verse herlaadbeurt — zodat een klant die
+  // na het betalen teruggaat nooit een oude "Doorgaan naar betalen"-knop in
+  // een halfklaar-lijkende toestand te zien krijgt.
+  useEffect(() => {
+    function handlePageShow(event: PageTransitionEvent) {
+      if (event.persisted) {
+        window.location.reload();
+      }
+    }
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
 
   // Voorheen "Wijzigen" (ging helemaal terug naar stap 1, "Vorm") — op
   // verzoek van Christiaan (29-8-2026) vervangen door een gewone "Terug",
