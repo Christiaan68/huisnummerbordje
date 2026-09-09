@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { contactDetailsSchema, type ContactDetails } from "@/lib/validation/contact.schema";
 import { PaymentMethodIcons } from "@/components/layout/PaymentMethodIcons";
 import { cn } from "@/lib/utils";
+
+// Nederlandse postcode: 4 cijfers (niet beginnend met 0) + 2 letters, met of
+// zonder spatie/hoofdletters — zelfde formaat als contactDetailsSchema
+// hierboven accepteert.
+const NL_POSTCODE_REGEX = /^[1-9][0-9]{3}\s?[A-Za-z]{2}$/;
 
 interface ContactDetailsFormProps {
   onSubmit: (data: ContactDetails) => void;
@@ -30,6 +35,7 @@ export function ContactDetailsForm({
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<ContactDetails>({
     resolver: zodResolver(contactDetailsSchema),
@@ -72,6 +78,79 @@ export function ContactDetailsForm({
   const isFormComplete = contactDetailsSchema.safeParse(watchedValues).success;
   const canSubmit = isFormComplete && agreed;
 
+  // Straat + huisnummer opgesplitst in de UI (op verzoek van Christiaan,
+  // 9-9-2026: bij het intypen van de postcode moeten straat + plaats al
+  // zichtbaar worden, zodat alleen het huisnummer nog getypt hoeft te
+  // worden) — maar het onderliggende formulierveld blijft gewoon het
+  // bestaande, enkelvoudige "address" (straat + huisnummer samen), zodat er
+  // verder NERGENS anders iets hoeft te veranderen (validatie, opslag,
+  // e-mails, beheertool blijven één "adres"-veld verwachten, precies zoals
+  // vóór deze wijziging). "street" hieronder is dus puur lokale UI-state,
+  // niet rechtstreeks een formuliervel — bij elke wijziging van straat of
+  // huisnummer wordt het samengestelde geheel via setValue("address", …)
+  // in het echte formulierveld gezet (zie de twee useEffects verderop).
+  const [street, setStreet] = useState("");
+  const [houseNumber, setHouseNumber] = useState("");
+  const [isLookingUpAddress, setIsLookingUpAddress] = useState(false);
+  // Voorkomt een dubbele opzoekactie voor dezelfde postcode (bv. als de
+  // klant nog even doortypt/de cursor verplaatst zonder de postcode zelf te
+  // wijzigen) en voorkomt dat een trage, oude opzoekactie een inmiddels
+  // ingetypte, nieuwere postcode overschrijft (zie de "genegeerd"-check in
+  // de effect hieronder).
+  const lastLookedUpPostcode = useRef<string | null>(null);
+
+  const postalCodeValue = watch("postalCode");
+
+  useEffect(() => {
+    const normalized = postalCodeValue.replace(/\s+/g, "").toUpperCase();
+    if (!NL_POSTCODE_REGEX.test(postalCodeValue)) return;
+    if (normalized === lastLookedUpPostcode.current) return;
+
+    // Klein debounce-moment: pas opzoeken nadat de klant heeft opgehouden
+    // met typen, niet bij elke toetsaanslag.
+    const timeoutId = setTimeout(async () => {
+      lastLookedUpPostcode.current = normalized;
+      setIsLookingUpAddress(true);
+      try {
+        const res = await fetch(
+          `/api/postcode-lookup?postcode=${encodeURIComponent(normalized)}`
+        );
+        const data: { found: boolean; street?: string; city?: string } =
+          await res.json();
+        // Als de postcode intussen alweer gewijzigd is (klant typte door
+        // terwijl dit verzoek liep), dit resultaat negeren — anders zou een
+        // trage, verouderde opzoekactie de inmiddels nieuwere postcode-
+        // gegevens kunnen overschrijven.
+        if (lastLookedUpPostcode.current !== normalized) return;
+        if (data.found && data.street && data.city) {
+          setStreet(data.street);
+          setValue("city", data.city, { shouldValidate: false });
+        }
+        // Niet gevonden (onbekende postcode, opzoekdienst niet ingesteld of
+        // niet bereikbaar): straat/plaats blijven gewoon zoals ze waren —
+        // de klant typt ze dan zelf in, exact zoals vóór deze wijziging.
+      } catch {
+        // Stil negeren — zie toelichting hierboven, dit mag nooit de rest
+        // van het formulier blokkeren.
+      } finally {
+        setIsLookingUpAddress(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postalCodeValue]);
+
+  // Straat + huisnummer samenvoegen tot het bestaande "address"-veld, bij
+  // elke wijziging van één van beide (zowel handmatig getypt als
+  // automatisch ingevuld via de opzoekactie hierboven).
+  useEffect(() => {
+    setValue("address", `${street} ${houseNumber}`.trim(), {
+      shouldValidate: false,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [street, houseNumber]);
+
   function handleValidSubmit(data: ContactDetails) {
     if (!agreed) {
       setAgreedError(true);
@@ -97,22 +176,7 @@ export function ContactDetailsForm({
         )}
       </div>
 
-      <div>
-        <label htmlFor="address" className="mb-1.5 block text-sm font-medium text-foreground">
-          Adres <span className="text-muted-foreground">(straat + huisnummer)</span>
-        </label>
-        <input
-          id="address"
-          type="text"
-          {...register("address")}
-          className={fieldClass(!!errors.address)}
-        />
-        {errors.address && (
-          <p className="mt-1 text-sm text-destructive">{errors.address.message}</p>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-[1fr_auto] gap-4">
         <div>
           <label htmlFor="postalCode" className="mb-1.5 block text-sm font-medium text-foreground">
             Postcode
@@ -126,6 +190,48 @@ export function ContactDetailsForm({
           />
           {errors.postalCode && (
             <p className="mt-1 text-sm text-destructive">{errors.postalCode.message}</p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="houseNumber" className="mb-1.5 block text-sm font-medium text-foreground">
+            Huisnummer
+          </label>
+          <input
+            id="houseNumber"
+            type="text"
+            placeholder="12A"
+            value={houseNumber}
+            onChange={(event) => setHouseNumber(event.target.value)}
+            className={cn(fieldClass(!!errors.address), "w-24")}
+          />
+        </div>
+      </div>
+
+      {/* Straat + woonplaats: worden automatisch ingevuld zodra hierboven
+          een geldige postcode is getypt (zie de opzoekactie hogerop in dit
+          bestand) — blijven altijd gewoon zelf aan te passen, voor het
+          (zeldzame) geval dat de opzoekactie niets/iets verkeerds vindt, of
+          wanneer de opzoekdienst niet beschikbaar is. */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="street" className="mb-1.5 block text-sm font-medium text-foreground">
+            Straat
+            {isLookingUpAddress && (
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                bezig met opzoeken…
+              </span>
+            )}
+          </label>
+          <input
+            id="street"
+            type="text"
+            value={street}
+            onChange={(event) => setStreet(event.target.value)}
+            className={fieldClass(!!errors.address)}
+          />
+          {errors.address && (
+            <p className="mt-1 text-sm text-destructive">{errors.address.message}</p>
           )}
         </div>
 
