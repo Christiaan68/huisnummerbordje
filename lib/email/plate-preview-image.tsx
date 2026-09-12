@@ -4,8 +4,6 @@ import { loadGoogleFont } from "@/lib/email/google-fonts";
 import {
   DEFAULT_LINE_GAP_RATIO,
   EARS_AUTOFIT_FONT_KEY,
-  EARS_NUMBER_FONT_STACK,
-  EARS_NUMBER_FONT_WEIGHT,
   FRAME_STROKE_WIDTH_RATIO,
   LINE_GAP_RATIO_BY_FONT,
   getContrastTextColor,
@@ -252,13 +250,18 @@ export async function renderPlatePreviewPng(
   // van de renderer, de rest van de afbeelding blijft gewoon kloppen — zie
   // de toelichting bovenaan dit bestand.
   //
-  // Bij shapeKind "ears" (9-9-2026) is er bewust GEEN door de klant
-  // kiesbaar lettertype (vaste typografie, zie EARS_NUMBER_FONT_STACK in
-  // plate-visual.ts) — dus hier expliciet GEEN Google Font ophalen voor het
-  // huisnummer (geen onnodige netwerkcall; die 3 vormen hebben ook geen
-  // tekstregels, dus hasLine1/hasLine2 zijn voor hen altijd false).
+  // Bij shapeKind "ears" is er bewust GEEN door de klant kiesbaar
+  // lettertype (vaste typografie) — maar dat vaste lettertype IS zelf wel
+  // een Google Font (Bodoni Moda, zie EARS_NUMBER_FONT_STACK in
+  // plate-visual.ts en FONT_CONFIG_BY_ID.bodoni hierboven), dus die moet
+  // hier alsnog opgehaald worden (12-9-2026: hiervoor gebeurde dat expres
+  // niet, met als onbedoeld gevolg dat de e-mailafbeelding terugviel op
+  // Satori's eigen standaardlettertype i.p.v. Bodoni Moda). Die 3 vormen
+  // hebben zelf geen tekstregels, dus hasLine1/hasLine2 zijn voor hen
+  // altijd false — vandaar de aparte `isEars`-tak hieronder i.p.v. gewoon
+  // numberFontId toe te voegen aan de normale lijst.
   const uniqueFontIds = isEars
-    ? []
+    ? ["bodoni"]
     : Array.from(
         new Set(
           [numberFontId, hasLine1 ? line1FontId : null, hasLine2 ? line2FontId : null].filter(
@@ -325,17 +328,20 @@ export async function renderPlatePreviewPng(
     // ProductPreview.tsx.
     gapRatio: number;
   };
-  // Bij shapeKind "ears" (9-9-2026) altijd de vaste typografie
-  // (EARS_NUMBER_FONT_STACK/EARS_NUMBER_FONT_WEIGHT, plate-visual.ts) i.p.v.
-  // een via Google Fonts opgehaald, door de klant gekozen lettertype — er is
-  // hierboven ook bewust geen font voor opgehaald (uniqueFontIds is dan
-  // leeg), dus resolveFont(numberFontId) zou hier toch niets vinden.
+  // Bij shapeKind "ears" altijd de vaste typografie (Bodoni Moda, zie
+  // EARS_NUMBER_FONT_STACK in plate-visual.ts) i.p.v. een door de klant
+  // gekozen lettertype — maar WEL via resolveFont("bodoni") opgehaald (zie
+  // uniqueFontIds hierboven), want Satori kan niet overweg met de
+  // CSS-custom-property-syntax van EARS_NUMBER_FONT_STACK
+  // ("var(--font-bodoni), Georgia, serif") — dat werkt alleen in de
+  // browser (ProductPreview.tsx). EARS_NUMBER_FONT_WEIGHT (700) komt
+  // toevallig overeen met FONT_CONFIG_BY_ID.bodoni.weight, maar we nemen
+  // hier bewust het gewicht dat ook daadwerkelijk is opgehaald.
   const numberLine: Line = isEars
     ? {
         text: numberText,
         sizePx: numberSizePx,
-        fontFamily: EARS_NUMBER_FONT_STACK,
-        fontWeight: EARS_NUMBER_FONT_WEIGHT as SatoriFontWeight,
+        ...resolveFont("bodoni"),
         gapRatio: gapRatioFor(EARS_AUTOFIT_FONT_KEY),
       }
     : {

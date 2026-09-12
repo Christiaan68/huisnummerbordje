@@ -436,7 +436,25 @@ export function ProductPreview() {
               // cirkeltje + streepje) als de bestaande rechthoekige/ovale
               // vormen; "horizontaal"/"verticaal" krijgt een kaal,
               // schroefloos ophangoog (op de foto's zijn dat lege gaten).
+              //
+              // Achtergrondkaart (12-9-2026, feedback Christiaan): bij
+              // "horizontaal"/"verticaal" laat de puntige kadervorm de
+              // hoeken van de canvas onbedekt (transparant) — zonder deze
+              // rechthoekige achtergrond val je daar zo tegen de (donkere)
+              // paginaeachtergrond, waardoor je nauwelijks ziet waar de
+              // preview begint, zeker bij een zwart kader. Vaste lichte
+              // kleur (zelfde als kleuroptie "Wit", zie productColors) i.p.v.
+              // een thema-afhankelijke kleur, want het thema van de site is
+              // zelf donker.
               <>
+                <rect
+                  x={0}
+                  y={0}
+                  width={plateWidth}
+                  height={plateHeight}
+                  rx={plateWidth * 0.04}
+                  fill="#F7F5F0"
+                />
                 <path d={earsGeometry.framePath} fillRule="evenodd" fill={earFill} />
                 <rect
                   x={earsGeometry.innerRect.xMm}

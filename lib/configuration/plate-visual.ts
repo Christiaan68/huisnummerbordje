@@ -312,12 +312,11 @@ export const LINE_GAP_RATIO_BY_FONT: Record<string, number> = {
   times: 0.1,
   "schwitserland-schmal": 0.06,
   "commercial-script": 0.22,
-  // "ears-fixed-serif" (toegevoegd 9-9-2026): geen door de klant kiesbaar
-  // lettertype, zie EARS_AUTOFIT_FONT_KEY verderop in dit bestand — zelfde
-  // waarde als "times" (ook een compacte schreefletter, Tinos), want
-  // EARS_NUMBER_FONT_STACK (Georgia/Times New Roman) is vergelijkbaar
-  // compact.
-  "ears-fixed-serif": 0.1,
+  // "ears-fixed-serif": geen door de klant kiesbaar lettertype, zie
+  // EARS_AUTOFIT_FONT_KEY verderop in dit bestand — sinds 12-9-2026 zelfde
+  // waarde als "bodoni" hierboven, want EARS_NUMBER_FONT_STACK IS nu het
+  // Bodoni-lettertype (was eerder op "times"/Georgia gebaseerd).
+  "ears-fixed-serif": 0.16,
 };
 export const DEFAULT_LINE_GAP_RATIO = 0.08;
 
@@ -658,14 +657,16 @@ export function getEarsGeometry(
 
 // Vaste typografie voor de 3 "oren"-vormen — er is voor deze vormen bewust
 // GEEN lettertypekeuze voor de klant (ProductShape.hasFontChoice: false,
-// zie types/product.ts/config/product-options.ts), dus in tegenstelling tot
-// de 4 oorspronkelijke vormen wordt hier NIET een van de 6 custom Google
-// Fonts (fette-fraktur/bodoni/colonel/times/schwitserland-schmal/
-// commercial-script uit productFonts) gebruikt — die horen bij de
-// klant-kiesbare lettertypes van de andere vormen. In plaats daarvan een
-// simpele, stevige systeem-schreefletterstack, passend bij de sobere
-// jaren-30-uitstraling van deze vormen.
-export const EARS_NUMBER_FONT_STACK = "Georgia, 'Times New Roman', serif";
+// zie types/product.ts/config/product-options.ts). Op verzoek van
+// Christiaan (12-9-2026) is dit vaste lettertype hetzelfde als het al
+// bestaande, door de klant kiesbare "Bodoni"-lettertype van de 4
+// oorspronkelijke vormen (Bodoni Moda, zie de "bodoni"-regel in
+// productFonts/config/product-options.ts en de font-declaratie in
+// app/layout.tsx) — dus GEEN apart systeem-lettertype meer. `var(--font-
+// bodoni)` is dezelfde CSS-variabele die productFonts voor "bodoni"
+// gebruikt en staat al globaal beschikbaar (app/layout.tsx); Georgia/serif
+// blijven als terugval voor het geval die variabele onverhoopt ontbreekt.
+export const EARS_NUMBER_FONT_STACK = "var(--font-bodoni), Georgia, serif";
 export const EARS_NUMBER_FONT_WEIGHT = 700;
 
 // Synthetische "lettertype-id" — bestaat niet in productFonts (dat zou een
@@ -674,6 +675,6 @@ export const EARS_NUMBER_FONT_WEIGHT = 700;
 // afgestemde teken-/regelverhouding te laten gebruiken in plaats van de
 // algemene standaardwaarde. Zie CHAR_WIDTH_RATIO_BY_FONT in text-fit.ts
 // (teken-breedteverhouding) en LINE_GAP_RATIO_BY_FONT hieronder
-// (regelafstand) voor de bijbehorende, op "times" (ook een compacte
-// schreefletter, Tinos) gebaseerde inschatting.
+// (regelafstand) — sinds 12-9-2026 dezelfde waarden als "bodoni" zelf (zie
+// daar), want EARS_NUMBER_FONT_STACK IS nu het Bodoni-lettertype.
 export const EARS_AUTOFIT_FONT_KEY = "ears-fixed-serif";

@@ -58,12 +58,13 @@ const CHAR_WIDTH_RATIO_BY_FONT: Record<string, number> = {
   times: 0.58, // Tinos (Times-vervanger) — van oudsher een compacte, smalle schreefletter
   "schwitserland-schmal": 0.52, // Roboto Condensed — smal/condensed lettertype
   "commercial-script": 0.55, // Pinyon Script (gewicht 400) — verbonden schrijfletter, gemiddelde tekenbreedte
-  // "ears-fixed-serif" (toegevoegd 9-9-2026): geen door de klant kiesbaar
-  // lettertype — synthetische id voor de vaste typografie van de 3
-  // "oren"-vormen (EARS_NUMBER_FONT_STACK/EARS_AUTOFIT_FONT_KEY in
-  // plate-visual.ts, Georgia/Times New Roman, gewicht 700). Vergelijkbare
-  // verhouding als "times" hierboven (ook een compacte schreefletter).
-  "ears-fixed-serif": 0.6,
+  // "ears-fixed-serif": geen door de klant kiesbaar lettertype —
+  // synthetische id voor de vaste typografie van de 3 "oren"-vormen
+  // (EARS_NUMBER_FONT_STACK/EARS_AUTOFIT_FONT_KEY in plate-visual.ts).
+  // Sinds 12-9-2026 zelfde waarde als "bodoni" hierboven, want
+  // EARS_NUMBER_FONT_STACK IS nu het Bodoni-lettertype (was eerder op
+  // "times"/Georgia gebaseerd).
+  "ears-fixed-serif": 0.66,
 };
 const DEFAULT_CHAR_WIDTH_RATIO = 0.62;
 // De regelhoogte in de echte preview is exact gelijk aan de fontgrootte
