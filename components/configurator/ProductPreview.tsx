@@ -20,6 +20,7 @@ import {
   EARS_AUTOFIT_FONT_KEY,
   EARS_NUMBER_FONT_STACK,
   EARS_NUMBER_FONT_WEIGHT,
+  EARS_TEXT_MARGIN_RATIO,
   FONT_WEIGHT_BY_ID,
   FRAME_STROKE_WIDTH_RATIO,
   LINE_GAP_RATIO_BY_FONT,
@@ -146,6 +147,16 @@ export function ProductPreview() {
     ? plateColor?.hex ?? PLACEHOLDER_FILL
     : color?.hex ?? PLACEHOLDER_FILL;
   const earFill = earColor?.hex ?? PLACEHOLDER_FILL;
+  // Dun zwart lijntje om het kader/de oren heen wanneer de gekozen
+  // oren-kleur (bijna) wit is (12-9-2026, verzoek Christiaan): zonder dat
+  // lijntje vallen de oren tegen de lichte "mat" achter de preview (zie
+  // hieronder) helemaal weg. `getContrastTextColor` (hierboven al gebruikt
+  // voor de tekstkleur) geeft toevallig precies deze luminantie-toets: die
+  // levert een DONKERE tekstkleur op zodra de achtergrond licht genoeg is
+  // — dat hergebruiken we hier dus als "is deze oren-kleur licht?"-check,
+  // i.p.v. een aparte lijst met kleur-id's bij te houden die bij een
+  // toekomstige nieuwe (bijna) witte kleur weer vergeten zou kunnen worden.
+  const earNeedsOutline = earsShape && getContrastTextColor(earFill) === "#1a1a1a";
   const textColor = earsShape
     ? plateColor
       ? getContrastTextColor(plateColor.hex)
@@ -240,6 +251,11 @@ export function ProductPreview() {
       line2Chars: hasLine2 ? line2Text.length : null,
       minMarginXMm,
       minMarginYMm,
+      // Kleinere basismarge voor de 3 "oren"-vormen, zie
+      // EARS_TEXT_MARGIN_RATIO (plate-visual.ts) — bij de 4 oorspronkelijke
+      // vormen ongewijzigd (blijft de standaard MARGIN_RATIO in
+      // text-fit.ts).
+      ...(earsShape ? { baseMarginRatio: EARS_TEXT_MARGIN_RATIO } : {}),
       numberFontId: autoFitNumberFontId,
       line1FontId: line1Font?.id,
       line2FontId: line2Font?.id,
@@ -481,7 +497,15 @@ export function ProductPreview() {
                   rx={plateWidth * 0.04}
                   fill="#F7F5F0"
                 />
-                <path d={earsGeometry.framePath} fillRule="evenodd" fill={earFill} />
+                <path
+                  d={earsGeometry.framePath}
+                  fillRule="evenodd"
+                  fill={earFill}
+                  stroke={earNeedsOutline ? "#1a1a1a" : "none"}
+                  strokeWidth={
+                    earNeedsOutline ? Math.min(plateWidth, plateHeight) * 0.008 : 0
+                  }
+                />
                 <rect
                   x={earsGeometry.innerRect.xMm}
                   y={earsGeometry.innerRect.yMm}

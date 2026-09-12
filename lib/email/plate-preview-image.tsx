@@ -4,6 +4,7 @@ import { loadGoogleFont } from "@/lib/email/google-fonts";
 import {
   DEFAULT_LINE_GAP_RATIO,
   EARS_AUTOFIT_FONT_KEY,
+  EARS_TEXT_MARGIN_RATIO,
   FRAME_STROKE_WIDTH_RATIO,
   LINE_GAP_RATIO_BY_FONT,
   getContrastTextColor,
@@ -161,6 +162,10 @@ export async function renderPlatePreviewPng(
   // aanroeper de 2 losse kleuren nog niet doorgeeft.
   const plateFillHex = isEars ? plateColorHex ?? colorHex : colorHex;
   const earFillHex = isEars ? earColorHex ?? colorHex : colorHex;
+  // Dun zwart lijntje om het kader/de oren heen bij een (bijna) witte
+  // oren-kleur — zelfde reden en aanpak als in ProductPreview.tsx (zonder
+  // dat lijntje vallen de oren tegen CANVAS_BG, ook een lichte kleur, weg).
+  const earNeedsOutline = isEars && getContrastTextColor(earFillHex) === "#1a1a1a";
 
   const ratio = widthMm / heightMm;
   const plateWidthPx = PLATE_PX_WIDTH;
@@ -236,6 +241,9 @@ export async function renderPlatePreviewPng(
     line2Chars: hasLine2 ? (line2Text as string).length : null,
     minMarginXMm,
     minMarginYMm,
+    // Kleinere basismarge voor de 3 "oren"-vormen, zie EARS_TEXT_MARGIN_RATIO
+    // (plate-visual.ts) en dezelfde toelichting in ProductPreview.tsx.
+    ...(isEars ? { baseMarginRatio: EARS_TEXT_MARGIN_RATIO } : {}),
     numberFontId: autoFitNumberFontId,
     line1FontId,
     line2FontId,
@@ -438,7 +446,13 @@ export async function renderPlatePreviewPng(
               }}
               viewBox={`0 0 ${widthMm} ${heightMm}`}
             >
-              <path d={earsGeometry.framePath} fillRule="evenodd" fill={earFillHex} />
+              <path
+                d={earsGeometry.framePath}
+                fillRule="evenodd"
+                fill={earFillHex}
+                stroke={earNeedsOutline ? "#1a1a1a" : "none"}
+                strokeWidth={earNeedsOutline ? Math.min(widthMm, heightMm) * 0.008 : 0}
+              />
               <rect
                 x={earsGeometry.innerRect.xMm}
                 y={earsGeometry.innerRect.yMm}

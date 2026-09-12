@@ -13,6 +13,15 @@ export interface AutoFitInput {
   // Standaard 0 (geen extra marge, dus gelijk aan het oude gedrag).
   minMarginXMm?: number;
   minMarginYMm?: number;
+  // Overschrijft de standaard basismarge-verhouding (MARGIN_RATIO
+  // hieronder, normaal 0.09) — toegevoegd 12-9-2026 voor de 3 "oren"-
+  // vormen: hun middenvlak is al smaller dan het volledige bordje (het
+  // kader/de oren zitten eromheen, zie getEarsGeometry), dus daar mag de
+  // (kleinere) basismarge zelf ook een stuk kleiner, om het huisnummer
+  // groter te kunnen laten uitvallen — zie EARS_TEXT_MARGIN_RATIO in
+  // plate-visual.ts. Bij de 4 oorspronkelijke vormen (die dit veld niet
+  // meegeven) blijft MARGIN_RATIO gewoon van toepassing, exact als voorheen.
+  baseMarginRatio?: number;
   // Welk lettertype er voor elk tekstveld apart gebruikt wordt — bepaalt
   // hoe breed een karakter gemiddeld is (zie CHAR_WIDTH_RATIO_BY_FONT
   // hieronder) en hoeveel regelafstand dat lettertype nodig heeft (zie
@@ -112,6 +121,7 @@ export function computeAutoFit(input: AutoFitInput): AutoFitResult {
     line2Chars,
     minMarginXMm = 0,
     minMarginYMm = 0,
+    baseMarginRatio = MARGIN_RATIO,
     numberFontId,
     line1FontId,
     line2FontId,
@@ -143,7 +153,7 @@ export function computeAutoFit(input: AutoFitInput): AutoFitResult {
 
   const baseMarginMm = Math.max(
     MIN_MARGIN_MM,
-    Math.min(widthMm, heightMm) * MARGIN_RATIO
+    Math.min(widthMm, heightMm) * baseMarginRatio
   );
   // De marge mag nooit kleiner zijn dan wat nodig is om de schroefgaatjes
   // vrij te houden (minMarginXMm/minMarginYMm) — zie ProductPreview.tsx

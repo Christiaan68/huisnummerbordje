@@ -702,3 +702,13 @@ export const EARS_NUMBER_FONT_WEIGHT = 700;
 // (regelafstand) — sinds 12-9-2026 dezelfde waarden als "bodoni" zelf (zie
 // daar), want EARS_NUMBER_FONT_STACK IS nu het Bodoni-lettertype.
 export const EARS_AUTOFIT_FONT_KEY = "ears-fixed-serif";
+
+// Kleinere basismarge-verhouding voor computeAutoFit (text-fit.ts) bij de 3
+// "oren"-vormen — op verzoek van Christiaan (12-9-2026: "cijfers en letters
+// mogen nog groter, maar niet de rand van het vlak raken"). De standaard
+// MARGIN_RATIO (0.09) in text-fit.ts is afgestemd op de 4 oorspronkelijke
+// vormen, waar de tekst in het VOLLEDIGE bordje staat; bij de "oren"-vormen
+// staat de tekst al in het kleinere middenvlak (binnen het kader, zie
+// getEarsGeometry) — daar mag dus een kleinere marge, en dat maakt het
+// huisnummer navenant groter, zonder de rand van het middenvlak te raken.
+export const EARS_TEXT_MARGIN_RATIO = 0.04;
