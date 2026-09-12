@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { useFontPreview } from "@/lib/configuration/FontPreviewContext";
 import { usePricingData } from "@/lib/configuration/PricingDataContext";
@@ -43,6 +43,35 @@ export function ProductPreview() {
   const pricingData = usePricingData();
   const plateRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
+  // Werkelijk gerenderde breedte (in px) van het bordje-vlak zelf
+  // (plateRef) — 13-9-2026, bugfix. De letterschaal hieronder (pxPerMm)
+  // ging er lange tijd van uit dat het vlak altijd precies PREVIEW_WIDTH_PX
+  // (260px) breed is, maar plateRef heeft geen vaste breedte: op een smaller
+  // scherm/layout is het in werkelijkheid smaller. Met de vaste aanname werd
+  // de tekst dan te groot berekend — met name bij één cijfer (bv. "1"), waar
+  // het lettertype toch al op de maximale hoogte uitkomt — waardoor de tekst
+  // over de rand van het (flex-)vlak heen liep. Een element met
+  // `aspectRatio` mag van CSS zelf hoger worden dan de verhouding voorschrijft
+  // zodra de inhoud niet past (min-height:auto), dus het HELE vlak werd
+  // daardoor zichtbaar niet-vierkant/niet in de juiste verhouding — ook al is
+  // de onderliggende mm-geometrie (getEarsGeometry/toSquareRect) wél exact
+  // vierkant. Met de écht gemeten breedte hieronder klopt de letterschaal
+  // altijd met het werkelijke vlak, dus loopt de tekst nooit meer over en
+  // blijft de verhouding intact.
+  const [measuredPlateWidthPx, setMeasuredPlateWidthPx] = useState(PREVIEW_WIDTH_PX);
+
+  useLayoutEffect(() => {
+    const plate = plateRef.current;
+    if (!plate) return;
+    const updateWidth = () => {
+      const width = plate.getBoundingClientRect().width;
+      if (width > 0) setMeasuredPlateWidthPx(width);
+    };
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(plate);
+    return () => observer.disconnect();
+  }, []);
 
   // Zolang iemand met de muis boven een lettertype-optie in de dropdown
   // hangt (zie TextInput.tsx/FontPreviewContext.tsx), toont de preview
@@ -260,10 +289,12 @@ export function ProductPreview() {
       line1FontId: line1Font?.id,
       line2FontId: line2Font?.id,
     });
-    // pxPerMm blijft gebaseerd op de volledige plaatbreedte (plateWidth) —
-    // dat is de schaal van de viewBox/canvas hieronder, waar zowel het
-    // middenvlak als de oren in dezelfde mm-coördinaten getekend worden.
-    const pxPerMm = PREVIEW_WIDTH_PX / plateWidth;
+    // pxPerMm zet mm-coördinaten (dezelfde schaal als het middenvlak/de
+    // oren, plateWidth) om naar px — op basis van de WERKELIJK gerenderde
+    // breedte van het vlak (measuredPlateWidthPx, zie hierboven), niet een
+    // vaste aanname. Zo blijft de tekst altijd precies binnen het vlak
+    // passen, ongeacht de daadwerkelijke schermbreedte.
+    const pxPerMm = measuredPlateWidthPx / plateWidth;
     numberFontSize = fit.numberSizeMm * pxPerMm;
     line1FontSize = fit.line1SizeMm ? fit.line1SizeMm * pxPerMm : line1FontSize;
     line2FontSize = fit.line2SizeMm ? fit.line2SizeMm * pxPerMm : line2FontSize;
