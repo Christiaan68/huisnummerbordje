@@ -381,7 +381,9 @@ export function getEarsStyleForShapeId(
 // buitenmaat van het complete bordje MET oren, niet van het middenvlak
 // alleen). Bij "vier-hoeken" wordt deze waarde niet gebruikt (geen
 // uitstekende oren daar, zie getEarsGeometry).
-const EARS_PROTRUSION_RATIO = 0.22;
+// Verkleind (12-9-2026, feedback Christiaan: middenvlak te klein/te veel
+// marge t.o.v. de aangeleverde productfoto's) van 0.22 naar 0.19.
+const EARS_PROTRUSION_RATIO = 0.19;
 
 // Breedte van een oor waar het de hoofdrechthoek raakt ("basis"), als
 // fractie van de DWARSAFMETING (bij horizontale oren: de hoogte van het
@@ -410,7 +412,9 @@ const EARS_MAIN_RECT_CORNER_RADIUS_RATIO = 0.04;
 // vergelijking met de aangeleverde productfoto's: daarop loopt de
 // oren-kleur als een doorlopend kader om de hele plaat (niet alleen als
 // losse oor-tabjes), en groeien de oren daar organisch uit voort.
-const EARS_FRAME_THICKNESS_RATIO = 0.07;
+// Verkleind (12-9-2026, zelfde feedback) van 0.07 naar 0.025 — op de foto's
+// is dit kader een dunne rand, geen brede lijst.
+const EARS_FRAME_THICKNESS_RATIO = 0.025;
 
 /**
  * Bouwt een gesloten SVG-(sub)pad voor een rechthoek met afgeronde hoeken —
