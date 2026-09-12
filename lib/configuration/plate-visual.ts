@@ -447,6 +447,32 @@ function roundedRectPath(
   ].join(" ");
 }
 
+/**
+ * Dwingt een rechthoek af tot een vierkant, gecentreerd binnen dezelfde
+ * ruimte — op verzoek van Christiaan (12-9-2026): "het vlak waar de
+ * cijfers/letters in staan, moet ten alle tijden vierkant blijven" bij de
+ * 3 "oren"-vormen. "horizontaal"/"verticaal" hebben een niet-vierkante
+ * bordjesmaat (130×100 resp. 100×130mm), dus zonder deze stap zou het
+ * middenvlak daar een niet-vierkante rechthoek worden — de kortste zijde
+ * (breedte of hoogte) bepaalt de zijde van het vierkant, en de overgebleven
+ * ruimte op de andere as komt aan weerszijden gelijk terecht bij het kader
+ * (earColor), niet bij het middenvlak (plateColor). Bij "vier-hoeken" is
+ * de rechthoek altijd al vierkant (vaste maat 160×160mm), dus daar heeft
+ * dit geen effect.
+ */
+function toSquareRect<T extends { xMm: number; yMm: number; widthMm: number; heightMm: number }>(
+  rect: T
+): T {
+  const side = Math.min(rect.widthMm, rect.heightMm);
+  return {
+    ...rect,
+    xMm: rect.xMm + (rect.widthMm - side) / 2,
+    yMm: rect.yMm + (rect.heightMm - side) / 2,
+    widthMm: side,
+    heightMm: side,
+  };
+}
+
 export interface EarHoleGeometry {
   xMm: number;
   yMm: number;
@@ -463,7 +489,11 @@ export interface EarHoleGeometry {
 }
 
 export interface EarsGeometry {
-  /** Het zichtbare middenvlak (plateColor) — een rechthoek met licht afgeronde hoeken. */
+  /**
+   * Het zichtbare middenvlak (plateColor) — een VIERKANT (zie
+   * toSquareRect) met licht afgeronde hoeken, altijd gecentreerd binnen
+   * de eigenlijke (mogelijk niet-vierkante) beschikbare ruimte.
+   */
   innerRect: {
     xMm: number;
     yMm: number;
@@ -554,13 +584,15 @@ export function getEarsGeometry(
     // outerRadiusMm/frameMm (die twee zijn hier te klein resp. te groot om
     // er een prettige afronding uit af te leiden).
     const innerRadiusMm = Math.min(widthMm, heightMm) * 0.07;
-    const innerRect = {
+    // toSquareRect: bij "vier-hoeken" (altijd 160×160mm) heeft dit geen
+    // effect (al vierkant) — zie de toelichting bij toSquareRect hierboven.
+    const innerRect = toSquareRect({
       xMm: frameMm,
       yMm: frameMm,
       widthMm: widthMm - 2 * frameMm,
       heightMm: heightMm - 2 * frameMm,
       radiusMm: innerRadiusMm,
-    };
+    });
     return {
       innerRect,
       framePath: [
@@ -589,13 +621,16 @@ export function getEarsGeometry(
     const shoulderRightMm = widthMm - protrusionMm;
     const midY = heightMm / 2;
 
-    const innerRect = {
+    // toSquareRect: 130×100mm is geen vierkante bordjesmaat, dus zonder dit
+    // zou het middenvlak een niet-vierkante rechthoek worden — zie de
+    // toelichting bij toSquareRect hierboven.
+    const innerRect = toSquareRect({
       xMm: shoulderLeftMm + frameMm,
       yMm: frameMm,
       widthMm: shoulderRightMm - shoulderLeftMm - 2 * frameMm,
       heightMm: heightMm - 2 * frameMm,
       radiusMm: innerRadiusMm,
-    };
+    });
 
     const outerPath = [
       `M ${shoulderLeftMm} 0`,
@@ -637,13 +672,16 @@ export function getEarsGeometry(
   const shoulderBottomMm = heightMm - protrusionMm;
   const midX = widthMm / 2;
 
-  const innerRect = {
+  // toSquareRect: 100×130mm is geen vierkante bordjesmaat, dus zonder dit
+  // zou het middenvlak een niet-vierkante rechthoek worden — zie de
+  // toelichting bij toSquareRect hierboven.
+  const innerRect = toSquareRect({
     xMm: frameMm,
     yMm: shoulderTopMm + frameMm,
     widthMm: widthMm - 2 * frameMm,
     heightMm: shoulderBottomMm - shoulderTopMm - 2 * frameMm,
     radiusMm: innerRadiusMm,
-  };
+  });
 
   const outerPath = [
     `M ${midX} 0`,
