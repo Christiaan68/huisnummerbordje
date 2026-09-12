@@ -542,7 +542,10 @@ export function getEarsGeometry(
     // schroefmiddelpunt, plus de schroefstraal zelf, plus een kleine
     // marge — zodat de schroef bij elke bordjesmaat gegarandeerd volledig
     // binnen het kader valt, met wat lucht eromheen.
-    const screwMarginMm = holeRadiusMm * 0.6;
+    // Verkleind (12-9-2026, feedback Christiaan: middenvlak moet groter)
+    // van 0.6 naar 0.25 — nog net genoeg lucht om de schroef niet
+    // letterlijk te raken, maar niet meer dan dat.
+    const screwMarginMm = holeRadiusMm * 0.25;
     const frameMm =
       Math.max(widthMm, heightMm) * SCREW_INSET_RATIO + holeRadiusMm + screwMarginMm;
     // Duidelijk zichtbaar afgeronde hoeken op het middenvlak (op verzoek

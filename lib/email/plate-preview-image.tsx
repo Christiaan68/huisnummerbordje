@@ -198,13 +198,12 @@ export async function renderPlatePreviewPng(
   // getScrewClearanceMarginsMm er ook rekening mee dat de tekst niet krap
   // tegen de kaderlijn aan mag komen (29-8-2026).
   //
-  // "Oren"-vormen (9-9-2026): zelfde aanpak als ProductPreview.tsx — de
-  // tekst wordt gecentreerd in het (bij "horizontaal"/"verticaal" smallere/
-  // lagere) middenvlak, niet in het volledige widthMm×heightMm-canvas, en
-  // alleen "vier-hoeken" (waar de hoekgaten IN het middenvlak zitten, zie
-  // getEarsGeometry) hergebruikt de bestaande getScrewClearanceMarginsMm-
-  // marge; bij "horizontaal"/"verticaal" zitten de gaten in de oren, dus
-  // buiten het middenvlak, en volstaat computeAutoFit's eigen basismarge.
+  // "Oren"-vormen: zelfde aanpak als ProductPreview.tsx — de tekst wordt
+  // gecentreerd in het (smallere/lagere) middenvlak, niet in het volledige
+  // widthMm×heightMm-canvas. Bij alle 3 stijlen zitten de bevestigingsgaten
+  // IN het kader eromheen, dus altijd BUITEN het middenvlak (zie
+  // getEarsGeometry) — er is dan geen aparte schroef-marge nodig,
+  // computeAutoFit's eigen basismarge volstaat voor alle 3.
   let fitWidthMm = widthMm;
   let fitHeightMm = heightMm;
   let minMarginXMm = 0;
@@ -215,11 +214,14 @@ export async function renderPlatePreviewPng(
     fitWidthMm = earsGeometry.innerRect.widthMm;
     fitHeightMm = earsGeometry.innerRect.heightMm;
     autoFitNumberFontId = EARS_AUTOFIT_FONT_KEY;
-    if (input.earsStyle === "vier-hoeken") {
-      const margins = getScrewClearanceMarginsMm(false, widthMm, heightMm, false);
-      minMarginXMm = margins.minMarginXMm;
-      minMarginYMm = margins.minMarginYMm;
-    }
+    // "vier-hoeken" gebruikte hier tot 12-9-2026 ook
+    // getScrewClearanceMarginsMm — verwijderd om dezelfde reden als in
+    // ProductPreview.tsx (zie de toelichting daar): dat telde de
+    // schroefmarge dubbel op (eerst al verwerkt in de kaderdikte/
+    // innerRect, dan nogmaals hier), waardoor het cijfer nodeloos klein
+    // werd. Bij "vier-hoeken" zitten de gaten, net als bij
+    // "horizontaal"/"verticaal", altijd al BUITEN het middenvlak —
+    // computeAutoFit's eigen basismarge volstaat voor alle 3 stijlen.
   } else {
     const margins = getScrewClearanceMarginsMm(isOval, widthMm, heightMm, isFramed);
     minMarginXMm = margins.minMarginXMm;

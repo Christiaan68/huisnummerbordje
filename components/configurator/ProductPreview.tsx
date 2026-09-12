@@ -189,17 +189,15 @@ export function ProductPreview() {
     // getScrewClearanceMarginsMm er ook rekening mee dat de tekst niet krap
     // tegen de kaderlijn aan mag komen (29-8-2026).
     //
-    // "Oren"-vormen (9-9-2026) rekenen dit anders uit: de tekst staat
-    // gecentreerd in het MIDDENVLAK (earsGeometry.mainRect), niet in het
-    // volledige (bredere/hogere) canvas — bij "horizontaal"/"verticaal" is
-    // dat middenvlak dus smaller/lager dan plateWidth/plateHeight (de oren
-    // zelf steken erbuiten uit). Bevestigingsgaten zitten bij die twee
-    // stijlen IN de oren, dus buiten het middenvlak — er is dan geen aparte
-    // schroef-marge nodig, computeAutoFit's eigen basismarge volstaat. Bij
-    // "vier-hoeken" zit het middenvlak wél vol met hoekgaten die dezelfde
-    // positie/straal hebben als de bestaande 4 hoekschroeven van een
-    // rechthoekig bordje (zie getEarsGeometry) — daarom wordt daar dezelfde
-    // getScrewClearanceMarginsMm(false, ...)-berekening hergebruikt.
+    // "Oren"-vormen rekenen dit anders uit: de tekst staat gecentreerd in
+    // het MIDDENVLAK (earsGeometry.innerRect), niet in het volledige
+    // (bredere/hogere) canvas — dat middenvlak is dus smaller/lager dan
+    // plateWidth/plateHeight (het kader eromheen, incl. de puntige oren bij
+    // "horizontaal"/"verticaal", steekt erbuiten uit). Bij alle 3 stijlen
+    // zitten de bevestigingsgaten IN dat kader, dus altijd BUITEN het
+    // middenvlak (zie getEarsGeometry) — er is dan geen aparte
+    // schroef-marge nodig, computeAutoFit's eigen basismarge (MARGIN_RATIO
+    // in text-fit.ts) volstaat voor alle 3.
     let fitWidthMm = plateWidth;
     let fitHeightMm = plateHeight;
     let minMarginXMm = 0;
@@ -210,11 +208,19 @@ export function ProductPreview() {
       fitWidthMm = earsGeometry.innerRect.widthMm;
       fitHeightMm = earsGeometry.innerRect.heightMm;
       autoFitNumberFontId = EARS_AUTOFIT_FONT_KEY;
-      if (earsStyle === "vier-hoeken") {
-        const margins = getScrewClearanceMarginsMm(false, plateWidth, plateHeight, false);
-        minMarginXMm = margins.minMarginXMm;
-        minMarginYMm = margins.minMarginYMm;
-      }
+      // "vier-hoeken" gebruikte hier tot 12-9-2026 ook
+      // getScrewClearanceMarginsMm — dat was fout: die berekent de marge
+      // die nodig is om de schroeven vanaf de RAND VAN HET HELE BORDJE vrij
+      // te houden, maar computeAutoFit hieronder krijgt al de kleinere
+      // innerRect-afmeting (dus al ingesprongen met de volledige
+      // kaderdikte, die zelf ook al ruim genoeg is om de schroeven —
+      // sinds 12-9-2026 in het kader, niet meer op het vlak, zie
+      // getEarsGeometry — vrij te houden). Die twee marges bij elkaar
+      // opgeteld maakte het cijfer nodeloos klein (gemeld door Christiaan).
+      // Bij "vier-hoeken" zitten de gaten dus, net als bij
+      // "horizontaal"/"verticaal", altijd al BUITEN het middenvlak —
+      // computeAutoFit's eigen basismarge (MARGIN_RATIO in text-fit.ts)
+      // volstaat voor alle 3 stijlen.
     } else {
       const margins = getScrewClearanceMarginsMm(
         isOval,
@@ -400,22 +406,27 @@ export function ProductPreview() {
         Live preview
       </p>
 
-      {/* Lichte "mat" rond de preview van de 3 "oren"-vormen (12-9-2026,
-          feedback Christiaan: tegen het donkere thema van de site was
-          nauwelijks te zien waar de preview begon, vooral bij een zwart
-          kader/vlak) — dezelfde lichte kleur als kleuroptie "Wit" (zie
-          productColors), met wat padding eromheen, zodat er altijd een
-          duidelijk zichtbare lichte rand rond het bordje blijft, ongeacht
-          welke kleuren de klant kiest. De 4 oorspronkelijke vormen vullen
-          hun canvas al vrijwel volledig en hebben dit niet nodig. */}
-      <div
-        className="mx-auto w-full max-w-[260px]"
-        style={
-          earsShape
-            ? { backgroundColor: "#F7F5F0", borderRadius: "20px", padding: "14px" }
-            : undefined
-        }
-      >
+      <div className="mx-auto w-full max-w-[260px]">
+        {/* Lichte "mat" rond ALLEEN het bordje zelf, bij de 3 "oren"-vormen
+            (12-9-2026, feedback Christiaan: tegen het donkere thema van de
+            site was nauwelijks te zien waar de preview begon, vooral bij
+            een zwart kader/vlak) — dezelfde lichte kleur als kleuroptie
+            "Wit" (zie productColors), met wat padding eromheen. Bewust een
+            APARTE, kleinere wrapper dan de buitenste hierboven (i.p.v. de
+            witte achtergrond op die buitenste te zetten): anders liep de
+            witte achtergrond door tot onder de specificatielijst/
+            totaalprijs/disclaimer eronder (gemeld door Christiaan,
+            12-9-2026) — die horen op de gewone (donkere) paginaondergrond
+            te blijven staan, alleen het bordje zelf krijgt de lichte mat.
+            De 4 oorspronkelijke vormen vullen hun canvas al vrijwel
+            volledig en hebben dit niet nodig. */}
+        <div
+          style={
+            earsShape
+              ? { backgroundColor: "#F7F5F0", borderRadius: "20px", padding: "14px" }
+              : undefined
+          }
+        >
         <div
           ref={plateRef}
           className="relative flex flex-col items-center justify-center p-7 text-center shadow-[0_20px_35px_rgba(0,0,0,0.35)] transition-all duration-300"
@@ -598,6 +609,7 @@ export function ProductPreview() {
               aria-hidden="true"
             />
           )}
+        </div>
         </div>
 
         <dl className="mt-5 space-y-1.5 text-xs">
