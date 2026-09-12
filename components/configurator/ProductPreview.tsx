@@ -400,7 +400,22 @@ export function ProductPreview() {
         Live preview
       </p>
 
-      <div className="mx-auto w-full max-w-[260px]">
+      {/* Lichte "mat" rond de preview van de 3 "oren"-vormen (12-9-2026,
+          feedback Christiaan: tegen het donkere thema van de site was
+          nauwelijks te zien waar de preview begon, vooral bij een zwart
+          kader/vlak) — dezelfde lichte kleur als kleuroptie "Wit" (zie
+          productColors), met wat padding eromheen, zodat er altijd een
+          duidelijk zichtbare lichte rand rond het bordje blijft, ongeacht
+          welke kleuren de klant kiest. De 4 oorspronkelijke vormen vullen
+          hun canvas al vrijwel volledig en hebben dit niet nodig. */}
+      <div
+        className="mx-auto w-full max-w-[260px]"
+        style={
+          earsShape
+            ? { backgroundColor: "#F7F5F0", borderRadius: "20px", padding: "14px" }
+            : undefined
+        }
+      >
         <div
           ref={plateRef}
           className="relative flex flex-col items-center justify-center p-7 text-center shadow-[0_20px_35px_rgba(0,0,0,0.35)] transition-all duration-300"

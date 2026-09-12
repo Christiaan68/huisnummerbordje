@@ -519,8 +519,6 @@ export function getEarsGeometry(
 ): EarsGeometry {
   const outerRadiusMm =
     Math.min(widthMm, heightMm) * EARS_MAIN_RECT_CORNER_RADIUS_RATIO;
-  const frameMm = Math.min(widthMm, heightMm) * EARS_FRAME_THICKNESS_RATIO;
-  const innerRadiusMm = Math.max(outerRadiusMm - frameMm, outerRadiusMm * 0.3);
   const holeRadiusMm = getScrewRadiusMm(widthMm, heightMm);
 
   if (earsStyle === "vier-hoeken") {
@@ -532,6 +530,27 @@ export function getEarsGeometry(
         style: "screw",
       })
     );
+    // Kaderdikte HIER bewust niet EARS_FRAME_THICKNESS_RATIO (die is voor
+    // de puntige oren van "horizontaal"/"verticaal"): bij "vier-hoeken"
+    // zitten de bevestigingsgaten IN het kader, dicht bij de hoek (zie
+    // getScrewPositions/SCREW_INSET_RATIO hierboven — dezelfde
+    // hoekpositie als de bestaande rechthoekige vorm), dus de kaderdikte
+    // moet minstens tot voorbij die schroef reiken, anders valt de schroef
+    // over het middenvlak heen i.p.v. erbuiten (gemeld door Christiaan,
+    // 12-9-2026, n.a.v. de eerdere, te dunne, vaste kaderdikte). Vandaar
+    // hier een AFGELEIDE kaderdikte: de afstand van de rand tot het
+    // schroefmiddelpunt, plus de schroefstraal zelf, plus een kleine
+    // marge — zodat de schroef bij elke bordjesmaat gegarandeerd volledig
+    // binnen het kader valt, met wat lucht eromheen.
+    const screwMarginMm = holeRadiusMm * 0.6;
+    const frameMm =
+      Math.max(widthMm, heightMm) * SCREW_INSET_RATIO + holeRadiusMm + screwMarginMm;
+    // Duidelijk zichtbaar afgeronde hoeken op het middenvlak (op verzoek
+    // van Christiaan, vergelijkbaar met de aangeleverde productfoto) — een
+    // eigen, aan de bordjesmaat gekoppelde verhouding, los van
+    // outerRadiusMm/frameMm (die twee zijn hier te klein resp. te groot om
+    // er een prettige afronding uit af te leiden).
+    const innerRadiusMm = Math.min(widthMm, heightMm) * 0.07;
     const innerRect = {
       xMm: frameMm,
       yMm: frameMm,
@@ -555,6 +574,8 @@ export function getEarsGeometry(
     };
   }
 
+  const frameMm = Math.min(widthMm, heightMm) * EARS_FRAME_THICKNESS_RATIO;
+  const innerRadiusMm = Math.max(outerRadiusMm - frameMm, outerRadiusMm * 0.3);
   const protrusionMm = Math.min(widthMm, heightMm) * EARS_PROTRUSION_RATIO;
   const holeDistanceFromTipMm = protrusionMm * EARS_HOLE_TIP_INSET_RATIO;
 
