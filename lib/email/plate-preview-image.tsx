@@ -214,8 +214,8 @@ export async function renderPlatePreviewPng(
   let autoFitNumberFontId: string = numberFontId;
 
   if (isEars && earsGeometry) {
-    fitWidthMm = earsGeometry.mainRect.widthMm;
-    fitHeightMm = earsGeometry.mainRect.heightMm;
+    fitWidthMm = earsGeometry.innerRect.widthMm;
+    fitHeightMm = earsGeometry.innerRect.heightMm;
     autoFitNumberFontId = EARS_AUTOFIT_FONT_KEY;
     if (input.earsStyle === "vier-hoeken") {
       const margins = getScrewClearanceMarginsMm(false, widthMm, heightMm, false);
@@ -414,10 +414,11 @@ export async function renderPlatePreviewPng(
           }}
         >
           {isEars && earsGeometry && (
-            // "Oren"-vormen (9-9-2026): middenvlak (plateFillHex) + oren
-            // (earFillHex), getekend met dezelfde getEarsGeometry-functie en
-            // dus dezelfde (bewust schematische) geometrie als de live
-            // preview (components/configurator/ProductPreview.tsx) — zie
+            // "Oren"-vormen: doorlopend kader (earFillHex, incl. de puntige
+            // oren bij "horizontaal"/"verticaal") + middenvlak (plateFillHex)
+            // erbovenop, getekend met dezelfde getEarsGeometry-functie en
+            // dus dezelfde geometrie als de live preview
+            // (components/configurator/ProductPreview.tsx) — zie
             // lib/configuration/plate-visual.ts.
             <svg
               style={{
@@ -429,17 +430,15 @@ export async function renderPlatePreviewPng(
               }}
               viewBox={`0 0 ${widthMm} ${heightMm}`}
             >
+              <path d={earsGeometry.framePath} fillRule="evenodd" fill={earFillHex} />
               <rect
-                x={earsGeometry.mainRect.xMm}
-                y={earsGeometry.mainRect.yMm}
-                width={earsGeometry.mainRect.widthMm}
-                height={earsGeometry.mainRect.heightMm}
-                rx={earsGeometry.mainRect.radiusMm}
+                x={earsGeometry.innerRect.xMm}
+                y={earsGeometry.innerRect.yMm}
+                width={earsGeometry.innerRect.widthMm}
+                height={earsGeometry.innerRect.heightMm}
+                rx={earsGeometry.innerRect.radiusMm}
                 fill={plateFillHex}
               />
-              {earsGeometry.ears.map((ear, index) => (
-                <path key={index} d={ear.path} fill={earFillHex} />
-              ))}
             </svg>
           )}
 
@@ -473,38 +472,55 @@ export async function renderPlatePreviewPng(
 
           {isEars &&
             earsGeometry &&
-            [...earsGeometry.ears.map((ear) => ear.hole), ...earsGeometry.cornerHoles].map(
-              (hole, index) => {
-                const holeRadiusPx = hole.radiusMm * pxPerMm;
+            earsGeometry.holes.map((hole, index) => {
+              const holeRadiusPx = hole.radiusMm * pxPerMm;
+              if (hole.style === "plain") {
+                // Kaal, schroefloos ophangoog — hoort bij "horizontaal"/
+                // "verticaal" (op de aangeleverde productfoto's zijn dat
+                // lege gaten, geen zichtbare schroeven).
                 return (
                   <div
                     key={index}
                     style={{
                       position: "absolute",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
                       left: hole.xMm * pxPerMm - holeRadiusPx,
                       top: hole.yMm * pxPerMm - holeRadiusPx,
                       width: holeRadiusPx * 2,
                       height: holeRadiusPx * 2,
                       borderRadius: "50%",
-                      backgroundColor: "#8f8f8f",
+                      backgroundColor: "#2b2b2b",
                     }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        width: holeRadiusPx * 1.1,
-                        height: holeRadiusPx * 1.1,
-                        borderRadius: "50%",
-                        backgroundColor: "#c9c9c9",
-                      }}
-                    />
-                  </div>
+                  />
                 );
               }
-            )}
+              return (
+                <div
+                  key={index}
+                  style={{
+                    position: "absolute",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    left: hole.xMm * pxPerMm - holeRadiusPx,
+                    top: hole.yMm * pxPerMm - holeRadiusPx,
+                    width: holeRadiusPx * 2,
+                    height: holeRadiusPx * 2,
+                    borderRadius: "50%",
+                    backgroundColor: "#8f8f8f",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      width: holeRadiusPx * 1.1,
+                      height: holeRadiusPx * 1.1,
+                      borderRadius: "50%",
+                      backgroundColor: "#c9c9c9",
+                    }}
+                  />
+                </div>
+              );
+            })}
 
           {isFramed && !isEars && (
             <svg

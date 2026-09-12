@@ -405,54 +405,106 @@ const EARS_HOLE_TIP_INSET_RATIO = 0.45;
 // consistent met die vormen uitziet.
 const EARS_MAIN_RECT_CORNER_RADIUS_RATIO = 0.04;
 
+// Dikte van het omlijstende kader (earColor) rond het middenvlak, als
+// fractie van min(breedte, hoogte) van het HELE bordje — toegevoegd n.a.v.
+// vergelijking met de aangeleverde productfoto's: daarop loopt de
+// oren-kleur als een doorlopend kader om de hele plaat (niet alleen als
+// losse oor-tabjes), en groeien de oren daar organisch uit voort.
+const EARS_FRAME_THICKNESS_RATIO = 0.07;
+
+/**
+ * Bouwt een gesloten SVG-(sub)pad voor een rechthoek met afgeronde hoeken —
+ * los stuk gereedschap zodat we zowel de buiten- als de binnencontour van
+ * het kader als los subpad in één `d`-string (evenodd) kunnen combineren
+ * (een <rect> met `rx` kan niet in zo'n gecombineerde string worden
+ * ingevoegd).
+ */
+function roundedRectPath(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number
+): string {
+  const r = Math.max(0, Math.min(radius, width / 2, height / 2));
+  if (r === 0) {
+    return `M ${x} ${y} L ${x + width} ${y} L ${x + width} ${y + height} L ${x} ${y + height} Z`;
+  }
+  return [
+    `M ${x + r} ${y}`,
+    `L ${x + width - r} ${y}`,
+    `A ${r} ${r} 0 0 1 ${x + width} ${y + r}`,
+    `L ${x + width} ${y + height - r}`,
+    `A ${r} ${r} 0 0 1 ${x + width - r} ${y + height}`,
+    `L ${x + r} ${y + height}`,
+    `A ${r} ${r} 0 0 1 ${x} ${y + height - r}`,
+    `L ${x} ${y + r}`,
+    `A ${r} ${r} 0 0 1 ${x + r} ${y}`,
+    `Z`,
+  ].join(" ");
+}
+
 export interface EarHoleGeometry {
   xMm: number;
   yMm: number;
   radiusMm: number;
-}
-
-export interface EarGeometry {
-  /** SVG-pad (trapezium) van dit ene oor, in dezelfde mm-coördinaten als de rest van de bordjestekening. */
-  path: string;
-  /** Bevestigingsgat in dit oor. */
-  hole: EarHoleGeometry;
+  /**
+   * "screw" tekent een zichtbare schroefkop (zoals de bestaande
+   * rechthoekige vorm) — hoort bij "vier-hoeken", waar de foto's een
+   * vastgeschroefd plaatje tonen. "plain" tekent een kaal, leeg
+   * bevestigingsoog zonder schroefkop — hoort bij de oren van
+   * "horizontaal"/"verticaal" (op de aangeleverde productfoto's zijn dat
+   * lege ophangogen, geen zichtbare schroeven).
+   */
+  style: "screw" | "plain";
 }
 
 export interface EarsGeometry {
-  /** Het middenvlak — een rechthoek met licht afgeronde hoeken, net als de bestaande rechthoekige vorm. */
-  mainRect: {
+  /** Het zichtbare middenvlak (plateColor) — een rechthoek met licht afgeronde hoeken. */
+  innerRect: {
     xMm: number;
     yMm: number;
     widthMm: number;
     heightMm: number;
     radiusMm: number;
   };
-  /** De uitstekende oren (2 stuks bij "horizontaal"/"verticaal"). Leeg bij "vier-hoeken". */
-  ears: EarGeometry[];
-  /** Bevestigingsgaten direct in het middenvlak, dicht bij de hoeken. Alleen gevuld bij "vier-hoeken" (bij de andere twee stijlen zit het gat in het oor zelf, zie `ears`). */
-  cornerHoles: EarHoleGeometry[];
+  /**
+   * Het omlijstende kader (earColor) als ÉÉN aaneengesloten SVG-pad
+   * (evenodd fill-rule: buitencontour + binnencontour van `innerRect` als
+   * "gat"), inclusief de puntige oren bij "horizontaal"/"verticaal". Bij
+   * "vier-hoeken" is dit een gewone kaderring rond de hele rechthoek.
+   *
+   * Dit verving (12-9-2026, n.a.v. vergelijking met de aangeleverde
+   * productfoto's) de eerdere aanpak met losse, zwevende oor-tabjes op een
+   * smaller middenvlak: op de foto's loopt de oren-kleur namelijk als een
+   * doorlopend kader om de HELE plaat (ook bij "vier-hoeken", waar dat
+   * kader eerder helemaal ontbrak), en groeien de oren daar organisch uit
+   * voort in plaats van als los aanhangsel.
+   */
+  framePath: string;
+  /** Bevestigingsgaten (in de oren, of bij "vier-hoeken" in de hoeken van het kader). */
+  holes: EarHoleGeometry[];
 }
 
 /**
- * Bouwt de schematische geometrie (middenvlak + oren, of middenvlak +
- * hoekgaten) voor één van de 3 "oren"-vormen, in dezelfde mm-coördinaten als
- * de rest van dit bestand (viewBox/canvas van 0 tot widthMm/heightMm — zie
- * ProductPreview.tsx en plate-preview-image.tsx). Wordt door beide
- * gebruikt, zodat de live preview en de e-mailafbeelding nooit uit elkaar
- * kunnen lopen (zie de toelichting bovenaan dit bestand).
+ * Bouwt de schematische geometrie (middenvlak + omlijstend kader +
+ * bevestigingsgaten) voor één van de 3 "oren"-vormen, in dezelfde
+ * mm-coördinaten als de rest van dit bestand (viewBox/canvas van 0 tot
+ * widthMm/heightMm — zie ProductPreview.tsx en plate-preview-image.tsx).
+ * Wordt door beide gebruikt, zodat de live preview en de e-mailafbeelding
+ * nooit uit elkaar kunnen lopen (zie de toelichting bovenaan dit bestand).
  *
- * - "horizontaal"/"verticaal": 2 oren die symmetrisch rond het midden van de
- *   linker/rechter- resp. boven/onderrand van het bordje naar buiten steken.
- *   Omdat widthMm/heightMm de buitenmaat van het HELE bordje (incl. oren)
- *   zijn, ligt het middenvlak (mainRect) hier smaller/lager dan de volledige
- *   canvas — precies zo veel ingesprongen als de oren uitsteken
- *   (EARS_PROTRUSION_RATIO) — zodat de oren binnen dezelfde vaste canvas
- *   passen zonder dat er coördinaten buiten 0..widthMm/0..heightMm nodig
- *   zijn (die zouden in de SVG-viewBox anders afgesneden worden).
- * - "vier-hoeken": GEEN uitstekende oren. Het middenvlak is dan gewoon de
- *   volledige rechthoek (widthMm × heightMm, met dezelfde afgeronde hoeken
- *   als de bestaande rechthoekige vorm), met 4 bevestigingsgaten dicht bij
- *   de hoeken — hiervoor wordt bewust dezelfde `getScrewPositions`/
+ * - "horizontaal"/"verticaal": het kader loopt door tot een punt aan de
+ *   linker-/rechter- resp. boven-/onderkant (een langgerekte zeshoek), met
+ *   een bevestigingsoog in elke punt. Omdat widthMm/heightMm de buitenmaat
+ *   van het HELE bordje (incl. de punten) zijn, ligt het middenvlak
+ *   (innerRect) hier smaller/lager dan de volledige canvas — precies zo
+ *   veel ingesprongen als de punten uitsteken (EARS_PROTRUSION_RATIO) plus
+ *   de kaderdikte (EARS_FRAME_THICKNESS_RATIO).
+ * - "vier-hoeken": geen puntige oren, gewoon een kaderring rond de volledige
+ *   rechthoek (widthMm × heightMm, met dezelfde afgeronde hoeken als de
+ *   bestaande rechthoekige vorm), met 4 zichtbare schroeven dicht bij de
+ *   hoeken — hiervoor wordt bewust dezelfde `getScrewPositions`/
  *   `getScrewRadiusMm` hergebruikt die de 4 hoekschroefjes van de bestaande
  *   rechthoekige vorm bepaalt (zelfde `SCREW_INSET_RATIO`), in plaats van
  *   een eigen, aparte hoekverhouding te verzinnen.
@@ -462,115 +514,141 @@ export function getEarsGeometry(
   widthMm: number,
   heightMm: number
 ): EarsGeometry {
-  const mainRectRadiusMm =
+  const outerRadiusMm =
     Math.min(widthMm, heightMm) * EARS_MAIN_RECT_CORNER_RADIUS_RATIO;
+  const frameMm = Math.min(widthMm, heightMm) * EARS_FRAME_THICKNESS_RATIO;
+  const innerRadiusMm = Math.max(outerRadiusMm - frameMm, outerRadiusMm * 0.3);
+  const holeRadiusMm = getScrewRadiusMm(widthMm, heightMm);
 
   if (earsStyle === "vier-hoeken") {
-    const radiusMm = getScrewRadiusMm(widthMm, heightMm);
-    const cornerHoles = getScrewPositions(false, widthMm, heightMm).map(
-      ([xr, yr]) => ({ xMm: widthMm * xr, yMm: heightMm * yr, radiusMm })
+    const holes: EarHoleGeometry[] = getScrewPositions(false, widthMm, heightMm).map(
+      ([xr, yr]) => ({
+        xMm: widthMm * xr,
+        yMm: heightMm * yr,
+        radiusMm: holeRadiusMm,
+        style: "screw",
+      })
     );
+    const innerRect = {
+      xMm: frameMm,
+      yMm: frameMm,
+      widthMm: widthMm - 2 * frameMm,
+      heightMm: heightMm - 2 * frameMm,
+      radiusMm: innerRadiusMm,
+    };
     return {
-      mainRect: {
-        xMm: 0,
-        yMm: 0,
-        widthMm,
-        heightMm,
-        radiusMm: mainRectRadiusMm,
-      },
-      ears: [],
-      cornerHoles,
+      innerRect,
+      framePath: [
+        roundedRectPath(0, 0, widthMm, heightMm, outerRadiusMm),
+        roundedRectPath(
+          innerRect.xMm,
+          innerRect.yMm,
+          innerRect.widthMm,
+          innerRect.heightMm,
+          innerRect.radiusMm
+        ),
+      ].join(" "),
+      holes,
     };
   }
 
   const protrusionMm = Math.min(widthMm, heightMm) * EARS_PROTRUSION_RATIO;
-  const holeRadiusMm = getScrewRadiusMm(widthMm, heightMm);
   const holeDistanceFromTipMm = protrusionMm * EARS_HOLE_TIP_INSET_RATIO;
 
   if (earsStyle === "horizontaal") {
-    // Oren links/rechts, in het midden van de linker-/rechterrand.
-    const baseWidthMm = heightMm * EARS_BASE_WIDTH_RATIO;
-    const tipWidthMm = baseWidthMm * EARS_TIP_WIDTH_RATIO;
+    // Kader loopt door tot een punt links/rechts, in het midden van de
+    // linker-/rechterrand.
+    const shoulderLeftMm = protrusionMm;
+    const shoulderRightMm = widthMm - protrusionMm;
     const midY = heightMm / 2;
 
-    const leftEar: EarGeometry = {
-      path: [
-        `M ${protrusionMm} ${midY - baseWidthMm / 2}`,
-        `L 0 ${midY - tipWidthMm / 2}`,
-        `L 0 ${midY + tipWidthMm / 2}`,
-        `L ${protrusionMm} ${midY + baseWidthMm / 2}`,
-        `Z`,
-      ].join(" "),
-      hole: { xMm: holeDistanceFromTipMm, yMm: midY, radiusMm: holeRadiusMm },
-    };
-    const rightEar: EarGeometry = {
-      path: [
-        `M ${widthMm - protrusionMm} ${midY - baseWidthMm / 2}`,
-        `L ${widthMm} ${midY - tipWidthMm / 2}`,
-        `L ${widthMm} ${midY + tipWidthMm / 2}`,
-        `L ${widthMm - protrusionMm} ${midY + baseWidthMm / 2}`,
-        `Z`,
-      ].join(" "),
-      hole: {
-        xMm: widthMm - holeDistanceFromTipMm,
-        yMm: midY,
-        radiusMm: holeRadiusMm,
-      },
+    const innerRect = {
+      xMm: shoulderLeftMm + frameMm,
+      yMm: frameMm,
+      widthMm: shoulderRightMm - shoulderLeftMm - 2 * frameMm,
+      heightMm: heightMm - 2 * frameMm,
+      radiusMm: innerRadiusMm,
     };
 
+    const outerPath = [
+      `M ${shoulderLeftMm} 0`,
+      `L ${shoulderRightMm} 0`,
+      `L ${widthMm} ${midY}`,
+      `L ${shoulderRightMm} ${heightMm}`,
+      `L ${shoulderLeftMm} ${heightMm}`,
+      `L 0 ${midY}`,
+      `Z`,
+    ].join(" ");
+
     return {
-      mainRect: {
-        xMm: protrusionMm,
-        yMm: 0,
-        widthMm: widthMm - 2 * protrusionMm,
-        heightMm,
-        radiusMm: mainRectRadiusMm,
-      },
-      ears: [leftEar, rightEar],
-      cornerHoles: [],
+      innerRect,
+      framePath: [
+        outerPath,
+        roundedRectPath(
+          innerRect.xMm,
+          innerRect.yMm,
+          innerRect.widthMm,
+          innerRect.heightMm,
+          innerRect.radiusMm
+        ),
+      ].join(" "),
+      holes: [
+        { xMm: holeDistanceFromTipMm, yMm: midY, radiusMm: holeRadiusMm, style: "plain" },
+        {
+          xMm: widthMm - holeDistanceFromTipMm,
+          yMm: midY,
+          radiusMm: holeRadiusMm,
+          style: "plain",
+        },
+      ],
     };
   }
 
-  // "verticaal" — oren boven/onder, in het midden van de boven-/onderrand.
-  const baseWidthMm = widthMm * EARS_BASE_WIDTH_RATIO;
-  const tipWidthMm = baseWidthMm * EARS_TIP_WIDTH_RATIO;
+  // "verticaal" — kader loopt door tot een punt boven/onder, in het midden
+  // van de boven-/onderrand.
+  const shoulderTopMm = protrusionMm;
+  const shoulderBottomMm = heightMm - protrusionMm;
   const midX = widthMm / 2;
 
-  const topEar: EarGeometry = {
-    path: [
-      `M ${midX - baseWidthMm / 2} ${protrusionMm}`,
-      `L ${midX - tipWidthMm / 2} 0`,
-      `L ${midX + tipWidthMm / 2} 0`,
-      `L ${midX + baseWidthMm / 2} ${protrusionMm}`,
-      `Z`,
-    ].join(" "),
-    hole: { xMm: midX, yMm: holeDistanceFromTipMm, radiusMm: holeRadiusMm },
-  };
-  const bottomEar: EarGeometry = {
-    path: [
-      `M ${midX - baseWidthMm / 2} ${heightMm - protrusionMm}`,
-      `L ${midX - tipWidthMm / 2} ${heightMm}`,
-      `L ${midX + tipWidthMm / 2} ${heightMm}`,
-      `L ${midX + baseWidthMm / 2} ${heightMm - protrusionMm}`,
-      `Z`,
-    ].join(" "),
-    hole: {
-      xMm: midX,
-      yMm: heightMm - holeDistanceFromTipMm,
-      radiusMm: holeRadiusMm,
-    },
+  const innerRect = {
+    xMm: frameMm,
+    yMm: shoulderTopMm + frameMm,
+    widthMm: widthMm - 2 * frameMm,
+    heightMm: shoulderBottomMm - shoulderTopMm - 2 * frameMm,
+    radiusMm: innerRadiusMm,
   };
 
+  const outerPath = [
+    `M ${midX} 0`,
+    `L ${widthMm} ${shoulderTopMm}`,
+    `L ${widthMm} ${shoulderBottomMm}`,
+    `L ${midX} ${heightMm}`,
+    `L 0 ${shoulderBottomMm}`,
+    `L 0 ${shoulderTopMm}`,
+    `Z`,
+  ].join(" ");
+
   return {
-    mainRect: {
-      xMm: 0,
-      yMm: protrusionMm,
-      widthMm,
-      heightMm: heightMm - 2 * protrusionMm,
-      radiusMm: mainRectRadiusMm,
-    },
-    ears: [topEar, bottomEar],
-    cornerHoles: [],
+    innerRect,
+    framePath: [
+      outerPath,
+      roundedRectPath(
+        innerRect.xMm,
+        innerRect.yMm,
+        innerRect.widthMm,
+        innerRect.heightMm,
+        innerRect.radiusMm
+      ),
+    ].join(" "),
+    holes: [
+      { xMm: midX, yMm: holeDistanceFromTipMm, radiusMm: holeRadiusMm, style: "plain" },
+      {
+        xMm: midX,
+        yMm: heightMm - holeDistanceFromTipMm,
+        radiusMm: holeRadiusMm,
+        style: "plain",
+      },
+    ],
   };
 }
 

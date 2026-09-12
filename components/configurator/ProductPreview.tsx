@@ -207,8 +207,8 @@ export function ProductPreview() {
     let autoFitNumberFontId: string | null | undefined = numberFont?.id;
 
     if (earsShape && earsGeometry) {
-      fitWidthMm = earsGeometry.mainRect.widthMm;
-      fitHeightMm = earsGeometry.mainRect.heightMm;
+      fitWidthMm = earsGeometry.innerRect.widthMm;
+      fitHeightMm = earsGeometry.innerRect.heightMm;
       autoFitNumberFontId = EARS_AUTOFIT_FONT_KEY;
       if (earsStyle === "vier-hoeken") {
         const margins = getScrewClearanceMarginsMm(false, plateWidth, plateHeight, false);
@@ -426,29 +426,28 @@ export function ProductPreview() {
             aria-hidden="true"
           >
             {earsShape && earsGeometry ? (
-              // "Oren"-vormen (9-9-2026): middenvlak (kleur = plateColor) +
-              // 2 uitstekende oren (kleur = earColor) of, bij "vier-hoeken",
-              // gewoon het volledige middenvlak met 4 hoekgaten — zie
-              // getEarsGeometry (lib/configuration/plate-visual.ts) voor de
-              // (bewust schematische) geometrie. De bevestigingsgaten
-              // hieronder zijn met opzet dezelfde "schroefje"-tekening
-              // (cirkel + kleiner cirkeltje + streepje) als de bestaande
-              // rechthoekige/ovale vormen verderop in dit bestand, voor een
-              // consistente uitstraling.
+              // "Oren"-vormen: doorlopend kader (kleur = earColor, incl. de
+              // puntige oren bij "horizontaal"/"verticaal") met daarin het
+              // middenvlak (kleur = plateColor) — zie getEarsGeometry
+              // (lib/configuration/plate-visual.ts) voor de (bewust
+              // schematische, maar op de aangeleverde productfoto's
+              // gebaseerde) geometrie. Bevestigingsgaten: "vier-hoeken"
+              // krijgt dezelfde "schroefje"-tekening (cirkel + kleiner
+              // cirkeltje + streepje) als de bestaande rechthoekige/ovale
+              // vormen; "horizontaal"/"verticaal" krijgt een kaal,
+              // schroefloos ophangoog (op de foto's zijn dat lege gaten).
               <>
+                <path d={earsGeometry.framePath} fillRule="evenodd" fill={earFill} />
                 <rect
-                  x={earsGeometry.mainRect.xMm}
-                  y={earsGeometry.mainRect.yMm}
-                  width={earsGeometry.mainRect.widthMm}
-                  height={earsGeometry.mainRect.heightMm}
-                  rx={earsGeometry.mainRect.radiusMm}
+                  x={earsGeometry.innerRect.xMm}
+                  y={earsGeometry.innerRect.yMm}
+                  width={earsGeometry.innerRect.widthMm}
+                  height={earsGeometry.innerRect.heightMm}
+                  rx={earsGeometry.innerRect.radiusMm}
                   fill={plateFill}
                 />
-                {earsGeometry.ears.map((ear, index) => (
-                  <path key={`ear-${index}`} d={ear.path} fill={earFill} />
-                ))}
-                {[...earsGeometry.ears.map((ear) => ear.hole), ...earsGeometry.cornerHoles].map(
-                  (hole, index) => (
+                {earsGeometry.holes.map((hole, index) =>
+                  hole.style === "screw" ? (
                     <g key={`hole-${index}`}>
                       <circle
                         cx={hole.xMm}
@@ -469,6 +468,16 @@ export function ProductPreview() {
                         transform={`rotate(${(index * 37) % 90} ${hole.xMm} ${hole.yMm})`}
                       />
                     </g>
+                  ) : (
+                    <circle
+                      key={`hole-${index}`}
+                      cx={hole.xMm}
+                      cy={hole.yMm}
+                      r={hole.radiusMm}
+                      fill="#2b2b2b"
+                      stroke="#000000"
+                      strokeWidth={hole.radiusMm * 0.1}
+                    />
                   )
                 )}
               </>
