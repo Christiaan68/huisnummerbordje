@@ -88,13 +88,15 @@ export function ContactDetailsForm({
   // huisnummer wordt het samengestelde geheel via setValue("address", …)
   // in het echte formulierveld gezet (zie de twee useEffects verderop).
   //
-  // De automatische opzoekactie zelf gaat op basis van postcode ÉN
-  // huisnummer sámen (niet postcode alleen, zoals de eerste versie deze dag
-  // deed) — zie app/api/postcode-lookup/route.ts voor de reden: de eerst
-  // gekozen dienst bleek ongeschikt (betaald + geen postcode-alleen
-  // opzoeken meer, plus een waarschuwing over een onveilige verbinding), en
-  // vrijwel alle huidige postcode-diensten werken sowieso op basis van
-  // postcode + huisnummer samen.
+  // 13-9-2026, n.a.v. een test op de telefoon door een tester: de
+  // opzoekactie ging tot dan toe op basis van postcode ÉN huisnummer samen,
+  // waardoor een klant eerst het huisnummer moest intypen voordat straat/
+  // plaats werden opgezocht — verwarrend, want het huisnummer hoort er pas
+  // ná straat/plaats bij te komen. Sinds de overstap naar de PDOK
+  // Locatieserver (zie app/api/postcode-lookup/route.ts) kan er al op
+  // postcode ALLEEN gezocht worden — het huisnummer is dus geen vereiste
+  // meer voor deze opzoekactie, en blijft verder gewoon een eigen, apart in
+  // te vullen vakje.
   const [street, setStreet] = useState("");
   const [houseNumber, setHouseNumber] = useState("");
   // "idle": nog niet (genoeg) ingevuld om iets op te zoeken. "loading":
@@ -106,30 +108,24 @@ export function ContactDetailsForm({
   const [lookupStatus, setLookupStatus] = useState<
     "idle" | "loading" | "found" | "not-found"
   >("idle");
-  // Voorkomt een dubbele opzoekactie voor dezelfde postcode+huisnummer (bv.
-  // als de klant nog even doortypt/de cursor verplaatst zonder de waarden
-  // zelf te wijzigen) en voorkomt dat een trage, oude opzoekactie een
-  // inmiddels ingetypte, nieuwere postcode/huisnummer overschrijft (zie de
-  // "genegeerd"-check in de effect hieronder).
+  // Voorkomt een dubbele opzoekactie voor dezelfde postcode (bv. als de
+  // klant nog even doortypt/de cursor verplaatst zonder de postcode zelf te
+  // wijzigen) en voorkomt dat een trage, oude opzoekactie een inmiddels
+  // ingetypte, nieuwere postcode overschrijft (zie de "genegeerd"-check in
+  // de effect hieronder).
   const lastLookedUpKey = useRef<string | null>(null);
 
   const postalCodeValue = watch("postalCode");
 
   useEffect(() => {
     const normalizedPostcode = postalCodeValue.replace(/\s+/g, "").toUpperCase();
-    // Alleen het voorste, numerieke deel van het huisnummer gebruikt voor de
-    // opzoekactie (bv. "12A" -> "12") — een toevoeging verandert de straat/
-    // plaats niet. Het volledige, zelf ingetypte huisnummer (mét eventuele
-    // toevoeging) blijft gewoon staan in het "Huisnummer"-vakje en komt ook
-    // zo in het samengestelde adres terecht (zie de effect hieronder).
-    const houseNumberDigits = houseNumber.match(/^\d+/)?.[0];
 
-    if (!NL_POSTCODE_REGEX.test(postalCodeValue) || !houseNumberDigits) {
+    if (!NL_POSTCODE_REGEX.test(postalCodeValue)) {
       setLookupStatus("idle");
       return;
     }
 
-    const key = `${normalizedPostcode}|${houseNumberDigits}`;
+    const key = normalizedPostcode;
     if (key === lastLookedUpKey.current) return;
 
     // Klein debounce-moment: pas opzoeken nadat de klant heeft opgehouden
@@ -137,27 +133,35 @@ export function ContactDetailsForm({
     const timeoutId = setTimeout(async () => {
       lastLookedUpKey.current = key;
       setLookupStatus("loading");
+      // Nieuwe opzoekactie voor een ANDERE postcode gestart: de oude,
+      // mogelijk niet meer kloppende straat/plaats van de vórige postcode
+      // meteen wissen. Zonder dit bleef er bij het corrigeren van een
+      // postcode een verouderd straat/plaats-resultaat van de eerdere
+      // (foute) postcode zichtbaar staan, wat de indruk gaf dat het
+      // corrigeren niet werkte (gemeld door een tester, 13-9-2026).
+      setStreet("");
+      setValue("city", "", { shouldValidate: false });
       try {
         const res = await fetch(
-          `/api/postcode-lookup?postcode=${encodeURIComponent(normalizedPostcode)}&huisnummer=${encodeURIComponent(houseNumberDigits)}`
+          `/api/postcode-lookup?postcode=${encodeURIComponent(normalizedPostcode)}`
         );
         const data: { found: boolean; street?: string; city?: string } =
           await res.json();
-        // Als de postcode/het huisnummer intussen alweer gewijzigd is
-        // (klant typte door terwijl dit verzoek liep), dit resultaat
-        // negeren — anders zou een trage, verouderde opzoekactie de
-        // inmiddels nieuwere gegevens kunnen overschrijven.
+        // Als de postcode intussen alweer gewijzigd is (klant typte door
+        // terwijl dit verzoek liep), dit resultaat negeren — anders zou een
+        // trage, verouderde opzoekactie de inmiddels nieuwere postcode
+        // kunnen overschrijven.
         if (lastLookedUpKey.current !== key) return;
         if (data.found && data.street && data.city) {
           setStreet(data.street);
           setValue("city", data.city, { shouldValidate: false });
           setLookupStatus("found");
         } else {
-          // Niet gevonden (onbekende combinatie, opzoekdienst niet
-          // bereikbaar): straat/plaats blijven gewoon zoals ze waren — de
-          // klant typt ze dan zelf in, exact zoals vóór deze wijziging. Wel
-          // duidelijk maken dát er niets gevonden is (zie "not-found"
-          // hieronder in de JSX), in plaats van stil niets te doen.
+          // Niet gevonden (onbekende postcode, opzoekdienst niet
+          // bereikbaar): straat/plaats blijven leeg — de klant typt ze dan
+          // zelf in. Wel duidelijk maken dát er niets gevonden is (zie
+          // "not-found" hieronder in de JSX), in plaats van stil niets te
+          // doen.
           setLookupStatus("not-found");
         }
       } catch {
@@ -167,7 +171,7 @@ export function ContactDetailsForm({
 
     return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [postalCodeValue, houseNumber]);
+  }, [postalCodeValue]);
 
   // Straat + huisnummer samenvoegen tot het bestaande "address"-veld, bij
   // elke wijziging van één van beide (zowel handmatig getypt als
@@ -188,7 +192,11 @@ export function ContactDetailsForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(handleValidSubmit)} className="max-w-sm space-y-5">
+    <form
+      onSubmit={handleSubmit(handleValidSubmit)}
+      className="max-w-sm space-y-5"
+      autoComplete="on"
+    >
       <div>
         <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-foreground">
           Naam
@@ -196,6 +204,7 @@ export function ContactDetailsForm({
         <input
           id="name"
           type="text"
+          autoComplete="name"
           {...register("name")}
           className={fieldClass(!!errors.name)}
         />
@@ -205,11 +214,14 @@ export function ContactDetailsForm({
       </div>
 
       {/* Uitleg vooraf, op verzoek van Christiaan (9-9-2026): moet vooraf
-          duidelijk zijn dát postcode + huisnummer de straat/plaats
-          automatisch invullen, niet iets dat de klant per ongeluk moet
-          ontdekken. */}
+          duidelijk zijn dát de postcode de straat/plaats automatisch
+          invult, niet iets dat de klant per ongeluk moet ontdekken. Tekst
+          13-9-2026 aangepast: het huisnummer is niet langer nodig om de
+          opzoekactie te laten starten (zie de toelichting bij de
+          opzoekactie hierboven), dus dat wordt hier niet meer genoemd als
+          iets wat je "eerst" moet doen. */}
       <p className="-mb-1 text-xs text-muted-foreground">
-        Vul je postcode en huisnummer in — straat en plaats vullen we dan automatisch voor je in.
+        Vul je postcode in — straat en plaats vullen we dan automatisch voor je in. Het huisnummer vul je er zelf bij in.
       </p>
 
       <div className="grid grid-cols-[1fr_auto] gap-4">
@@ -220,7 +232,9 @@ export function ContactDetailsForm({
           <input
             id="postalCode"
             type="text"
+            inputMode="text"
             placeholder="1234 AB"
+            autoComplete="postal-code"
             {...register("postalCode")}
             className={fieldClass(!!errors.postalCode)}
           />
@@ -237,6 +251,7 @@ export function ContactDetailsForm({
             id="houseNumber"
             type="text"
             placeholder="12A"
+            autoComplete="address-line2"
             value={houseNumber}
             onChange={(event) => setHouseNumber(event.target.value)}
             className={cn(fieldClass(!!errors.address), "w-24")}
@@ -268,6 +283,7 @@ export function ContactDetailsForm({
           <input
             id="street"
             type="text"
+            autoComplete="address-line1"
             value={street}
             onChange={(event) => setStreet(event.target.value)}
             className={fieldClass(!!errors.address)}
@@ -284,6 +300,7 @@ export function ContactDetailsForm({
           <input
             id="city"
             type="text"
+            autoComplete="address-level2"
             {...register("city")}
             className={fieldClass(!!errors.city)}
           />
@@ -300,6 +317,7 @@ export function ContactDetailsForm({
         <input
           id="email"
           type="email"
+          autoComplete="email"
           {...register("email")}
           className={fieldClass(!!errors.email)}
         />
@@ -315,6 +333,7 @@ export function ContactDetailsForm({
         <input
           id="phone"
           type="tel"
+          autoComplete="tel"
           {...register("phone")}
           className={fieldClass(!!errors.phone)}
         />
