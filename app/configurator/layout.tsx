@@ -52,16 +52,20 @@ export default async function ConfiguratorLayout({
               className="fixed inset-0 -z-10"
               style={{
                 backgroundImage:
-                  "linear-gradient(to bottom, rgba(20,16,12,0.42), rgba(20,16,12,0.26) 45%, rgba(20,16,12,0.65))",
+                  "linear-gradient(to bottom, rgba(20,16,12,0.55), rgba(20,16,12,0.4) 45%, rgba(20,16,12,0.78))",
               }}
               aria-hidden="true"
             />
 
+            {/* 14-9-2026: op de "controle"-stap (hele specificatielijst los
+                over de foto, in het drukste deel van de foto) bleek dit nog
+                steeds te weinig leesbaar — overlay hierboven en de
+                text-shadow hieronder allebei nog wat verder aangezet. */}
             <div
               className="relative mx-auto max-w-6xl px-6 pb-10 pt-28 sm:pt-32"
               style={{
                 textShadow:
-                  "0 2px 8px rgba(0,0,0,0.6), 0 1px 3px rgba(0,0,0,0.5)",
+                  "0 2px 10px rgba(0,0,0,0.75), 0 1px 3px rgba(0,0,0,0.65)",
               }}
             >
               <ProgressIndicator />
