@@ -28,13 +28,21 @@ export default async function ConfiguratorLayout({
                 want je zit al in de configurator. */}
             <Header showConfiguratorLink={false} />
 
-            {/* Zelfde achtergrondfoto als de homepage-hero, nu met dezelfde
+            {/* Zelfde achtergrondfoto als de homepage-hero, met dezelfde
                 lichte warmgetinte overlay (i.p.v. de donkere teal-wasteil)
-                zodat de foto ook hier goed zichtbaar en in kleur blijft. Hier
-                staat geen tekst los over de foto (de formulierstappen en
-                preview hebben hun eigen kaart-achtergrond), dus geen
-                text-shadow nodig — de overlay mag hier wel iets sterker zijn
-                dan op de homepage, voor rustige contrast met die kaarten. */}
+                zodat de foto goed zichtbaar en in kleur blijft. Anders dan
+                eerst gedacht staat hier wél veel tekst los over de foto (de
+                stap-bolletjes, de stap-titel per stap, en de "live
+                preview"-kolom incl. specificatielijst/totaalprijs zijn
+                bewust GEEN kaart, zie ProductPreview.tsx) — 14-9-2026,
+                gemeld door Christiaan na screenshot: die tekst was bijna
+                onleesbaar. Los van een iets donkerdere overlay lossen we dat
+                nu op met text-shadow, i.p.v. een kader/vlak achter de tekst
+                te zetten (dat wilde Christiaan expliciet niet). text-shadow
+                is een "inherited" CSS-eigenschap, dus 1 shadow hieronder op
+                de buitenste inhoud-wrapper werkt door tot alle tekst erin —
+                ook de tekst die al wél op een kaart staat (bv. de
+                vorm-keuzekaarten), daar valt de schaduw gewoon niet op. */}
             <div
               className="fixed inset-0 -z-10 bg-cover bg-center"
               style={{ backgroundImage: `url(${siteContent.hero.backgroundImage})` }}
@@ -44,12 +52,18 @@ export default async function ConfiguratorLayout({
               className="fixed inset-0 -z-10"
               style={{
                 backgroundImage:
-                  "linear-gradient(to bottom, rgba(20,16,12,0.35), rgba(20,16,12,0.2) 45%, rgba(20,16,12,0.6))",
+                  "linear-gradient(to bottom, rgba(20,16,12,0.42), rgba(20,16,12,0.26) 45%, rgba(20,16,12,0.65))",
               }}
               aria-hidden="true"
             />
 
-            <div className="relative mx-auto max-w-6xl px-6 pb-10 pt-28 sm:pt-32">
+            <div
+              className="relative mx-auto max-w-6xl px-6 pb-10 pt-28 sm:pt-32"
+              style={{
+                textShadow:
+                  "0 2px 8px rgba(0,0,0,0.6), 0 1px 3px rgba(0,0,0,0.5)",
+              }}
+            >
               <ProgressIndicator />
               <div className="mt-10 grid grid-cols-1 gap-12 lg:grid-cols-[1fr_260px]">
                 <div>{children}</div>
