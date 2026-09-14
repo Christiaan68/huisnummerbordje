@@ -82,10 +82,10 @@ export function ShapeSelector() {
         </div>
         <div>
           <p className="text-sm font-medium text-muted-foreground">
-            Weet je het nog niet?
+            Iets anders nodig?
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Stel eerst je vraag, dan helpen we je op weg.
+            Wil je iets speciaals of een andere vorm? Neem contact met ons op.
           </p>
         </div>
       </Link>

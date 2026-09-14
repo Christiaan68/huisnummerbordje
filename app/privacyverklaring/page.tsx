@@ -6,8 +6,8 @@ import { BackToTopButton } from "@/components/layout/BackToTopButton";
 import { companyInfo, siteContent } from "@/config/site-content";
 
 export const metadata: Metadata = {
-  title: "Privacyverklaring | Emaille Huisnummers",
-  description: "Hoe Emaille Huisnummers omgaat met persoonsgegevens.",
+  title: "Privacyverklaring | Emaille Huisnummerbordjes",
+  description: "Hoe Emaille Huisnummerbordjes omgaat met persoonsgegevens.",
 };
 
 // Privacyverklaring, toegevoegd 27-8-2026 op verzoek van Christiaan. Basis
@@ -54,7 +54,7 @@ export default function PrivacyverklaringPage() {
 
         <p className="mt-4 text-sm leading-relaxed text-foreground">
           Deze privacyverklaring geldt voor deze webshop van Emaille
-          Huisnummers, een activiteit van {companyInfo.name}. Hierin lees je
+          Huisnummerbordjes, een activiteit van {companyInfo.name}. Hierin lees je
           welke persoonsgegevens we verwerken, waarvoor, en welke rechten je
           hebt.
         </p>
