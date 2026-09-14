@@ -28,15 +28,24 @@ export default async function ConfiguratorLayout({
                 want je zit al in de configurator. */}
             <Header showConfiguratorLink={false} />
 
-            {/* Zelfde achtergrondfoto + overlay als de homepage-hero, zodat de
-                configurator er visueel bij aansluit i.p.v. een effen donker vlak. */}
+            {/* Zelfde achtergrondfoto als de homepage-hero, nu met dezelfde
+                lichte warmgetinte overlay (i.p.v. de donkere teal-wasteil)
+                zodat de foto ook hier goed zichtbaar en in kleur blijft. Hier
+                staat geen tekst los over de foto (de formulierstappen en
+                preview hebben hun eigen kaart-achtergrond), dus geen
+                text-shadow nodig — de overlay mag hier wel iets sterker zijn
+                dan op de homepage, voor rustige contrast met die kaarten. */}
             <div
               className="fixed inset-0 -z-10 bg-cover bg-center"
               style={{ backgroundImage: `url(${siteContent.hero.backgroundImage})` }}
               aria-hidden="true"
             />
             <div
-              className="fixed inset-0 -z-10 bg-gradient-to-b from-background/90 via-background/85 to-background"
+              className="fixed inset-0 -z-10"
+              style={{
+                backgroundImage:
+                  "linear-gradient(to bottom, rgba(20,16,12,0.35), rgba(20,16,12,0.2) 45%, rgba(20,16,12,0.6))",
+              }}
               aria-hidden="true"
             />
 

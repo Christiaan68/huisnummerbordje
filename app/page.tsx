@@ -14,7 +14,9 @@ export default function HomePage() {
       <main>
         <section className="relative overflow-hidden">
           {/* Achtergrondfoto (door de eigenaar aan te leveren op het pad
-              hieronder) met een donkere overlay voor leesbaarheid. Zonder
+              hieronder) met een lichte, warmgetinte overlay: de foto blijft
+              goed zichtbaar en in kleur, leesbaarheid van de tekst komt nu
+              van text-shadow i.p.v. een donkere wasteil eroverheen. Zonder
               afbeelding valt de sectie terug op het donkere basisfond. */}
           <div
             className="absolute inset-0 bg-cover bg-center"
@@ -22,16 +24,22 @@ export default function HomePage() {
             aria-hidden="true"
           />
           <div
-            className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/70 to-background"
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                "linear-gradient(to bottom, rgba(20,16,12,0.28), rgba(20,16,12,0.14) 45%, rgba(20,16,12,0.48))",
+            }}
             aria-hidden="true"
           />
 
           <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-6 pb-20 pt-32 sm:pt-40 lg:grid-cols-2 lg:pb-28">
             <div>
-              <h1 className="font-serif text-4xl font-medium leading-[1.1] text-foreground sm:text-5xl lg:text-6xl">
+              <h1
+                className="font-serif text-4xl font-medium leading-[1.1] text-foreground sm:text-5xl lg:text-6xl [text-shadow:0_3px_14px_rgba(0,0,0,0.75),0_1px_3px_rgba(0,0,0,0.6)]"
+              >
                 {hero.title}
               </h1>
-              <p className="mt-6 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
+              <p className="mt-6 max-w-md text-base leading-relaxed text-[#e7e2d6] sm:text-lg [text-shadow:0_2px_10px_rgba(0,0,0,0.8),0_1px_2px_rgba(0,0,0,0.7)]">
                 {hero.intro}
               </p>
               <Link
