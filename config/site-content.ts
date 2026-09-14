@@ -5,9 +5,15 @@
 export const siteContent = {
   hero: {
     backgroundImage: "/images/hero-background.jpg",
+    // Nieuwe hero-tekst, aangeleverd door Christiaan (14-9-2026): een
+    // korte inleidende zin boven de titel ("eyebrow"), de titel zelf
+    // (ongewijzigd) en een nieuwe tekst eronder — zie app/page.tsx voor
+    // hoe deze drie elementen samen worden getoond.
+    eyebrow:
+      "Een huis met karakter verdient een huisnummer met karakter. Geef jouw entree de finishing touch met een emaille huisnummer dat bij je woning past.",
     title: "Duurzaam. Opvallend. Authentiek.",
     intro:
-      "Een geëmailleerd huisnummerbordje is gemaakt om jarenlang mee te gaan. Emaille is sterk, duurzaam en bestand tegen weer en wind. De karakteristieke uitstraling maakt ieder bordje uniek en geeft jouw woning een authentiek en opvallend detail.",
+      "Diepe glans, een karakteristieke uitstraling en bestand tegen weer en wind. Stel jouw huisnummerbordje samen en maak het welkom compleet.",
     ctaLabel: "Ontwerp jouw huisnummerbordje",
     ctaHref: "/configurator",
   },

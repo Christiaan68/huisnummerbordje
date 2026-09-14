@@ -34,8 +34,15 @@ export default function HomePage() {
 
           <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-6 pb-20 pt-32 sm:pt-40 lg:grid-cols-2 lg:pb-28">
             <div>
+              {/* Inleidende zin boven de titel ("eyebrow") — nieuwe tekst
+                  van Christiaan, 14-9-2026. Bewust in een lichte, iets
+                  kleinere doorlopende stijl (i.p.v. hoofdletters/tracking)
+                  omdat het twee volle zinnen zijn, geen kort label. */}
+              <p className="max-w-md font-serif text-lg italic leading-snug text-[#e7e2d6] [text-shadow:0_2px_10px_rgba(0,0,0,0.8),0_1px_2px_rgba(0,0,0,0.7)] sm:text-xl">
+                {hero.eyebrow}
+              </p>
               <h1
-                className="font-serif text-4xl font-medium leading-[1.1] text-foreground sm:text-5xl lg:text-6xl [text-shadow:0_3px_14px_rgba(0,0,0,0.75),0_1px_3px_rgba(0,0,0,0.6)]"
+                className="mt-5 font-serif text-4xl font-medium leading-[1.1] text-foreground sm:text-5xl lg:text-6xl [text-shadow:0_3px_14px_rgba(0,0,0,0.75),0_1px_3px_rgba(0,0,0,0.6)]"
               >
                 {hero.title}
               </h1>
