@@ -59,6 +59,13 @@ export async function POST(request: Request) {
     askerName: question.name,
     askerEmail: question.email,
     question: question.question,
+    // Optioneel (14-9-2026, zie lib/validation/question.schema.ts) — alleen
+    // meegeven als de bezoeker ze ook heeft ingevuld.
+    askerPhone: question.phone || undefined,
+    askerAddress:
+      [question.street, question.houseNumber].filter(Boolean).join(" ") || undefined,
+    askerPostalCode: question.postalCode || undefined,
+    askerCity: question.city || undefined,
   });
 
   try {

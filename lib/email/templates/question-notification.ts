@@ -31,6 +31,13 @@ interface QuestionEmailData {
   askerName: string;
   askerEmail: string;
   question: string;
+  // Optioneel ingevuld door de bezoeker (14-9-2026, "liefst ook alle andere
+  // gegevens", zie lib/validation/question.schema.ts) — alleen getoond als
+  // ze ook echt zijn ingevuld.
+  askerPhone?: string;
+  askerAddress?: string;
+  askerPostalCode?: string;
+  askerCity?: string;
 }
 
 /**
@@ -91,6 +98,16 @@ export function renderQuestionNotificationEmail(data: QuestionEmailData): string
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                     ${row("Naam", data.askerName)}
                     ${row("E-mail", data.askerEmail)}
+                    ${data.askerPhone ? row("Telefoon", data.askerPhone) : ""}
+                    ${data.askerAddress ? row("Adres", data.askerAddress) : ""}
+                    ${
+                      data.askerPostalCode || data.askerCity
+                        ? row(
+                            "Postcode/plaats",
+                            [data.askerPostalCode, data.askerCity].filter(Boolean).join(" ")
+                          )
+                        : ""
+                    }
                     ${row("Datum", date)}
                   </table>
                 </td>
