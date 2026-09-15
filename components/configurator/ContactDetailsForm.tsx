@@ -377,6 +377,41 @@ export function ContactDetailsForm({
         )}
       </div>
 
+      {/* Volgorde van deze twee vinkjes op verzoek van Christiaan (15-9-2026)
+          omgedraaid: "met de hand gemaakt" staat nu boven het akkoord-vinkje
+          met de leveringsvoorwaarden. */}
+      <div>
+        <label htmlFor="understandsHandmade" className="flex items-start gap-3">
+          <input
+            id="understandsHandmade"
+            type="checkbox"
+            checked={understandsHandmade}
+            onChange={(event) => {
+              setUnderstandsHandmade(event.target.checked);
+              if (event.target.checked) setUnderstandsError(false);
+            }}
+            aria-describedby={
+              understandsError ? "understandsHandmade-error" : undefined
+            }
+            aria-invalid={understandsError}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded-sm border-border text-primary accent-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          />
+          <span className="text-sm text-muted-foreground">
+            Mijn huisnummerbordje wordt met de hand gemaakt en kan iets
+            afwijken van de preview.
+          </span>
+        </label>
+        {understandsError && (
+          <p
+            id="understandsHandmade-error"
+            role="alert"
+            className="mt-1.5 pl-7 text-sm text-destructive"
+          >
+            Vink dit aan om je bestelling te kunnen plaatsen.
+          </p>
+        )}
+      </div>
+
       <div>
         <label htmlFor="agreesToTerms" className="flex items-start gap-3">
           <input
@@ -415,42 +450,6 @@ export function ContactDetailsForm({
         </label>
         {agreedError && (
           <p id="agreesToTerms-error" role="alert" className="mt-1.5 pl-7 text-sm text-destructive">
-            Vink dit aan om je bestelling te kunnen plaatsen.
-          </p>
-        )}
-      </div>
-
-      {/* Tweede, apart verplicht vinkje (15-9-2026, verzoek Christiaan) —
-          bewust in een eigen regel direct onder het akkoord-vinkje (i.p.v.
-          er inline aan vastgeplakt), met dezelfde ruime aanraakafstand en
-          opmaak, zodat het ook op mobiel rustig en duidelijk blijft. */}
-      <div>
-        <label htmlFor="understandsHandmade" className="flex items-start gap-3">
-          <input
-            id="understandsHandmade"
-            type="checkbox"
-            checked={understandsHandmade}
-            onChange={(event) => {
-              setUnderstandsHandmade(event.target.checked);
-              if (event.target.checked) setUnderstandsError(false);
-            }}
-            aria-describedby={
-              understandsError ? "understandsHandmade-error" : undefined
-            }
-            aria-invalid={understandsError}
-            className="mt-0.5 h-4 w-4 shrink-0 rounded-sm border-border text-primary accent-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          />
-          <span className="text-sm text-muted-foreground">
-            Mijn huisnummerbordje wordt met de hand gemaakt en kan iets
-            afwijken van de preview.
-          </span>
-        </label>
-        {understandsError && (
-          <p
-            id="understandsHandmade-error"
-            role="alert"
-            className="mt-1.5 pl-7 text-sm text-destructive"
-          >
             Vink dit aan om je bestelling te kunnen plaatsen.
           </p>
         )}
