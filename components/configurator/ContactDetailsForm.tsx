@@ -67,6 +67,15 @@ export function ContactDetailsForm({
   const [agreed, setAgreed] = useState(false);
   const [agreedError, setAgreedError] = useState(false);
 
+  // Tweede, apart verplicht vinkje (15-9-2026, verzoek Christiaan) — net als
+  // "agreed" hierboven bewust GEEN onderdeel van contactDetailsSchema (puur
+  // een blokkade in de browser, geen gegeven dat opgeslagen/gemaild hoeft te
+  // worden). Los van het vergelijkbare vinkje op de vorige stap ("Controle",
+  // zie app/configurator/controle/page.tsx) — dat bevestigt de configuratie,
+  // dit bevestigt de bestelling zelf.
+  const [understandsHandmade, setUnderstandsHandmade] = useState(false);
+  const [understandsError, setUnderstandsError] = useState(false);
+
   // Voor de kleur van de "Doorgaan naar betalen"-knop (zie canSubmit
   // hieronder) wordt HIER, los van react-hook-form's eigen foutmeldingen-
   // systeem, apart en stil gecontroleerd of het formulier al compleet is —
@@ -76,7 +85,7 @@ export function ContactDetailsForm({
   // gedrag houden als voorheen.
   const watchedValues = watch();
   const isFormComplete = contactDetailsSchema.safeParse(watchedValues).success;
-  const canSubmit = isFormComplete && agreed;
+  const canSubmit = isFormComplete && agreed && understandsHandmade;
 
   // Straat + huisnummer opgesplitst in de UI (op verzoek van Christiaan,
   // 9-9-2026) — maar het onderliggende formulierveld blijft gewoon het
@@ -184,10 +193,19 @@ export function ContactDetailsForm({
   }, [street, houseNumber]);
 
   function handleValidSubmit(data: ContactDetails) {
+    // Beide vinkjes los gecontroleerd (i.p.v. alleen bij canSubmit stoppen)
+    // zodat, als er meer dan één ontbreekt, ook meteen bij allebei de
+    // foutmelding verschijnt — net als het bestaande "agreed"-gedrag.
+    let blocked = false;
     if (!agreed) {
       setAgreedError(true);
-      return;
+      blocked = true;
     }
+    if (!understandsHandmade) {
+      setUnderstandsError(true);
+      blocked = true;
+    }
+    if (blocked) return;
     onSubmit(data);
   }
 
@@ -397,6 +415,42 @@ export function ContactDetailsForm({
         </label>
         {agreedError && (
           <p id="agreesToTerms-error" role="alert" className="mt-1.5 pl-7 text-sm text-destructive">
+            Vink dit aan om je bestelling te kunnen plaatsen.
+          </p>
+        )}
+      </div>
+
+      {/* Tweede, apart verplicht vinkje (15-9-2026, verzoek Christiaan) —
+          bewust in een eigen regel direct onder het akkoord-vinkje (i.p.v.
+          er inline aan vastgeplakt), met dezelfde ruime aanraakafstand en
+          opmaak, zodat het ook op mobiel rustig en duidelijk blijft. */}
+      <div>
+        <label htmlFor="understandsHandmade" className="flex items-start gap-3">
+          <input
+            id="understandsHandmade"
+            type="checkbox"
+            checked={understandsHandmade}
+            onChange={(event) => {
+              setUnderstandsHandmade(event.target.checked);
+              if (event.target.checked) setUnderstandsError(false);
+            }}
+            aria-describedby={
+              understandsError ? "understandsHandmade-error" : undefined
+            }
+            aria-invalid={understandsError}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded-sm border-border text-primary accent-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          />
+          <span className="text-sm text-muted-foreground">
+            Mijn huisnummerbordje wordt met de hand gemaakt en kan iets
+            afwijken van de preview.
+          </span>
+        </label>
+        {understandsError && (
+          <p
+            id="understandsHandmade-error"
+            role="alert"
+            className="mt-1.5 pl-7 text-sm text-destructive"
+          >
             Vink dit aan om je bestelling te kunnen plaatsen.
           </p>
         )}

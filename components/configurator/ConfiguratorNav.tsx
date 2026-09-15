@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { configuratorSteps, getVisibleSteps } from "@/lib/configuration/steps";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
+import { useTopBarAction } from "@/lib/configuration/TopBarActionContext";
 import { cn } from "@/lib/utils";
 
 interface ConfiguratorNavProps {
@@ -14,6 +16,7 @@ interface ConfiguratorNavProps {
 export function ConfiguratorNav({ stepId }: ConfiguratorNavProps) {
   const router = useRouter();
   const { selection, dispatch } = useConfigurator();
+  const { setAction } = useTopBarAction();
 
   // Sinds 9-9-2026 (7 vormen): "Terug"/"Verder" navigeren binnen de
   // stappenlijst die voor de HUIDIG GEKOZEN vorm van toepassing is (zie
@@ -28,6 +31,25 @@ export function ConfiguratorNav({ stepId }: ConfiguratorNavProps) {
   const nextStep = visibleSteps[currentIndex + 1];
 
   const canProceed = currentStep ? currentStep.isComplete(selection) : false;
+
+  // Meldt dezelfde "Verder"-knop aan bij ProgressIndicator.tsx, zodat die
+  // ook bovenaan (naast de stap-tabjes) getoond wordt — zie
+  // lib/configuration/TopBarActionContext.tsx. Bij het verlaten van de stap
+  // (of als er geen volgende stap is, zoals op "Controle" — die gebruikt
+  // deze component niet) weer opgeruimd.
+  useEffect(() => {
+    if (!nextStep) {
+      setAction(null);
+      return;
+    }
+    setAction({
+      label: "Verder",
+      onClick: () => router.push(nextStep.path),
+      disabled: !canProceed,
+    });
+    return () => setAction(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nextStep?.path, canProceed]);
 
   function handleReset() {
     const confirmed = window.confirm(

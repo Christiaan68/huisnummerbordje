@@ -1,6 +1,7 @@
 import { ConfiguratorProvider } from "@/lib/configuration/ConfiguratorContext";
 import { FontPreviewProvider } from "@/lib/configuration/FontPreviewContext";
 import { PricingDataProvider } from "@/lib/configuration/PricingDataContext";
+import { TopBarActionProvider } from "@/lib/configuration/TopBarActionContext";
 import { getLivePricingData } from "@/lib/configuration/livePricing";
 import { ProgressIndicator } from "@/components/configurator/ProgressIndicator";
 import { ProductPreview } from "@/components/configurator/ProductPreview";
@@ -21,6 +22,7 @@ export default async function ConfiguratorLayout({
     <ConfiguratorProvider>
       <PricingDataProvider data={pricingData}>
         <FontPreviewProvider>
+        <TopBarActionProvider>
           <div className="relative min-h-screen">
             {/* Zelfde hamburgermenu (Home / Start configurator / Contact) als
                 op de andere pagina's, nu ook boven elke configuratorstap. De
@@ -75,6 +77,7 @@ export default async function ConfiguratorLayout({
               </div>
             </div>
           </div>
+        </TopBarActionProvider>
         </FontPreviewProvider>
       </PricingDataProvider>
     </ConfiguratorProvider>

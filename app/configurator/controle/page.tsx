@@ -7,6 +7,7 @@ import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { ConfigurationSummary } from "@/components/configurator/ConfigurationSummary";
 import { ContactDetailsForm } from "@/components/configurator/ContactDetailsForm";
 import { QuestionModal } from "@/components/configurator/QuestionModal";
+import { useTopBarAction } from "@/lib/configuration/TopBarActionContext";
 import { getVisibleSteps } from "@/lib/configuration/steps";
 import { productShapes } from "@/config/product-options";
 import { isEarsShape } from "@/lib/configuration/shape-helpers";
@@ -37,6 +38,18 @@ export default function ControlePage() {
   );
   const [message, setMessage] = useState<string | null>(null);
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
+
+  // Verplicht selectievakje op deze stap (op verzoek van Christiaan,
+  // 15-9-2026): de klant moet bevestigen te begrijpen dat het bordje met de
+  // hand gemaakt wordt en iets van de preview kan afwijken, vóórdat de
+  // configuratie bevestigd kan worden. Los van, en bovenop, het vergelijkbare
+  // vinkje bij "Jouw gegevens" hierna (zie ContactDetailsForm.tsx) — dat
+  // vinkje hoort bij het bestellen zelf, dit vinkje bij het bevestigen van
+  // de configuratie.
+  const [understandsHandmade, setUnderstandsHandmade] = useState(false);
+  const [understandsError, setUnderstandsError] = useState(false);
+
+  const { setAction } = useTopBarAction();
 
   // Vangnet tegen terugnavigeren na het betalen (toegevoegd 9-9-2026, n.a.v.
   // een vraag van Christiaan aan Mollie's support-chat — Mollie heeft hier
@@ -91,10 +104,33 @@ export default function ControlePage() {
       setMessage("Niet alle keuzes zijn compleet. Ga terug en vul ze aan.");
       return;
     }
+    if (!understandsHandmade) {
+      setUnderstandsError(true);
+      return;
+    }
     setStatus("idle");
     setMessage(null);
     setStage("contact");
   }
+
+  // Meldt de "Configuratie bevestigen"-knop aan bij ProgressIndicator.tsx
+  // (zie lib/configuration/TopBarActionContext.tsx), zodat die ook bovenaan
+  // getoond wordt — alleen zolang deze pagina op de "summary"-stage staat;
+  // bij "Jouw gegevens" (stage "contact") heeft het eigen formulier al zijn
+  // eigen "Doorgaan naar betalen"-knop onderaan, daar tonen we bovenaan geen
+  // dubbele knop.
+  useEffect(() => {
+    if (stage !== "summary") {
+      setAction(null);
+      return;
+    }
+    setAction({
+      label: "Configuratie bevestigen",
+      onClick: handleConfiguratieBevestigen,
+    });
+    return () => setAction(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage, understandsHandmade, selection]);
 
   async function handleContactSubmit(contact: ContactDetails) {
     if (!selection.shapeId || !selection.sizeId || !isConfiguratieCompleet()) {
@@ -207,6 +243,42 @@ export default function ControlePage() {
             .
           </p>
 
+          {/* Verplicht vinkje (15-9-2026, verzoek Christiaan) — bewust in een
+              eigen, rustige regel met ruime afstand tot de tekst erboven en
+              de knoppenrij eronder (i.p.v. inline naast de knop gepropt),
+              zodat het ook op mobiel goed leesbaar en aanraakbaar blijft. */}
+          <div className="mt-8 border-t border-border pt-6">
+            <label htmlFor="understandsHandmade" className="flex items-start gap-3">
+              <input
+                id="understandsHandmade"
+                type="checkbox"
+                checked={understandsHandmade}
+                onChange={(event) => {
+                  setUnderstandsHandmade(event.target.checked);
+                  if (event.target.checked) setUnderstandsError(false);
+                }}
+                aria-describedby={
+                  understandsError ? "understandsHandmade-error" : undefined
+                }
+                aria-invalid={understandsError}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded-sm border-border text-primary accent-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              />
+              <span className="text-sm text-muted-foreground">
+                Ik begrijp dat mijn huisnummerbordje speciaal voor mij met de
+                hand wordt gemaakt en iets kan afwijken van de preview.
+              </span>
+            </label>
+            {understandsError && (
+              <p
+                id="understandsHandmade-error"
+                role="alert"
+                className="mt-1.5 pl-7 text-sm text-destructive"
+              >
+                Vink dit aan om je configuratie te bevestigen.
+              </p>
+            )}
+          </div>
+
           {message && (
             <p
               className={
@@ -219,7 +291,7 @@ export default function ControlePage() {
             </p>
           )}
 
-          <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6">
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
             <button
               type="button"
               onClick={handleTerug}
