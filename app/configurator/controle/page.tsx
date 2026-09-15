@@ -227,6 +227,14 @@ export default function ControlePage() {
             .
           </p>
 
+          {/* Puur informatieve regel (15-9-2026, verzoek Christiaan) — geen
+              vinkje, alleen een tekstregel op de plek waar eerder het
+              verplichte vinkje stond. */}
+          <p className="mt-8 border-t border-border pt-6 text-sm text-muted-foreground">
+            Het huisnummerbordje wordt speciaal voor u met de hand gemaakt en
+            kan iets afwijken van de preview.
+          </p>
+
           {message && (
             <p
               className={
@@ -239,7 +247,7 @@ export default function ControlePage() {
             </p>
           )}
 
-          <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6">
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
             <button
               type="button"
               onClick={handleTerug}
