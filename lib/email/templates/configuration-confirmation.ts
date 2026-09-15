@@ -1,5 +1,3 @@
-import { formatPriceCents } from "@/lib/configuration/pricing";
-
 interface ConfigurationEmailData {
   // Het eigen bestelnummer van de webshop (bv. "#630002"), toegevoegd
   // 29-8-2026 op verzoek van Christiaan — al kant-en-klaar geformatteerd
@@ -55,8 +53,11 @@ interface ConfigurationEmailData {
   // het genereren onverhoopt mislukt is) → geen afbeelding tonen, de rest
   // van de mail blijft gewoon werken.
   previewImageCid?: string;
-  // Prijs — zie lib/configuration/pricing.ts. priceTotalCents is null
-  // wanneer er (nog) geen prijs bekend is voor deze maat/afwerking.
+  // Prijsvelden blijven hier (nog) bestaan omdat lib/email/sendOrderEmails.ts
+  // ze meegeeft, maar worden sinds 15-9-2026 NIET meer getoond in deze mail
+  // (verzoek Christiaan: geen prijzen in de bevestigingsmails, nl én de) —
+  // zie de render-functie hieronder, waar de prijs-/meerprijsregels en de
+  // €-vermelding bij "Kader" zijn verwijderd.
   priceTotalCents?: number | null;
   priceColorSurchargeCents?: number;
   priceExtraCharsCents?: number;
@@ -116,11 +117,6 @@ const TRANSLATIONS = {
     labelFrame: "Kader",
     frameYes: "Ja",
     frameNo: "Nee",
-    priceOnRequest: "prijs op aanvraag",
-    labelColorSurcharge: "Meerprijs kleur",
-    labelExtraCharsSurcharge: "Meerprijs extra tekens",
-    labelTotalPrice: "Totaalprijs",
-    totalPriceOnRequest: "Prijs op aanvraag",
     labelPaymentMethod: "Betaalmethode",
     labelPaidAt: "Betaald op",
     footer: "Deze e-mail is automatisch gegenereerd vanuit de configurator.",
@@ -179,11 +175,6 @@ const TRANSLATIONS = {
     labelFrame: "Rahmen",
     frameYes: "Ja",
     frameNo: "Nein",
-    priceOnRequest: "Preis auf Anfrage",
-    labelColorSurcharge: "Aufpreis Farbe",
-    labelExtraCharsSurcharge: "Aufpreis Extrazeichen",
-    labelTotalPrice: "Gesamtpreis",
-    totalPriceOnRequest: "Preis auf Anfrage",
     labelPaymentMethod: "Zahlungsmethode",
     labelPaidAt: "Bezahlt am",
     footer: "Diese E-Mail wurde automatisch vom Konfigurator generiert.",
@@ -361,36 +352,8 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
                     ${
                       isEarsOrder
                         ? ""
-                        : row(
-                            t.labelFrame,
-                            data.hasFrame
-                              ? `${t.frameYes} – ${
-                                  data.priceFrameSurchargeCents != null
-                                    ? formatPriceCents(data.priceFrameSurchargeCents)
-                                    : t.priceOnRequest
-                                }`
-                              : t.frameNo
-                          )
+                        : row(t.labelFrame, data.hasFrame ? t.frameYes : t.frameNo)
                     }
-                    ${
-                      data.priceColorSurchargeCents
-                        ? row(t.labelColorSurcharge, formatPriceCents(data.priceColorSurchargeCents))
-                        : ""
-                    }
-                    ${
-                      data.priceExtraCharsCents
-                        ? row(
-                            `${t.labelExtraCharsSurcharge} (${data.priceExtraCharsCount}×)`,
-                            formatPriceCents(data.priceExtraCharsCents)
-                          )
-                        : ""
-                    }
-                    ${row(
-                      t.labelTotalPrice,
-                      data.priceTotalCents != null
-                        ? formatPriceCents(data.priceTotalCents)
-                        : t.totalPriceOnRequest
-                    )}
                     ${
                       data.paymentMethodName && data.paidAt
                         ? row(t.labelPaymentMethod, data.paymentMethodName) +

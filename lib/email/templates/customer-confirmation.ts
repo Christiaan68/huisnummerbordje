@@ -1,5 +1,3 @@
-import { formatPriceCents } from "@/lib/configuration/pricing";
-
 interface CustomerConfirmationData {
   // Het eigen bestelnummer van de webshop (bv. "#630002"), toegevoegd
   // 29-8-2026 op verzoek van Christiaan — al kant-en-klaar geformatteerd
@@ -35,8 +33,10 @@ interface CustomerConfirmationData {
   // Onbekend/leeg (bv. omdat het genereren onverhoopt mislukt is) → geen
   // afbeelding tonen, de rest van de mail blijft gewoon werken.
   previewImageCid?: string;
-  // Prijs — zie lib/configuration/pricing.ts. priceTotalCents is null
-  // wanneer er (nog) geen prijs bekend is voor deze maat/afwerking.
+  // Prijsvelden blijven hier (nog) bestaan omdat lib/email/sendOrderEmails.ts
+  // ze meegeeft, maar worden sinds 15-9-2026 NIET meer getoond in deze mail
+  // (verzoek Christiaan: geen prijzen in de bevestigingsmails, nl én de) —
+  // zie de render-functie hieronder.
   priceTotalCents?: number | null;
   priceColorSurchargeCents?: number;
   priceExtraCharsCents?: number;
@@ -152,37 +152,9 @@ export function renderCustomerConfirmationEmail(
                     ${
                       isEarsOrder
                         ? ""
-                        : row(
-                            "Kader",
-                            data.hasFrame
-                              ? `Ja – ${
-                                  data.priceFrameSurchargeCents != null
-                                    ? formatPriceCents(data.priceFrameSurchargeCents)
-                                    : "prijs op aanvraag"
-                                }`
-                              : "Nee"
-                          )
+                        : row("Kader", data.hasFrame ? "Ja" : "Nee")
                     }
                     ${row("Aantal", data.quantity)}
-                    ${
-                      data.priceColorSurchargeCents
-                        ? row("Meerprijs kleur", formatPriceCents(data.priceColorSurchargeCents))
-                        : ""
-                    }
-                    ${
-                      data.priceExtraCharsCents
-                        ? row(
-                            `Meerprijs extra tekens (${data.priceExtraCharsCount}×)`,
-                            formatPriceCents(data.priceExtraCharsCents)
-                          )
-                        : ""
-                    }
-                    ${row(
-                      "Totaalprijs",
-                      data.priceTotalCents != null
-                        ? formatPriceCents(data.priceTotalCents)
-                        : "Prijs op aanvraag"
-                    )}
                   </table>
                 </td>
               </tr>
