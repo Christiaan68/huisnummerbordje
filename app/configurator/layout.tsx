@@ -70,19 +70,7 @@ export default async function ConfiguratorLayout({
                   "0 2px 10px rgba(0,0,0,0.75), 0 1px 3px rgba(0,0,0,0.65)",
               }}
             >
-              {/* De rechter-uitgelijnde knop in ProgressIndicator mag niet
-                  verder naar rechts uitlijnen dan de onderste "Verder"-knop
-                  (die in de linker kolom hierbeneden staat, naast de
-                  preview-kolom). Vanaf "lg" (waar die kolommen naast elkaar
-                  staan) daarom evenveel ruimte gereserveerd aan de
-                  rechterkant als de preview-kolom + tussenruimte inneemt
-                  (260px kolom + 48px = gap-12) — zo lijnt de knop precies
-                  boven de onderste knop uit, zonder de rest van de
-                  bovenaanzicht-opbouw (die daarvóór al klopte) te hoeven
-                  verbouwen. 15-9-2026, gemeld door Christiaan. */}
-              <div className="lg:pr-[308px]">
-                <ProgressIndicator />
-              </div>
+              <ProgressIndicator />
               <div className="mt-10 grid grid-cols-1 gap-12 lg:grid-cols-[1fr_260px]">
                 <div>{children}</div>
                 <ProductPreview />

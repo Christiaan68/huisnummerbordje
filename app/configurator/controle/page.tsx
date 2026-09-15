@@ -7,6 +7,7 @@ import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { ConfigurationSummary } from "@/components/configurator/ConfigurationSummary";
 import { ContactDetailsForm } from "@/components/configurator/ContactDetailsForm";
 import { QuestionModal } from "@/components/configurator/QuestionModal";
+import { StepHeader } from "@/components/configurator/StepHeader";
 import { useTopBarAction } from "@/lib/configuration/TopBarActionContext";
 import { getVisibleSteps } from "@/lib/configuration/steps";
 import { productShapes } from "@/config/product-options";
@@ -211,13 +212,10 @@ export default function ControlePage() {
 
   return (
     <div>
-      <p className="text-sm uppercase tracking-widest text-muted-foreground">
-        Configurator — stap 7 van 7
-      </p>
-      <h1 className="mt-1 font-serif text-2xl text-primary">
-        {stage === "summary" && "Controle"}
-        {stage === "contact" && "Jouw gegevens"}
-      </h1>
+      <StepHeader
+        eyebrow="Configurator — stap 7 van 7"
+        title={stage === "summary" ? "Controle" : "Jouw gegevens"}
+      />
 
       {stage === "summary" && (
         <>

@@ -1,13 +1,11 @@
 import { ConfiguratorNav } from "@/components/configurator/ConfiguratorNav";
 import { ColorSelector } from "@/components/configurator/ColorSelector";
+import { StepHeader } from "@/components/configurator/StepHeader";
 
 export default function KleurPage() {
   return (
     <div>
-      <p className="text-sm uppercase tracking-widest text-muted-foreground">
-        Configurator — stap 3 van 7
-      </p>
-      <h1 className="mt-1 font-serif text-2xl text-primary">Kleur</h1>
+      <StepHeader eyebrow="Configurator — stap 3 van 7" title="Kleur" />
       <p className="mt-4 text-muted-foreground">
         Kies de kleur van jouw huisnummerbordje. Zwart, Wit en Donkerblauw
         zijn de standaardkleuren en zitten bij de prijs inbegrepen. Voor de

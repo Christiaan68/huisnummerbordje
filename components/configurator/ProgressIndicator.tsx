@@ -1,22 +1,14 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Check, ChevronRight } from "lucide-react";
+import { Check } from "lucide-react";
 import { getVisibleSteps } from "@/lib/configuration/steps";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
-import { useTopBarAction } from "@/lib/configuration/TopBarActionContext";
 import { cn } from "@/lib/utils";
 
 export function ProgressIndicator() {
   const pathname = usePathname();
   const { selection } = useConfigurator();
-  // De "Verder"/"Configuratie bevestigen"-knop van de huidige stap, hier
-  // rechts naast de tabjes getoond (op verzoek van Christiaan, 15-9-2026,
-  // zodat die knop niet alleen onderaan de pagina staat) — elke stap meldt
-  // zijn eigen knop aan via TopBarActionContext (zie ConfiguratorNav.tsx en
-  // app/configurator/controle/page.tsx), deze component weet zelf niets
-  // over de stap-specifieke logica erachter.
-  const { action } = useTopBarAction();
   // Sinds 9-9-2026 (7 vormen): toont alleen de stappen die voor de huidig
   // gekozen vorm van toepassing zijn (zie lib/configuration/steps.ts,
   // getVisibleSteps) — zo krijgt een klant met een "oren"-vorm bv. geen
@@ -26,9 +18,15 @@ export function ProgressIndicator() {
   const visibleSteps = getVisibleSteps(selection);
   const currentIndex = visibleSteps.findIndex((step) => step.path === pathname);
 
+  // De "Verder"/"Configuratie bevestigen"-knop stond hier eerst ook (rechts
+  // naast deze tabjes), maar viel dan op een andere hoogte dan de oranje
+  // staptitel eronder (bv. "Vorm") en dus niet mooi boven de onderste knop
+  // uitgelijnd — Christiaan wilde 'm op dezelfde hoogte als die titel
+  // (15-9-2026). Staat sindsdien in StepHeader.tsx, dat elke stappagina
+  // gebruikt voor zijn titelblok. Deze component toont dus weer alleen de
+  // tabjes, zoals vóór die knop-toevoeging.
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <ol className="flex flex-1 items-center gap-1 sm:gap-2">
+    <ol className="flex items-center gap-1 sm:gap-2">
       {visibleSteps.map((step, index) => {
         const isCurrent = index === currentIndex;
         const isDone = index < currentIndex && step.isComplete(selection);
@@ -78,28 +76,6 @@ export function ProgressIndicator() {
           </li>
         );
       })}
-      </ol>
-
-      {/* Bewust ONDER de tabjes als de ruimte krap wordt (flex-wrap hierboven
-          + ml-auto hier) i.p.v. de tabjes te laten verdrukken — zo blijft er
-          op mobiel voldoende witruimte omdat beide rijen dan hun eigen volle
-          breedte houden. */}
-      {action && (
-        <button
-          type="button"
-          onClick={action.onClick}
-          disabled={action.disabled}
-          className={cn(
-            "ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-sm px-5 py-2.5 text-sm font-medium transition-colors sm:px-6 sm:py-3",
-            !action.disabled
-              ? "bg-primary text-primary-foreground hover:bg-primary/90"
-              : "cursor-not-allowed bg-secondary text-muted-foreground"
-          )}
-        >
-          {action.label}
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      )}
-    </div>
+    </ol>
   );
 }
