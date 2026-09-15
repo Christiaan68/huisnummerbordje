@@ -85,7 +85,8 @@ export function ShapeSelector() {
             Iets anders nodig?
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Wil je iets speciaals of een andere vorm? Neem contact met ons op.
+            Wil je iets speciaals, een andere vorm, of gaat het om een
+            zakelijke aanvraag? Neem gerust contact met ons op.
           </p>
         </div>
       </Link>

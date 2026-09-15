@@ -481,6 +481,15 @@ export function ProductPreview() {
             aspectRatio: ratio,
             borderRadius: isOval ? "50%" : "12px",
             color: textColor,
+            // De configurator-achtergrond zet een text-shadow op de
+            // buitenste inhoud-wrapper (leesbaarheid over de achtergrondfoto,
+            // zie app/configurator/layout.tsx) — dat is een "inherited"
+            // CSS-eigenschap en kwam daardoor ook op het huisnummer/de
+            // tekstregels van het bordje zelf terecht. Dat oogt niet als een
+            // echt geëmailleerd bordje (15-9-2026, feedback Christiaan) —
+            // hier expliciet uitgezet zodat de preview-tekst weer vlak
+            // (schaduwloos) blijft, ongeacht wat de omliggende pagina doet.
+            textShadow: "none",
           }}
         >
           {/* Het "geëmailleerde plaatje" zelf: achtergrond en de 4
