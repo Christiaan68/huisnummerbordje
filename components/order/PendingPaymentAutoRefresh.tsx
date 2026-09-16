@@ -96,10 +96,11 @@ interface PendingPaymentAutoRefreshProps {
  *
  * UITBREIDING (16-9-2026, op verzoek van Christiaan): tegelijk met de extra
  * regel hierboven verschijnen nu ook pas "Naar home" en de "Vraag over deze
- * bestelling"-knop (zie PaymentIssueContact) — samen in één, rechts
- * uitgelijnde regel, met dezelfde breedte (max-w-md) als de tekst erboven,
- * zodat de rechterkant van de knoppenrij precies onder de rechterkant van
- * de tekst valt. Vóór dat moment (attempts < 2) toont dit component nog
+ * bestelling"-knop (zie PaymentIssueContact) — samen in één regel, met
+ * dezelfde breedte (max-w-md) als de tekst erboven: "Naar home" links
+ * uitgelijnd (onder de linkerkant van de tekst), "Vraag over deze
+ * bestelling" rechts uitgelijnd (onder de rechterkant van de tekst). Vóór
+ * dat moment (attempts < 2) toont dit component nog
  * NIETS zichtbaars: de betaling duurt dan nog gewoon normaal, geen reden om
  * al een knoppenrij te tonen — zie app/bestelling/bedankt/page.tsx, waar de
  * algemene knoppenrij voor die reden bewust helemaal wordt overgeslagen
@@ -131,7 +132,7 @@ export function PendingPaymentAutoRefresh(props: PendingPaymentAutoRefreshProps)
         hoeft niets te doen, we blijven het voor je checken.
       </p>
 
-      <div className="mt-6 flex max-w-md flex-wrap items-center justify-end gap-4">
+      <div className="mt-6 flex max-w-md flex-wrap items-center justify-between gap-4">
         <Link
           href="/"
           className="inline-flex items-center justify-center rounded-sm border border-border bg-secondary px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary/70"
