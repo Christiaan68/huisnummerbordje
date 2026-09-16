@@ -84,3 +84,62 @@ export function getPaymentMethodLabel(method: string | null | undefined): string
     method.charAt(0).toUpperCase() + method.slice(1)
   );
 }
+
+/**
+ * BIC → banknaam, alleen relevant bij iDEAL-betalingen (Mollie geeft dan
+ * `payment.details.consumerBic` mee) — toegevoegd 16-9-2026, op verzoek van
+ * Christiaan, zodat het beheertool naast de betaalmethode ook de bank kan
+ * tonen. Bevat de banken die als iDEAL-issuer bij Mollie beschikbaar zijn.
+ * Een onbekende BIC valt terug op de BIC zelf, zodat er nooit een verzonnen
+ * banknaam getoond wordt (zie ook getFailureReasonLabel hieronder, zelfde
+ * uitgangspunt).
+ */
+const BANK_NAME_BY_BIC: Record<string, string> = {
+  ABNANL2A: "ABN AMRO",
+  ASNBNL21: "ASN Bank",
+  BUNQNL2A: "bunq",
+  INGBNL2A: "ING",
+  KNABNL2H: "Knab",
+  RABONL2U: "Rabobank",
+  RBRBNL21: "RegioBank",
+  SNSBNL2A: "SNS Bank",
+  TRIONL2U: "Triodos Bank",
+  FVLBNL22: "Van Lanschot Kempen",
+  NNBANL2G: "Nationale-Nederlanden",
+  MOYONL21: "Moneyou",
+  REVOLT21: "Revolut",
+};
+
+export function getBankName(bic: string | null | undefined): string | null {
+  if (!bic) return null;
+  return BANK_NAME_BY_BIC[bic] ?? bic;
+}
+
+/**
+ * Mollie's eigen, technische foutreden bij een afgewezen creditcardbetaling
+ * (`payment.details.failureReason`) vertaald naar het Nederlands —
+ * toegevoegd 16-9-2026. Komt in de praktijk vrijwel alleen voor bij
+ * creditcard: bij iDEAL geeft Mollie normaal gesproken geen aparte
+ * foutreden mee, daar is de status zelf ('failed'/'expired'/'canceled') de
+ * enige beschikbare informatie. Een reden die hier nog niet in staat, wordt
+ * ongewijzigd (Mollie's eigen code) getoond in plaats van verzonnen te
+ * worden — zie de afspraak hierover in het orderoverzicht.
+ */
+const FAILURE_REASON_LABELS: Record<string, string> = {
+  invalid_card_number: "ongeldig kaartnummer",
+  invalid_cvv: "ongeldige CVV-code",
+  invalid_card_holder_name: "ongeldige naam kaarthouder",
+  card_expired: "kaart verlopen",
+  invalid_card_type: "kaarttype niet ondersteund",
+  refer_to_card_issuer: "geweigerd door kaartuitgever",
+  insufficient_funds: "onvoldoende saldo",
+  inactive_card: "kaart niet actief",
+  unauthorized: "niet geautoriseerd",
+  possible_fraud: "mogelijke fraude gedetecteerd",
+  unknown_reason: "onbekende reden",
+};
+
+export function getFailureReasonLabel(reason: string | null | undefined): string | null {
+  if (!reason) return null;
+  return FAILURE_REASON_LABELS[reason] ?? reason;
+}

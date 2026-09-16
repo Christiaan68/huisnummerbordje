@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { createMollie, getPaymentMethodLabel } from "@/lib/mollie/client";
+import {
+  createMollie,
+  getPaymentMethodLabel,
+  getBankName,
+  getFailureReasonLabel,
+} from "@/lib/mollie/client";
 import { formatDutchDateTime } from "@/lib/formatDate";
 import {
   getOrderById,
@@ -93,9 +98,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true, already: "paid" });
   }
 
+  // Mollie's `details`-veld bevat, afhankelijk van de betaalmethode, extra
+  // informatie (bv. de bank bij iDEAL via consumerBic, of een foutreden bij
+  // een afgewezen creditcard via failureReason) — de precieze vorm
+  // verschilt per methode, daarom hier bewust losjes getypeerd in plaats
+  // van Mollie's eigen (per-methode wisselende) detail-types over te nemen.
+  // Toegevoegd 16-9-2026, op verzoek van Christiaan, zodat het beheertool
+  // deze gegevens per order kan tonen.
+  const paymentMethodName = payment.method ? getPaymentMethodLabel(payment.method) : null;
+  const paymentDetails = payment.details as Record<string, string | undefined> | undefined;
+  const paymentBankName = getBankName(paymentDetails?.consumerBic);
+
   if (payment.status === "paid") {
     try {
-      await markOrderAsPaid(orderId, paymentId);
+      await markOrderAsPaid(orderId, paymentId, paymentMethodName, paymentBankName);
     } catch (err) {
       console.error(
         `Mollie-webhook: kon bestelling #${orderId} niet op 'paid' zetten:`,
@@ -180,7 +196,6 @@ export async function POST(request: Request) {
       // exacte moment). paidAt kan in theorie ontbreken (bv. bij een heel
       // ongebruikelijke edge-case) — dan valt dit terug op "nu" in plaats
       // van de mail te laten mislukken.
-      const paymentMethodName = getPaymentMethodLabel(payment.method);
       const paidAtFormatted = formatDutchDateTime(payment.paidAt ?? new Date());
 
       const result = await sendOrderEmails({
@@ -267,8 +282,16 @@ export async function POST(request: Request) {
     payment.status === "expired" ||
     payment.status === "canceled"
   ) {
+    const paymentFailureReason = getFailureReasonLabel(paymentDetails?.failureReason);
     try {
-      await updateOrderPaymentStatus(orderId, payment.status, paymentId);
+      await updateOrderPaymentStatus(
+        orderId,
+        payment.status,
+        paymentId,
+        paymentMethodName,
+        paymentBankName,
+        paymentFailureReason
+      );
     } catch (err) {
       console.error(
         `Mollie-webhook: kon bestelling #${orderId} niet op '${payment.status}' zetten:`,

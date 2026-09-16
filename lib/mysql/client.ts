@@ -216,15 +216,23 @@ export async function setOrderMolliePaymentId(
 /**
  * Zet een bestelling op 'paid' zodra Mollie (via de webhook) een gelukte
  * betaling bevestigt, en registreert het moment daarvan.
+ *
+ * paymentMethodName/paymentBankName (toegevoegd 16-9-2026, op verzoek van
+ * Christiaan) komen rechtstreeks van Mollie (zie getPaymentMethodLabel/
+ * getBankName in lib/mollie/client.ts) en worden bewaard zodat het
+ * beheertool ze in het orderoverzicht kan tonen — banknaam is optioneel
+ * (`null` als Mollie 'm niet meegeeft, bv. bij creditcard).
  */
 export async function markOrderAsPaid(
   orderId: number,
-  molliePaymentId: string
+  molliePaymentId: string,
+  paymentMethodName?: string | null,
+  paymentBankName?: string | null
 ): Promise<void> {
   const db = getPool();
   await db.execute(
-    "UPDATE configurations SET payment_status = 'paid', mollie_payment_id = ?, paid_at = NOW() WHERE id = ?",
-    [molliePaymentId, orderId]
+    "UPDATE configurations SET payment_status = 'paid', mollie_payment_id = ?, paid_at = NOW(), payment_method_name = ?, payment_bank_name = ? WHERE id = ?",
+    [molliePaymentId, paymentMethodName ?? null, paymentBankName ?? null, orderId]
   );
 }
 
@@ -232,16 +240,31 @@ export async function markOrderAsPaid(
  * Zet een bestelling op 'failed'/'expired'/'canceled' zodra Mollie (via de
  * webhook) zo'n eindstatus bevestigt. Er gaan in deze gevallen nooit
  * bevestigingsmails uit.
+ *
+ * paymentMethodName/paymentBankName/paymentFailureReason (toegevoegd
+ * 16-9-2026, zie markOrderAsPaid hierboven): dezelfde herkomst (Mollie
+ * zelf, via lib/mollie/client.ts). paymentFailureReason blijft `null` als
+ * Mollie zelf geen reden meegeeft — er wordt hier nooit een reden verzonnen.
  */
 export async function updateOrderPaymentStatus(
   orderId: number,
   status: "failed" | "expired" | "canceled",
-  molliePaymentId: string
+  molliePaymentId: string,
+  paymentMethodName?: string | null,
+  paymentBankName?: string | null,
+  paymentFailureReason?: string | null
 ): Promise<void> {
   const db = getPool();
   await db.execute(
-    "UPDATE configurations SET payment_status = ?, mollie_payment_id = ? WHERE id = ?",
-    [status, molliePaymentId, orderId]
+    "UPDATE configurations SET payment_status = ?, mollie_payment_id = ?, payment_method_name = ?, payment_bank_name = ?, payment_failure_reason = ? WHERE id = ?",
+    [
+      status,
+      molliePaymentId,
+      paymentMethodName ?? null,
+      paymentBankName ?? null,
+      paymentFailureReason ?? null,
+      orderId,
+    ]
   );
 }
 
@@ -290,6 +313,11 @@ export interface OrderRow {
   payment_status: "pending" | "paid" | "failed" | "expired" | "canceled";
   mollie_payment_id: string | null;
   paid_at: string | null;
+  // Toegevoegd 16-9-2026: zie markOrderAsPaid/updateOrderPaymentStatus
+  // hierboven — blijven `null` zolang een bestelling nog 'pending' is.
+  payment_method_name: string | null;
+  payment_bank_name: string | null;
+  payment_failure_reason: string | null;
   created_at: string;
 }
 

@@ -168,3 +168,21 @@ ALTER TABLE configurations ADD COLUMN plate_color_name VARCHAR(100) NULL AFTER p
 -- gewijzigd te worden: de nieuwe "oren"-vormen staan maximaal 7 tekens toe
 -- (zie houseNumberEarsSchema in lib/validation/text-input.schema.ts), dat
 -- past ruim binnen de bestaande kolombreedte.
+
+-- MIGRATIE 16-9-2026: uitbreiding orderoverzicht beheertool met
+-- betaalmethode, bank en foutreden (op verzoek van Christiaan). Deze drie
+-- kolommen worden gevuld door de Mollie-webhook (zie
+-- app/api/mollie-webhook/route.ts) zodra Mollie een EINDSTATUS doorgeeft
+-- (betaald, mislukt, verlopen of geannuleerd) — voor een order die nog
+-- 'pending' is, staan ze dus nog leeg. payment_method_name/
+-- payment_bank_name komen rechtstreeks van Mollie's payment.method en (bij
+-- iDEAL) payment.details.consumerBic; payment_failure_reason komt alleen
+-- van Mollie's eigen payment.details.failureReason (voornamelijk bij
+-- geweigerde creditcardbetalingen) — deze kolom blijft bewust leeg als
+-- Mollie zelf geen reden meegeeft, er wordt nooit een reden verzonnen. Voer
+-- onderstaande drie regels ÉÉNMALIG uit in hetzelfde SQL-scherm om de tabel
+-- bij te werken:
+
+ALTER TABLE configurations ADD COLUMN payment_method_name VARCHAR(100) NULL;
+ALTER TABLE configurations ADD COLUMN payment_bank_name VARCHAR(100) NULL;
+ALTER TABLE configurations ADD COLUMN payment_failure_reason VARCHAR(255) NULL;
