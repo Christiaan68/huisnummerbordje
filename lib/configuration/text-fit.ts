@@ -1,4 +1,9 @@
-import { LINE_GAP_RATIO_BY_FONT, DEFAULT_LINE_GAP_RATIO } from "./plate-visual";
+import {
+  LINE_GAP_RATIO_BY_FONT,
+  DEFAULT_LINE_GAP_RATIO,
+  LINE_HEIGHT_RATIO_BY_FONT,
+  DEFAULT_LINE_HEIGHT_RATIO,
+} from "./plate-visual";
 
 export interface AutoFitInput {
   widthMm: number;
@@ -98,12 +103,22 @@ const DEFAULT_CHAR_WIDTH_RATIO = 0.62;
 // er in werkelijkheid nodig is, waardoor het nummer op bordjes waar de
 // hoogte (niet de breedte) de beperkende factor is — bijvoorbeeld brede,
 // lage bordjes, of bordjes met 1 of 2 extra tekstregels — onnodig klein
-// werd berekend. Deze waarde nu op 1 gezet zodat de berekening precies
-// overeenkomt met wat er echt getekend wordt; dit maakt de tekst nergens
-// kleiner, alleen (waar hoogte de beperking was) groter.
-const LINE_HEIGHT_RATIO = 1;
-const LINE1_TO_NUMBER_RATIO = 0.2;
-const LINE2_TO_NUMBER_RATIO = 0.12;
+// werd berekend.
+//
+// 16-9-2026: verder verfijnd — de regelBOX is exact de fontgrootte
+// (line-height:1, zie hierboven), maar de INKT van een cijfer vult die box
+// niet volledig (elk lettertype heeft van nature wat "lucht" boven/onder
+// het cijfer). Zolang de hoogte de beperkende factor is (o.a. bordjes
+// zonder extra tekstregel, brede/lage bordjes), werd daardoor nog steeds
+// onnodig veel witruimte overgehouden. LINE_HEIGHT_RATIO_BY_FONT
+// (plate-visual.ts, per lettertype gemeten) corrigeert hiervoor; bij een
+// combinatie van lettertypes (huisnummer + tekstregel(s), elk met een
+// eigen lettertype sinds 28-8-2026) wordt — net als bij gapRatioFor
+// hieronder — de meest terughoudende (hoogste, dus minst vergrotende)
+// waarde van de betrokken lettertypes gebruikt, zodat er nooit te weinig
+// hoogte gereserveerd wordt.
+const LINE1_TO_NUMBER_RATIO = 0.15;
+const LINE2_TO_NUMBER_RATIO = 0.09;
 // Marge rond de tekst — bewust klein gehouden. Bij rechthoekige bordjes
 // wordt deze toch altijd overstemd door de (grotere) marge die nodig is om
 // de schroefjes vrij te houden (zie getScrewClearanceMarginsMm hieronder),
@@ -126,6 +141,12 @@ function gapRatioFor(fontId: string | null | undefined): number {
   return fontId != null && fontId in LINE_GAP_RATIO_BY_FONT
     ? LINE_GAP_RATIO_BY_FONT[fontId]
     : DEFAULT_LINE_GAP_RATIO;
+}
+
+function lineHeightRatioFor(fontId: string | null | undefined): number {
+  return fontId != null && fontId in LINE_HEIGHT_RATIO_BY_FONT
+    ? LINE_HEIGHT_RATIO_BY_FONT[fontId]
+    : DEFAULT_LINE_HEIGHT_RATIO;
 }
 
 export function computeAutoFit(input: AutoFitInput): AutoFitResult {
@@ -167,6 +188,18 @@ export function computeAutoFit(input: AutoFitInput): AutoFitResult {
   ];
   const gapRatio = Math.max(...activeGapRatios);
 
+  // Zelfde redenering als gapRatio hierboven, nu voor de inkt-vs-regelbox-
+  // verhouding (zie LINE_HEIGHT_RATIO_BY_FONT in plate-visual.ts): de
+  // MEEST terughoudende (hoogste, dus minst vergrotende) waarde van de
+  // betrokken lettertypes wordt gebruikt, zodat er nooit te weinig hoogte
+  // gereserveerd wordt.
+  const activeLineHeightRatios = [
+    lineHeightRatioFor(numberFontId),
+    ...(hasLine1 ? [lineHeightRatioFor(line1FontId)] : []),
+    ...(hasLine2 ? [lineHeightRatioFor(line2FontId)] : []),
+  ];
+  const lineHeightRatio = Math.max(...activeLineHeightRatios);
+
   const baseMarginMm = Math.max(
     MIN_MARGIN_MM,
     Math.min(widthMm, heightMm) * baseMarginRatio
@@ -198,7 +231,7 @@ export function computeAutoFit(input: AutoFitInput): AutoFitResult {
 
   const lineCount = 1 + (hasLine1 ? 1 : 0) + (hasLine2 ? 1 : 0);
   const heightFactor =
-    LINE_HEIGHT_RATIO *
+    lineHeightRatio *
       (1 +
         (hasLine1 ? LINE1_TO_NUMBER_RATIO : 0) +
         (hasLine2 ? LINE2_TO_NUMBER_RATIO : 0)) +

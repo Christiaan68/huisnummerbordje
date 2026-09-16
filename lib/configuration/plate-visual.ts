@@ -325,6 +325,39 @@ export const LINE_GAP_RATIO_BY_FONT: Record<string, number> = {
 };
 export const DEFAULT_LINE_GAP_RATIO = 0.05;
 
+// 16-9-2026 (feedback Christiaan: "het huisnummer mag sowieso nog groter,
+// ook t.o.v. de eventuele andere regels") — de hoogteberekening in
+// computeAutoFit (text-fit.ts) ging er tot nu toe van uit dat een cijfer
+// de VOLLE fontgrootte (line-height:1-regelbox) visueel vult. In
+// werkelijkheid neemt een cijfer maar een deel daarvan in (de rest is
+// normale "lucht" boven/onder het cijfer, ingebouwd in elk lettertype) —
+// hierdoor werd de tekst onnodig klein berekend zodra de HOOGTE (i.p.v.
+// de breedte) de beperkende factor was, o.a. bij bordjes zonder extra
+// tekstregel en brede/lage bordjes. Gemeten (zelfde methode/opzet als
+// CHAR_WIDTH_RATIO_BY_FONT in text-fit.ts: de echte lettertypebestanden in
+// een headless browser geladen, met canvas `measureText`/
+// `actualBoundingBox*` de werkelijke inkt-hoogte van de cijfers 0-9
+// gemeten), met bewust het HOOGSTE gemeten cijfer (niet het gemiddelde) +
+// 5% marge aangehouden — dus veilig voor het "hoogste" cijfer van dat
+// lettertype, niet alleen voor een gemiddelde. Bij "commercial-script"
+// (Pinyon Script) week één gemeten cijfer sterk af van de rest (een
+// sierlijke uithaal) — daar bewust op 1 (geen aanpassing/geen extra
+// vergroting) gehouden, veiliger dan varen op een onbetrouwbare uitschieter
+// bij een verbonden schrijfletter. CSS verdeelt de "lucht" in een
+// regelbox altijd gelijk boven/onder de tekst (ongeacht line-height-
+// waarde), dus deze cijfers vergroten de tekst zonder 'm buiten de al
+// berekende marge (schroefjes/kaderlijn) te laten uitsteken.
+export const LINE_HEIGHT_RATIO_BY_FONT: Record<string, number> = {
+  "fette-fraktur": 0.8,
+  bodoni: 0.88,
+  colonel: 0.76,
+  times: 0.72,
+  "schwitserland-schmal": 0.8,
+  "commercial-script": 1,
+  "ears-fixed-serif": 0.88, // zelfde als "bodoni", zie toelichting hierboven bij LINE_GAP_RATIO_BY_FONT
+};
+export const DEFAULT_LINE_HEIGHT_RATIO = 1;
+
 // Lettergewicht per lettertype-optie, gebruikt door zowel de live preview
 // (ProductPreview.tsx) als de e-mailafbeelding (plate-preview-image.tsx,
 // via FONT_CONFIG_BY_ID daar) om te bepalen hoe vet de tekst getekend
