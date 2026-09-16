@@ -20,6 +20,9 @@ interface ConfigurationEmailData {
   // render-functie hieronder (2 losse "Kleur oren"/"Kleur vlak"-regels in
   // plaats van de ene "Kleur"-regel) en lib/email/sendOrderEmails.ts.
   colorName?: string;
+  // printColorName ("Opdruk kleur", toegevoegd 16-9-2026) — naast colorName
+  // ("Ondergrond kleur") hierboven, zie types/configuration.ts.
+  printColorName?: string;
   earColorName?: string;
   plateColorName?: string;
   sizeName: string;
@@ -101,9 +104,17 @@ const TRANSLATIONS = {
     finishFlat: "Vlak",
     finishCurved: "Gewelfd",
     labelColor: "Kleur",
+    // labelBaseColor/labelPrintColor (16-9-2026, op verzoek van Christiaan):
+    // vervangen de losse labelColor/labelEarColor/labelPlateColor-regels
+    // hierboven/hieronder — dezelfde 2 labels gelden nu voor ALLE vormen
+    // (colorMode "single" én "ears-and-plate"), zie render-functie.
+    labelBaseColor: "Ondergrond kleur",
+    labelPrintColor: "Opdruk kleur",
     // labelEarColor/labelPlateColor: toegevoegd 9-9-2026 voor de 3 nieuwe
-    // "oren"-vormen (colorMode "ears-and-plate") — vervangen dan sámen de
-    // ene labelColor-regel hierboven (zie render-functie).
+    // "oren"-vormen (colorMode "ears-and-plate") — sinds 16-9-2026 niet meer
+    // gebruikt door de render-functie (die gebruikt labelBaseColor/
+    // labelPrintColor hierboven voor alle vormen), maar hier bewust laten
+    // staan i.p.v. verwijderd, mocht dit ooit weer uit elkaar moeten.
     labelEarColor: "Kleur oren",
     labelPlateColor: "Kleur vlak",
     labelSize: "Maat",
@@ -159,9 +170,16 @@ const TRANSLATIONS = {
     finishFlat: "Flach",
     finishCurved: "Gewölbt",
     labelColor: "Farbe",
+    // labelBaseColor/labelPrintColor: toegevoegd 16-9-2026, samen met de
+    // Nederlandse labels hierboven — eigen (niet door Christiaan
+    // geverifieerde) vertaling, zie het rapport van deze wijziging.
+    labelBaseColor: "Untergrundfarbe",
+    labelPrintColor: "Aufdruckfarbe",
     // Toegevoegd 9-9-2026, samen met de Nederlandse labels hierboven —
     // eigen (niet door Christiaan geverifieerde) vertaling, zie het
-    // rapport van deze wijziging.
+    // rapport van deze wijziging. Sinds 16-9-2026 niet meer gebruikt door de
+    // render-functie, zie de toelichting bij labelEarColor/labelPlateColor
+    // (nl) hierboven.
     labelEarColor: "Farbe Ösen",
     labelPlateColor: "Farbe Platte",
     labelSize: "Größe",
@@ -335,11 +353,10 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
                     }
                     ${
                       isEarsOrder
-                        ? row(t.labelEarColor, data.earColorName!) +
-                          row(t.labelPlateColor, data.plateColorName!)
-                        : data.colorName
-                          ? row(t.labelColor, data.colorName)
-                          : ""
+                        ? row(t.labelBaseColor, data.plateColorName!) +
+                          row(t.labelPrintColor, data.earColorName!)
+                        : (data.colorName ? row(t.labelBaseColor, data.colorName) : "") +
+                          (data.printColorName ? row(t.labelPrintColor, data.printColorName) : "")
                     }
                     ${row(t.labelSize, data.sizeName)}
                     ${row(t.labelHouseNumber, data.customText)}

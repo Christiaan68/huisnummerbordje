@@ -44,8 +44,8 @@ export function ConfigurationSummary() {
       <dl>
         <Row label="Vorm" value={shape?.name ?? "—"} />
         <Row label="Maat" value={size?.name ?? "—"} />
-        <Row label="Kleur oren" value={earColor?.name ?? "—"} />
-        <Row label="Kleur vlak" value={plateColor?.name ?? "—"} />
+        <Row label="Ondergrond kleur" value={plateColor?.name ?? "—"} />
+        <Row label="Opdruk kleur" value={earColor?.name ?? "—"} />
         <Row label="Huisnummer" value={selection.customText || "—"} />
         {orderLabel && <Row label="Volgorde" value={orderLabel} />}
         {price && price.colorSurchargeCents > 0 && (
@@ -68,8 +68,11 @@ export function ConfigurationSummary() {
     );
   }
 
-  // colorMode "single" — de 4 oorspronkelijke vormen. Ongewijzigd gedrag.
+  // colorMode "single" — de 4 oorspronkelijke vormen + het ovale model.
+  // Sinds 16-9-2026: twee kleuren, "Ondergrond kleur" (colorId) en "Opdruk
+  // kleur" (printColorId) — zie ColorSelector.tsx.
   const color = productColors.find((c) => c.id === selection.colorId);
+  const printColor = productColors.find((c) => c.id === selection.printColorId);
   const numberFont = productFonts.find((f) => f.id === selection.numberFontId);
   const line1Font = productFonts.find((f) => f.id === selection.line1FontId);
   const line2Font = productFonts.find((f) => f.id === selection.line2FontId);
@@ -90,7 +93,8 @@ export function ConfigurationSummary() {
               : "—"
         }
       />
-      <Row label="Kleur" value={color?.name ?? "—"} />
+      <Row label="Ondergrond kleur" value={color?.name ?? "—"} />
+      <Row label="Opdruk kleur" value={printColor?.name ?? "—"} />
       <Row label="Maat" value={size?.name ?? "—"} />
       <Row label="Huisnummer" value={selection.customText || "—"} />
       <Row label="Lettertype huisnummer" value={numberFont?.name ?? "—"} />

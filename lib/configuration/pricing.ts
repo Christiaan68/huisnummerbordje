@@ -92,13 +92,25 @@ export function calculatePrice(
       (earIsSurcharge ? globalPricingOptions.colorSurchargeCents : 0) +
       (plateIsSurcharge ? globalPricingOptions.colorSurchargeCents : 0);
   } else {
-    // Bestaande vormen (colorMode "single") — ongewijzigd gedrag. Nog geen
-    // kleur gekozen? Dan nog geen meerprijs tonen (die komt vanzelf zodra de
-    // klant een kleur kiest).
-    const isStandardColor = selection.colorId
-      ? globalPricingOptions.standardColorIds.includes(selection.colorId)
-      : true;
-    colorSurchargeCents = isStandardColor ? 0 : globalPricingOptions.colorSurchargeCents;
+    // Vormen met colorMode "single" — sinds 16-9-2026 (op verzoek van
+    // Christiaan) TWEE losse kleurkeuzes ("Ondergrond kleur" = colorId,
+    // "Opdruk kleur" = printColorId) i.p.v. één — exact dezelfde opzet als
+    // de "oren"-vormen hierboven: de meerprijs geldt PER kleur die geen
+    // standaardkleur is (dus 0x, 1x of 2x colorSurchargeCents), tegen
+    // dezelfde `standardColorIds` voor beide (colorId en printColorId komen
+    // immers uit dezelfde lijst, productColors). Nog geen keuze gemaakt voor
+    // een kleurveld? Dan telt dat veld (nog) niet mee als meerprijskleur
+    // (die verschijnt vanzelf zodra de klant een kleur kiest).
+    const baseIsSurcharge = Boolean(
+      selection.colorId && !globalPricingOptions.standardColorIds.includes(selection.colorId)
+    );
+    const printIsSurcharge = Boolean(
+      selection.printColorId &&
+        !globalPricingOptions.standardColorIds.includes(selection.printColorId)
+    );
+    colorSurchargeCents =
+      (baseIsSurcharge ? globalPricingOptions.colorSurchargeCents : 0) +
+      (printIsSurcharge ? globalPricingOptions.colorSurchargeCents : 0);
   }
 
   const extraCharsCount = Math.max(

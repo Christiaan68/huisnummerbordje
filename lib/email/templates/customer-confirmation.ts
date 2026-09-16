@@ -15,6 +15,9 @@ interface CustomerConfirmationData {
   // plateColorName hieronder gevuld (nooit beide tegelijk) — zelfde opzet
   // als lib/email/templates/configuration-confirmation.ts.
   colorName?: string;
+  // printColorName ("Opdruk kleur", toegevoegd 16-9-2026) — naast colorName
+  // ("Ondergrond kleur") hierboven, zie types/configuration.ts.
+  printColorName?: string;
   earColorName?: string;
   plateColorName?: string;
   sizeName: string;
@@ -140,10 +143,10 @@ export function renderCustomerConfirmationEmail(
                     ${isEarsOrder ? "" : row("Afwerking", data.finish === "vlak" ? "Vlak" : "Gewelfd")}
                     ${
                       isEarsOrder
-                        ? row("Kleur oren", data.earColorName!) + row("Kleur vlak", data.plateColorName!)
-                        : data.colorName
-                          ? row("Kleur", data.colorName)
-                          : ""
+                        ? row("Ondergrond kleur", data.plateColorName!) +
+                          row("Opdruk kleur", data.earColorName!)
+                        : (data.colorName ? row("Ondergrond kleur", data.colorName) : "") +
+                          (data.printColorName ? row("Opdruk kleur", data.printColorName) : "")
                     }
                     ${row("Maat", data.sizeName)}
                     ${row("Huisnummer", data.customText)}

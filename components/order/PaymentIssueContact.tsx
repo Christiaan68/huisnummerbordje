@@ -15,6 +15,7 @@ interface PaymentIssueContactProps {
   shapeName: string;
   finish: "vlak" | "gewelfd";
   colorName?: string | null;
+  printColorName?: string | null;
   earColorName?: string | null;
   plateColorName?: string | null;
   sizeName: string;
@@ -106,9 +107,14 @@ export function PaymentIssueContact(props: PaymentIssueContactProps) {
     ["Adres", `${props.contactAddress}, ${props.contactPostalCode} ${props.contactCity}`],
     ["Vorm", props.shapeName],
     ["Afwerking", props.finish === "vlak" ? "Vlak" : "Gewelfd"],
-    ...(props.colorName ? ([["Kleur", props.colorName]] as [string, string][]) : []),
-    ...(props.earColorName ? ([["Kleur oren", props.earColorName]] as [string, string][]) : []),
-    ...(props.plateColorName ? ([["Kleur vlak", props.plateColorName]] as [string, string][]) : []),
+    ...(props.colorName ? ([["Ondergrond kleur", props.colorName]] as [string, string][]) : []),
+    ...(props.printColorName
+      ? ([["Opdruk kleur", props.printColorName]] as [string, string][])
+      : []),
+    ...(props.plateColorName
+      ? ([["Ondergrond kleur", props.plateColorName]] as [string, string][])
+      : []),
+    ...(props.earColorName ? ([["Opdruk kleur", props.earColorName]] as [string, string][]) : []),
     ["Maat", props.sizeName],
     ["Huisnummer", props.customText],
     ...(props.extraLine1 ? ([["Tekstregel 1", props.extraLine1]] as [string, string][]) : []),

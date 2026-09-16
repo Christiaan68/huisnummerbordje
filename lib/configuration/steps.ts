@@ -44,13 +44,15 @@ export const configuratorSteps: ConfiguratorStep[] = [
     label: "Kleur",
     // Voor colorMode "ears-and-plate"-vormen (nieuw 9-9-2026) zijn er 2
     // losse verplichte kleuren (oren + vlak) in plaats van de ene `colorId`
-    // — zie ColorSelector.tsx en types/configuration.ts.
+    // — zie ColorSelector.tsx en types/configuration.ts. Sinds 16-9-2026
+    // geldt ook voor colorMode "single"-vormen 2 losse verplichte kleuren
+    // (colorId = "Ondergrond kleur", printColorId = "Opdruk kleur").
     isComplete: (s) => {
       const shape = productShapes.find((shape) => shape.id === s.shapeId);
       if (isEarsShape(shape)) {
         return Boolean(s.earColorId) && Boolean(s.plateColorId);
       }
-      return Boolean(s.colorId);
+      return Boolean(s.colorId) && Boolean(s.printColorId);
     },
     // Deze stap blijft voor ALLE vormen zichtbaar (ook "oren"-vormen) — enkel
     // het gedrag erbinnen verandert, niet de zichtbaarheid.

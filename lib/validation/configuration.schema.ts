@@ -41,6 +41,10 @@ export const createConfigurationSchema = z
     // gekozen vorm en wordt hieronder in de superRefine afgedwongen. Zie de
     // toelichting in types/configuration.ts.
     colorId: z.string().optional().default(""),
+    // printColorId ("Opdruk kleur", toegevoegd 16-9-2026): alleen verplicht
+    // voor colorMode "single"-vormen, naast colorId ("Ondergrond kleur") —
+    // zie types/configuration.ts en de superRefine hieronder.
+    printColorId: z.string().optional().default(""),
     earColorId: z.string().optional().default(""),
     plateColorId: z.string().optional().default(""),
     // Bij "ears-and-plate"-vormen kiest de klant geen maat (er is er maar 1,
@@ -137,8 +141,16 @@ export const createConfigurationSchema = z
     if (data.colorId.trim().length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Kies een kleur.",
+        message: "Kies een ondergrondkleur.",
         path: ["colorId"],
+      });
+    }
+
+    if (data.printColorId.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Kies een opdrukkleur.",
+        path: ["printColorId"],
       });
     }
 

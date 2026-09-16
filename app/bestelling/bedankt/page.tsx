@@ -138,6 +138,7 @@ export default async function BestellingBedanktPage({
             shapeName={order.shape_name}
             finish={order.finish}
             colorName={order.color_name}
+            printColorName={order.print_color_name}
             earColorName={order.ear_color_name}
             plateColorName={order.plate_color_name}
             sizeName={order.size_name}

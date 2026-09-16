@@ -147,6 +147,7 @@ export async function POST(request: Request) {
       // types/configuration.ts.
       const earsShape = isEarsShape(shape);
       let color: (typeof productColors)[number] | undefined;
+      let printColor: (typeof productColors)[number] | undefined;
       let earColor: ReturnType<typeof getEarsColorOptions>[number] | undefined;
       let plateColor: ReturnType<typeof getEarsColorOptions>[number] | undefined;
 
@@ -163,10 +164,11 @@ export async function POST(request: Request) {
         }
       } else {
         color = productColors.find((c) => c.id === order.color_id);
+        printColor = productColors.find((c) => c.id === order.print_color_id);
 
-        if (!color) {
+        if (!color || !printColor) {
           console.error(
-            `Mollie-webhook: bestelling #${orderId} is betaald, maar de kleur (${order.color_id}) kon niet meer teruggevonden worden — mails NIET verstuurd. Handmatig navragen bij de klant is nodig.`
+            `Mollie-webhook: bestelling #${orderId} is betaald, maar de ondergrond-/opdrukkleur (${order.color_id}/${order.print_color_id}) kon niet meer teruggevonden worden — mails NIET verstuurd. Handmatig navragen bij de klant is nodig.`
           );
           return NextResponse.json({ received: true, warning: "product-lookup-failed" });
         }
@@ -206,6 +208,7 @@ export async function POST(request: Request) {
         // (colorMode "ears-and-plate") — nooit allebei tegelijk gevuld, zie
         // lib/email/sendOrderEmails.ts.
         colorName: earsShape ? undefined : color!.name,
+        printColorName: earsShape ? undefined : printColor!.name,
         earColorName: earsShape ? earColor!.name : undefined,
         plateColorName: earsShape ? plateColor!.name : undefined,
         // colorHex: kleur bij colorMode "single" (bestaand gedrag). Bij
@@ -218,6 +221,7 @@ export async function POST(request: Request) {
         // gebruikt hieronder wél de 2 losse kleuren, via earColorHex/
         // plateColorHex + shapeKind/earsStyle.
         colorHex: earsShape ? plateColor!.hex : color!.hex,
+        printColorHex: earsShape ? undefined : printColor!.hex,
         earColorHex: earsShape ? earColor!.hex : undefined,
         plateColorHex: earsShape ? plateColor!.hex : undefined,
         shapeKind: earsShape ? "ears" : shape.id === "ovaal" ? "oval" : "rect",

@@ -13,9 +13,14 @@ interface QuestionEmailData {
   // geen afwerkingskeuze, zie app/api/contact-question/route.ts.
   finish?: "vlak" | "gewelfd";
   colorName?: string;
+  // printColorName (toegevoegd 16-9-2026): "Opdruk kleur", naast colorName
+  // ("Ondergrond kleur") hierboven — zie types/configuration.ts.
+  printColorName?: string;
   // earColorName/plateColorName: alleen gezet voor de 3 "oren"-vormen (2
-  // losse verplichte kleuren i.p.v. de ene `colorName` hierboven) — zie
-  // types/configuration.ts / config/product-options.ts (productColorsOren).
+  // losse verplichte kleuren i.p.v. colorName/printColorName hierboven) —
+  // zie types/configuration.ts / config/product-options.ts
+  // (productColorsOren). plateColorName = "Ondergrond kleur", earColorName =
+  // "Opdruk kleur" (zie renderQuestionNotificationEmail hieronder).
   earColorName?: string;
   plateColorName?: string;
   sizeName?: string;
@@ -139,9 +144,10 @@ export function renderQuestionNotificationEmail(data: QuestionEmailData): string
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                     ${row("Vorm", data.shapeName ?? "")}
                     ${data.finish ? row("Afwerking", data.finish === "vlak" ? "Vlak" : "Gewelfd") : ""}
-                    ${data.colorName ? row("Kleur", data.colorName) : ""}
-                    ${data.earColorName ? row("Kleur oren", data.earColorName) : ""}
-                    ${data.plateColorName ? row("Kleur vlak", data.plateColorName) : ""}
+                    ${data.colorName ? row("Ondergrond kleur", data.colorName) : ""}
+                    ${data.printColorName ? row("Opdruk kleur", data.printColorName) : ""}
+                    ${data.plateColorName ? row("Ondergrond kleur", data.plateColorName) : ""}
+                    ${data.earColorName ? row("Opdruk kleur", data.earColorName) : ""}
                     ${row("Maat", data.sizeName ?? "")}
                     ${row("Huisnummer", data.customText ?? "")}
                     ${data.extraLine1 ? row("Tekstregel 1", data.extraLine1) : ""}

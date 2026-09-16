@@ -13,21 +13,35 @@ export type PaymentProvider = "mollie" | "stripe" | null;
 export interface ConfiguratorSelection {
   shapeId: string | null;
   finish: PlateFinish | null;
-  // `colorId`: de ENE kleurkeuze voor vormen met colorMode "single" (de 4
-  // oorspronkelijke vormen). Blijft voor die vormen ongewijzigd in gebruik.
+  // `colorId`: de "Ondergrond kleur" voor vormen met colorMode "single" (de
+  // 4 oorspronkelijke vormen + het ovale model). Blijft voor die vormen
+  // ongewijzigd in gebruik (alleen de zichtbare naam is sinds 16-9-2026
+  // "Ondergrond kleur" i.p.v. "Kleur" — zie ColorSelector.tsx).
   colorId: string | null;
+  // `printColorId`: "Opdruk kleur" — toegevoegd 16-9-2026, op verzoek van
+  // Christiaan, voor dezelfde colorMode "single"-vormen als `colorId`
+  // hierboven. Bepaalt in de preview/e-mails de kleur van het huisnummer en
+  // eventuele tekstregels (colorId bepaalt alleen de achtergrond), uit
+  // dezelfde kleurenlijst `productColors` als colorId. Net als colorId:
+  // blijft null voor colorMode "ears-and-plate"-vormen.
+  printColorId: string | null;
   // `earColorId`/`plateColorId`: toegevoegd 9-9-2026 voor vormen met
   // colorMode "ears-and-plate" (de 3 nieuwe jaren-30-vormen met
   // bevestigingsogen, zie types/product.ts) — kleur van de "oren"
   // respectievelijk het vlak, allebei verplicht en allebei uit de aparte
   // lijst `productColorsOren` (config/product-options.ts), nooit uit
-  // `productColors`.
+  // `productColors`. Sinds 16-9-2026 in de UI hernoemd/hergebruikt als
+  // dezelfde "Ondergrond kleur"/"Opdruk kleur"-indeling als colorId/
+  // printColorId hierboven: `plateColorId` = "Ondergrond kleur" (bepaalt de
+  // achtergrond van het middenvlak), `earColorId` = "Opdruk kleur" (geldt in
+  // de preview voor zowel de oren als het huisnummer) — zie ColorSelector.tsx
+  // en ProductPreview.tsx. De veldnamen zelf zijn ongewijzigd gebleven.
   //
   // Per vorm is maar één van de twee kleurmodellen relevant:
-  // - colorMode "single"          → alleen `colorId` gebruikt/verplicht;
-  //   `earColorId`/`plateColorId` blijven null.
+  // - colorMode "single"          → alleen `colorId`/`printColorId`
+  //   gebruikt/verplicht; `earColorId`/`plateColorId` blijven null.
   // - colorMode "ears-and-plate"  → alleen `earColorId` + `plateColorId`
-  //   gebruikt/verplicht; `colorId` blijft null.
+  //   gebruikt/verplicht; `colorId`/`printColorId` blijven null.
   // Zie ConfiguratorContext.tsx (SET_SHAPE) voor het resetten van het
   // niet-relevante veld/de niet-relevante velden bij het wisselen van vorm,
   // en lib/validation/configuration.schema.ts voor de conditionele
@@ -58,6 +72,7 @@ export const emptyConfiguratorSelection: ConfiguratorSelection = {
   shapeId: null,
   finish: null,
   colorId: null,
+  printColorId: null,
   earColorId: null,
   plateColorId: null,
   sizeId: null,
@@ -138,6 +153,7 @@ export interface CreateConfigurationInput {
   // gekozen" — de vertaling naar `undefined` voor deze wire-payload gebeurt
   // in controle/page.tsx.
   colorId?: string;
+  printColorId?: string;
   earColorId?: string;
   plateColorId?: string;
   sizeId: string;

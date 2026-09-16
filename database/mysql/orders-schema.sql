@@ -186,3 +186,19 @@ ALTER TABLE configurations ADD COLUMN plate_color_name VARCHAR(100) NULL AFTER p
 ALTER TABLE configurations ADD COLUMN payment_method_name VARCHAR(100) NULL;
 ALTER TABLE configurations ADD COLUMN payment_bank_name VARCHAR(100) NULL;
 ALTER TABLE configurations ADD COLUMN payment_failure_reason VARCHAR(255) NULL;
+
+-- MIGRATIE 16-9-2026: kleurkeuzes uitgebreid (op verzoek van Christiaan). De
+-- 4 oorspronkelijke vormen + het ovale model (colorMode "single") hadden tot
+-- nu toe maar één kleur (color_id/color_name, hierboven al aanwezig) — dat
+-- veld heet vanaf nu "Ondergrond kleur" (bepaalt de achtergrond) en krijgt
+-- er een tweede, verplichte kleur naast: print_color_id/print_color_name,
+-- de "Opdruk kleur" (bepaalt het huisnummer + eventuele tekstregels), uit
+-- dezelfde kleurenlijst als color_id (productColors). Blijft NULL voor de 3
+-- "oren"-vormen (colorMode "ears-and-plate") — die gebruiken voortaan
+-- dezelfde "Ondergrond kleur"/"Opdruk kleur"-indeling via hun bestaande
+-- plate_color_id/ear_color_id-kolommen (alleen de UI-labels/volgorde zijn
+-- daar gewijzigd, geen nieuwe kolommen nodig). Voer onderstaande twee regels
+-- ÉÉNMALIG uit in hetzelfde SQL-scherm om de tabel bij te werken:
+
+ALTER TABLE configurations ADD COLUMN print_color_id VARCHAR(64) NULL AFTER color_name;
+ALTER TABLE configurations ADD COLUMN print_color_name VARCHAR(100) NULL AFTER print_color_id;

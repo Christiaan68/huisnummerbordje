@@ -84,6 +84,9 @@ export async function POST(request: Request) {
   const color = earsShape
     ? undefined
     : productColors.find((c) => c.id === data.colorId);
+  const printColor = earsShape
+    ? undefined
+    : productColors.find((c) => c.id === data.printColorId);
   const numberFont = earsShape
     ? undefined
     : productFonts.find((f) => f.id === data.numberFontId);
@@ -101,6 +104,7 @@ export async function POST(request: Request) {
     (earsShape
       ? !earColor || !plateColor
       : !color ||
+        !printColor ||
         !numberFont ||
         (shape.extraLines >= 1 && !line1Font) ||
         (shape.extraLines >= 2 && !line2Font))
@@ -136,6 +140,7 @@ export async function POST(request: Request) {
     // afzonderlijk alleen getoond wordt als het bijbehorende veld gezet is.
     finish: earsShape ? undefined : data.finish ?? undefined,
     colorName: earsShape ? undefined : color?.name,
+    printColorName: earsShape ? undefined : printColor?.name,
     earColorName: earsShape ? earColor?.name : undefined,
     plateColorName: earsShape ? plateColor?.name : undefined,
     sizeName: size.name,

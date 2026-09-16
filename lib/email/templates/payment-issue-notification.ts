@@ -13,6 +13,7 @@ interface PaymentIssueEmailData {
   // (colorMode "ears-and-plate") — nooit allebei tegelijk gevuld, zie ook
   // lib/email/templates/question-notification.ts voor hetzelfde patroon.
   colorName?: string;
+  printColorName?: string;
   earColorName?: string;
   plateColorName?: string;
   sizeName: string;
@@ -107,9 +108,10 @@ export function renderPaymentIssueNotificationEmail(data: PaymentIssueEmailData)
                     ${row("Betaalstatus", data.paymentStatusLabel)}
                     ${row("Vorm", data.shapeName)}
                     ${row("Afwerking", data.finish === "vlak" ? "Vlak" : "Gewelfd")}
-                    ${data.colorName ? row("Kleur", data.colorName) : ""}
-                    ${data.earColorName ? row("Kleur oren", data.earColorName) : ""}
-                    ${data.plateColorName ? row("Kleur vlak", data.plateColorName) : ""}
+                    ${data.colorName ? row("Ondergrond kleur", data.colorName) : ""}
+                    ${data.printColorName ? row("Opdruk kleur", data.printColorName) : ""}
+                    ${data.plateColorName ? row("Ondergrond kleur", data.plateColorName) : ""}
+                    ${data.earColorName ? row("Opdruk kleur", data.earColorName) : ""}
                     ${row("Maat", data.sizeName)}
                     ${row("Huisnummer", data.customText)}
                     ${data.extraLine1 ? row("Tekstregel 1", data.extraLine1) : ""}

@@ -81,6 +81,12 @@ export interface PlatePreviewImageInput {
   // is aangesloten) toch een bruikbare (eenkleurige) afbeelding krijgt in
   // plaats van een crash of een lege plek.
   colorHex: string;
+  // printColorHex ("Opdruk kleur", toegevoegd 16-9-2026): tekstkleur
+  // (huisnummer + eventuele tekstregels) bij shapeKind "rect"/"oval" — zie
+  // de toelichting bij `textColor` verderop. Ontbreekt hij (bv. een oude
+  // aanroeper die dit veld nog niet doorgeeft), dan valt de afbeelding terug
+  // op het oude contrast-met-de-achtergrond-gedrag.
+  printColorHex?: string;
   // Losse kleuren voor shapeKind "ears" (colorMode "ears-and-plate", zie
   // types/configuration.ts: earColorId/plateColorId). Zie colorHex
   // hierboven voor het terugvalgedrag als deze ontbreken.
@@ -140,6 +146,7 @@ export async function renderPlatePreviewPng(
     widthMm,
     heightMm,
     colorHex,
+    printColorHex,
     earColorHex,
     plateColorHex,
     numberFontId,
@@ -172,9 +179,15 @@ export async function renderPlatePreviewPng(
   const plateHeightPx = Math.round(PLATE_PX_WIDTH / ratio);
   const pxPerMm = plateWidthPx / widthMm;
 
-  // Tekstkleur: bij een "oren"-bordje altijd op basis van de PLAAT-kleur
-  // (niet de oren-kleur, zelfde afspraak als in ProductPreview.tsx).
-  const textColor = getContrastTextColor(plateFillHex);
+  // Tekstkleur (huisnummer + eventuele tekstregels): sinds 16-9-2026 (net
+  // als in ProductPreview.tsx) de daadwerkelijk gekozen "Opdruk kleur" zelf,
+  // i.p.v. automatisch berekend contrast met de achtergrond — bij een
+  // "oren"-bordje is dat earFillHex (geldt daar ook al voor de oren zelf),
+  // bij "rect"/"oval" printColorHex. Ontbreekt printColorHex (oude
+  // aanroeper), dan valt dit terug op het oude contrast-gedrag.
+  const textColor = isEars
+    ? earFillHex
+    : printColorHex ?? getContrastTextColor(plateFillHex);
   const screwPositions = isEars ? [] : getScrewPositions(isOval, widthMm, heightMm);
   const screwRadiusPx = getScrewRadiusMm(widthMm, heightMm) * pxPerMm;
 

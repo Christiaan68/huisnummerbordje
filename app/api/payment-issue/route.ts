@@ -83,6 +83,7 @@ export async function POST(request: Request) {
     shapeName: order.shape_name,
     finish: order.finish,
     colorName: order.color_name ?? undefined,
+    printColorName: order.print_color_name ?? undefined,
     earColorName: order.ear_color_name ?? undefined,
     plateColorName: order.plate_color_name ?? undefined,
     sizeName: order.size_name,

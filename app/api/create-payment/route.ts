@@ -169,6 +169,8 @@ export async function POST(request: Request) {
         finish: "vlak",
         colorId: null,
         colorName: null,
+        printColorId: null,
+        printColorName: null,
         earColorId: earColor.id,
         earColorName: earColor.name,
         plateColorId: plateColor.id,
@@ -212,6 +214,9 @@ export async function POST(request: Request) {
     // --- Bestaande vormen (colorMode "single") — dit stuk is functioneel
     // exact het gedrag van vóór de uitbreiding naar 7 vormen. ---
     const color = productColors.find((c) => c.id === data.colorId);
+    // printColor ("Opdruk kleur", toegevoegd 16-9-2026) — zie de toelichting
+    // bij colorId hierboven, dat sindsdien "Ondergrond kleur" heet.
+    const printColor = productColors.find((c) => c.id === data.printColorId);
     const size = pricingData.productSizes.find((s) => s.id === data.sizeId);
     const numberFont = productFonts.find((f) => f.id === data.numberFontId);
     const line1Font = data.line1FontId
@@ -223,6 +228,7 @@ export async function POST(request: Request) {
 
     if (
       !color ||
+      !printColor ||
       !size ||
       !numberFont ||
       (shape.extraLines >= 1 && !line1Font) ||
@@ -272,6 +278,8 @@ export async function POST(request: Request) {
         finish: data.finish as "vlak" | "gewelfd",
         colorId: color.id,
         colorName: color.name,
+        printColorId: printColor.id,
+        printColorName: printColor.name,
         earColorId: null,
         earColorName: null,
         plateColorId: null,

@@ -104,51 +104,85 @@ export function ColorSelector() {
     // `plateColorId` starten op `null` (zie emptyConfiguratorSelection en de
     // SET_SHAPE-reducer in ConfiguratorContext.tsx), de klant moet dus zelf
     // bewust op een kleur klikken.
+    //
+    // Hernoemd/heringedeeld 16-9-2026 (op verzoek van Christiaan): eerst
+    // `plateColorId` als "Ondergrond kleur" (bepaalt de achtergrond van het
+    // middenvlak in de preview), dan `earColorId` als "Opdruk kleur" (geldt
+    // in de preview voor zowel de oren als het huisnummer, zie
+    // ProductPreview.tsx) — dezelfde volgorde/indeling als bij de
+    // colorMode "single"-vormen hieronder. De veldnamen/acties zelf
+    // (earColorId/plateColorId, SET_EAR_COLOR/SET_PLATE_COLOR) zijn
+    // ongewijzigd, alleen de volgorde en de zichtbare labels zijn omgedraaid.
     const earsColors = getEarsColorOptions();
 
     return (
       <div className="space-y-8">
         <div>
           <p className="mb-3 text-sm font-medium text-foreground">
-            Kleur van de oren
-          </p>
-          <ColorOptionGrid
-            colors={earsColors}
-            selectedId={selection.earColorId}
-            standardColorIds={globalPricingOptions.orenStandardColorIds}
-            colorSurchargeCents={globalPricingOptions.colorSurchargeCents}
-            ariaLabel="Kies een kleur voor de oren"
-            onSelect={(colorId) => dispatch({ type: "SET_EAR_COLOR", colorId })}
-          />
-        </div>
-        <div>
-          <p className="mb-3 text-sm font-medium text-foreground">
-            Kleur van het vlak
+            Ondergrond kleur
           </p>
           <ColorOptionGrid
             colors={earsColors}
             selectedId={selection.plateColorId}
             standardColorIds={globalPricingOptions.orenStandardColorIds}
             colorSurchargeCents={globalPricingOptions.colorSurchargeCents}
-            ariaLabel="Kies een kleur voor het vlak"
+            ariaLabel="Kies een ondergrondkleur"
             onSelect={(colorId) => dispatch({ type: "SET_PLATE_COLOR", colorId })}
+          />
+        </div>
+        <div>
+          <p className="mb-3 text-sm font-medium text-foreground">
+            Opdruk kleur
+          </p>
+          <ColorOptionGrid
+            colors={earsColors}
+            selectedId={selection.earColorId}
+            standardColorIds={globalPricingOptions.orenStandardColorIds}
+            colorSurchargeCents={globalPricingOptions.colorSurchargeCents}
+            ariaLabel="Kies een opdrukkleur"
+            onSelect={(colorId) => dispatch({ type: "SET_EAR_COLOR", colorId })}
           />
         </div>
       </div>
     );
   }
 
-  // colorMode "single" — de 4 oorspronkelijke vormen. Ongewijzigd gedrag:
-  // zelfde markup/klassen als vóór deze uitbreiding (nu via ColorOptionGrid,
-  // maar met identieke output).
+  // colorMode "single" — de 4 oorspronkelijke vormen + het ovale model.
+  // Sinds 16-9-2026 (op verzoek van Christiaan) TWEE kleurkeuzes i.p.v. één:
+  // eerst "Ondergrond kleur" (colorId, bestaand veld, bepaalt de
+  // achtergrond), dan "Opdruk kleur" (nieuw: printColorId, bepaalt in de
+  // preview het huisnummer en eventuele tekstregels) — allebei uit dezelfde
+  // kleurenlijst/standaardkleuren (productColors/standardColorIds). Zie
+  // ProductPreview.tsx voor hoe de twee kleuren toegepast worden en
+  // lib/configuration/pricing.ts voor de (per kleur losse) meerprijs.
   return (
-    <ColorOptionGrid
-      colors={productColors}
-      selectedId={selection.colorId}
-      standardColorIds={globalPricingOptions.standardColorIds}
-      colorSurchargeCents={globalPricingOptions.colorSurchargeCents}
-      ariaLabel="Kies een kleur"
-      onSelect={(colorId) => dispatch({ type: "SET_COLOR", colorId })}
-    />
+    <div className="space-y-8">
+      <div>
+        <p className="mb-3 text-sm font-medium text-foreground">
+          Ondergrond kleur
+        </p>
+        <ColorOptionGrid
+          colors={productColors}
+          selectedId={selection.colorId}
+          standardColorIds={globalPricingOptions.standardColorIds}
+          colorSurchargeCents={globalPricingOptions.colorSurchargeCents}
+          ariaLabel="Kies een ondergrondkleur"
+          onSelect={(colorId) => dispatch({ type: "SET_COLOR", colorId })}
+        />
+      </div>
+      <div>
+        <p className="mb-3 text-sm font-medium text-foreground">
+          Opdruk kleur
+        </p>
+        <ColorOptionGrid
+          colors={productColors}
+          selectedId={selection.printColorId}
+          standardColorIds={globalPricingOptions.standardColorIds}
+          colorSurchargeCents={globalPricingOptions.colorSurchargeCents}
+          ariaLabel="Kies een opdrukkleur"
+          onSelect={(colorId) => dispatch({ type: "SET_PRINT_COLOR", colorId })}
+        />
+      </div>
+    </div>
   );
 }

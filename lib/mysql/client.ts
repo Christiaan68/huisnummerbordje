@@ -68,6 +68,14 @@ export interface NewOrderRow {
   // bijbehorende ALTER TABLE die color_id/color_name NULL-baar maakt.
   colorId: string | null;
   colorName: string | null;
+  // printColorId/printColorName ("Opdruk kleur", toegevoegd 16-9-2026):
+  // tweede, verplichte kleur naast colorId/colorName ("Ondergrond kleur")
+  // hierboven, alleen voor colorMode "single"-vormen — blijft `null` voor de
+  // 3 "oren"-vormen. Zie database/mysql/orders-schema.sql (migratie
+  // 16-9-2026) voor de eenmalige ALTER TABLE die deze 2 nieuwe kolommen
+  // toevoegt.
+  printColorId: string | null;
+  printColorName: string | null;
   // earColorId/earColorName/plateColorId/plateColorName: TWEE losse,
   // allebei verplichte kleuren (oren + vlak) voor de 3 nieuwe "oren"-vormen
   // (colorMode "ears-and-plate", toegevoegd 9-9-2026) — uit de aparte
@@ -145,6 +153,7 @@ export async function saveOrderToDatabase(order: NewOrderRow): Promise<number> {
   const [result] = (await db.execute(
     `INSERT INTO configurations (
       shape_id, shape_name, finish, color_id, color_name,
+      print_color_id, print_color_name,
       ear_color_id, ear_color_name, plate_color_id, plate_color_name,
       size_id, size_name,
       font_id, font_name, line1_font_id, line1_font_name, line2_font_id, line2_font_name,
@@ -154,13 +163,15 @@ export async function saveOrderToDatabase(order: NewOrderRow): Promise<number> {
       price_extra_chars_count, price_frame_surcharge_cents, price_source,
       contact_name, contact_address, contact_postal_code, contact_city,
       contact_email, contact_phone, quantity
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       order.shapeId,
       order.shapeName,
       order.finish,
       order.colorId,
       order.colorName,
+      order.printColorId,
+      order.printColorName,
       order.earColorId,
       order.earColorName,
       order.plateColorId,
@@ -279,6 +290,8 @@ export interface OrderRow {
   // ear_color_id/ear_color_name/plate_color_id/plate_color_name gebruiken.
   color_id: string | null;
   color_name: string | null;
+  print_color_id: string | null;
+  print_color_name: string | null;
   ear_color_id: string | null;
   ear_color_name: string | null;
   plate_color_id: string | null;

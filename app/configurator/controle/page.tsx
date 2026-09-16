@@ -84,7 +84,10 @@ export default function ControlePage() {
     const shape = productShapes.find((s) => s.id === selection.shapeId);
     const incomplete = isEarsShape(shape)
       ? !selection.earColorId || !selection.plateColorId
-      : !selection.finish || !selection.colorId || !selection.numberFontId;
+      : !selection.finish ||
+        !selection.colorId ||
+        !selection.printColorId ||
+        !selection.numberFontId;
 
     return Boolean(selection.shapeId) && Boolean(selection.sizeId) && !incomplete;
   }
@@ -145,6 +148,7 @@ export default function ControlePage() {
       // waardoor JSON.stringify de key weglaat) — een letterlijke `null`
       // zou de server-validatie laten falen (zie types/configuration.ts).
       colorId: earsShape ? undefined : selection.colorId || undefined,
+      printColorId: earsShape ? undefined : selection.printColorId || undefined,
       earColorId: earsShape ? selection.earColorId || undefined : undefined,
       plateColorId: earsShape ? selection.plateColorId || undefined : undefined,
       sizeId: selection.sizeId,

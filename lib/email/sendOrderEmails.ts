@@ -55,12 +55,23 @@ export interface SendOrderEmailsInput {
   // types/configuration.ts (ConfiguratorSelection) voor dezelfde
   // "óf/óf"-opzet.
   colorName?: string;
+  // printColorName ("Opdruk kleur", toegevoegd 16-9-2026): naast colorName
+  // ("Ondergrond kleur") hierboven, alleen voor colorMode "single"-vormen —
+  // zie types/configuration.ts.
+  printColorName?: string;
   // earColorName/plateColorName: toegevoegd 9-9-2026 voor colorMode
   // "ears-and-plate"-vormen — kleur van de "oren" resp. het vlak. Zie de
   // toelichting bij colorName hierboven.
   earColorName?: string;
   plateColorName?: string;
   colorHex: string;
+  // printColorHex: het beeld-tegenhanger van printColorName hierboven —
+  // nodig om de tekstkleur (huisnummer + tekstregels) in de
+  // voorbeeldafbeelding correct te tekenen (zie renderPlatePreviewPng,
+  // lib/email/plate-preview-image.tsx). Alleen relevant bij colorMode
+  // "single"; ontbreekt hij, dan valt de afbeelding terug op het
+  // contrast-met-de-achtergrond-gedrag van vóór 16-9-2026.
+  printColorHex?: string;
   // earColorHex/plateColorHex/shapeKind/earsStyle: het beeld-tegenhanger van
   // earColorName/plateColorName hierboven — nodig om de voorbeeldafbeelding
   // (renderPlatePreviewPng, zie lib/email/plate-preview-image.tsx) voor de
@@ -165,6 +176,7 @@ export async function sendOrderEmails(
       widthMm: input.widthMm,
       heightMm: input.heightMm,
       colorHex: input.colorHex,
+      printColorHex: input.printColorHex,
       earColorHex: input.earColorHex,
       plateColorHex: input.plateColorHex,
       numberFontId: input.numberFontId,
@@ -202,6 +214,7 @@ export async function sendOrderEmails(
       shapeId: input.shape.id,
       finish: input.finish,
       colorName: input.colorName,
+      printColorName: input.printColorName,
       earColorName: input.earColorName,
       plateColorName: input.plateColorName,
       sizeName: input.sizeName,
@@ -277,6 +290,7 @@ export async function sendOrderEmails(
       shapeName: input.shape.name,
       finish: input.finish,
       colorName: input.colorName,
+      printColorName: input.printColorName,
       earColorName: input.earColorName,
       plateColorName: input.plateColorName,
       sizeName: input.sizeName,

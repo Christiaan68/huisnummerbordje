@@ -70,7 +70,10 @@ export function QuestionModal({ onClose }: QuestionModalProps) {
     const earsShape = isEarsShape(shape);
     const incomplete = earsShape
       ? !selection.earColorId || !selection.plateColorId
-      : !selection.finish || !selection.colorId || !selection.numberFontId;
+      : !selection.finish ||
+        !selection.colorId ||
+        !selection.printColorId ||
+        !selection.numberFontId;
 
     if (!selection.shapeId || !selection.sizeId || incomplete) {
       setStatus("error");
@@ -92,6 +95,7 @@ export function QuestionModal({ onClose }: QuestionModalProps) {
       shapeId: selection.shapeId,
       finish: selection.finish,
       colorId: earsShape ? undefined : selection.colorId || undefined,
+      printColorId: earsShape ? undefined : selection.printColorId || undefined,
       earColorId: earsShape ? selection.earColorId || undefined : undefined,
       plateColorId: earsShape ? selection.plateColorId || undefined : undefined,
       sizeId: selection.sizeId,

@@ -14,6 +14,10 @@ type Action =
   | { type: "SET_SHAPE"; shapeId: string }
   | { type: "SET_FINISH"; finish: PlateFinish }
   | { type: "SET_COLOR"; colorId: string }
+  // Toegevoegd 16-9-2026 voor colorMode "single"-vormen: de "Opdruk
+  // kleur" naast de bestaande SET_COLOR ("Ondergrond kleur"). Zie
+  // types/configuration.ts (printColorId).
+  | { type: "SET_PRINT_COLOR"; colorId: string }
   // Toegevoegd 9-9-2026 voor de 3 "oren"-vormen (colorMode
   // "ears-and-plate"): losse acties voor de kleur van de oren en van het
   // vlak, naast de bestaande SET_COLOR (die voor colorMode "single"-vormen
@@ -75,6 +79,9 @@ function reducer(
       // verlaten ervan.
       const colorModeChanged = oldShape?.colorMode !== newShape?.colorMode;
       const colorId = colorModeChanged ? null : state.colorId;
+      // printColorId (16-9-2026): reset volgens exact dezelfde regel als
+      // colorId hierboven — hoort er onlosmakelijk bij (colorMode "single").
+      const printColorId = colorModeChanged ? null : state.printColorId;
       const earColorId = colorModeChanged ? null : state.earColorId;
       const plateColorId = colorModeChanged ? null : state.plateColorId;
 
@@ -102,6 +109,7 @@ function reducer(
         sizeId,
         numberPosition: "start",
         colorId,
+        printColorId,
         earColorId,
         plateColorId,
         numberFontId: fontFieldsCleared ? null : state.numberFontId,
@@ -114,6 +122,8 @@ function reducer(
       return { ...state, finish: action.finish };
     case "SET_COLOR":
       return { ...state, colorId: action.colorId };
+    case "SET_PRINT_COLOR":
+      return { ...state, printColorId: action.colorId };
     case "SET_EAR_COLOR":
       return { ...state, earColorId: action.colorId };
     case "SET_PLATE_COLOR":

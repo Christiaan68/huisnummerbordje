@@ -19,6 +19,7 @@ interface PendingPaymentAutoRefreshProps {
   shapeName: string;
   finish: "vlak" | "gewelfd";
   colorName: string | null;
+  printColorName: string | null;
   earColorName: string | null;
   plateColorName: string | null;
   sizeName: string;
@@ -151,6 +152,7 @@ export function PendingPaymentAutoRefresh(props: PendingPaymentAutoRefreshProps)
           shapeName={props.shapeName}
           finish={props.finish}
           colorName={props.colorName}
+          printColorName={props.printColorName}
           earColorName={props.earColorName}
           plateColorName={props.plateColorName}
           sizeName={props.sizeName}

@@ -87,6 +87,10 @@ export function ProductPreview() {
 
   const shape = productShapes.find((s) => s.id === selection.shapeId);
   const color = productColors.find((c) => c.id === selection.colorId);
+  // printColor ("Opdruk kleur", toegevoegd 16-9-2026): kleur van het
+  // huisnummer + eventuele tekstregels bij colorMode "single"-vormen — zie
+  // de toelichting bij `textColor` hieronder.
+  const printColor = productColors.find((c) => c.id === selection.printColorId);
   const size = pricingData.productSizes.find((s) => s.id === selection.sizeId);
   const price = calculatePrice(selection, pricingData);
 
@@ -186,13 +190,15 @@ export function ProductPreview() {
   // i.p.v. een aparte lijst met kleur-id's bij te houden die bij een
   // toekomstige nieuwe (bijna) witte kleur weer vergeten zou kunnen worden.
   const earNeedsOutline = earsShape && getContrastTextColor(earFill) === "#1a1a1a";
-  const textColor = earsShape
-    ? plateColor
-      ? getContrastTextColor(plateColor.hex)
-      : undefined
-    : color
-      ? getContrastTextColor(color.hex)
-      : undefined;
+  // Tekstkleur (huisnummer + eventuele tekstregels): sinds 16-9-2026 (op
+  // verzoek van Christiaan) niet langer automatisch berekend op basis van
+  // het contrast met de achtergrond, maar de daadwerkelijk gekozen
+  // "Opdruk kleur" zelf — bij "oren"-vormen is dat `earColor` (geldt daar
+  // ook al voor de oren zelf, zie earFill hierboven), bij de overige vormen
+  // het nieuwe `printColor` (ColorSelector.tsx). Nog geen opdrukkleur
+  // gekozen? Dan blijft dit `undefined` (net als voorheen), zodat de tekst
+  // terugvalt op de gewone (via CSS overgeërfde) tekstkleur.
+  const textColor = earsShape ? earColor?.hex : printColor?.hex;
   const earsGeometry: EarsGeometry | null =
     earsShape && earsStyle ? getEarsGeometry(earsStyle, plateWidth, plateHeight) : null;
 
@@ -687,25 +693,33 @@ export function ProductPreview() {
               <dd className="capitalize text-foreground">{selection.finish ?? "—"}</dd>
             </div>
           )}
-          {/* "Oren"-vormen (colorMode "ears-and-plate", 9-9-2026) hebben 2
-              losse kleuren (oren + vlak) in plaats van de ene "Kleur"-rij
-              van de 4 oorspronkelijke vormen — zie ColorSelector.tsx. */}
+          {/* Alle vormen hebben sinds 16-9-2026 twee kleurkeuzes: eerst
+              "Ondergrond kleur", dan "Opdruk kleur" — bij "oren"-vormen
+              (colorMode "ears-and-plate", 9-9-2026) is dat plateColor/
+              earColor, bij de overige vormen colorId/printColorId. Zie
+              ColorSelector.tsx. */}
           {earsShape ? (
             <>
               <div className="flex justify-between border-b border-border/60 pb-1.5">
-                <dt className="text-muted-foreground">Kleur oren</dt>
-                <dd className="text-foreground">{earColor?.name ?? "—"}</dd>
+                <dt className="text-muted-foreground">Ondergrond kleur</dt>
+                <dd className="text-foreground">{plateColor?.name ?? "—"}</dd>
               </div>
               <div className="flex justify-between border-b border-border/60 pb-1.5">
-                <dt className="text-muted-foreground">Kleur vlak</dt>
-                <dd className="text-foreground">{plateColor?.name ?? "—"}</dd>
+                <dt className="text-muted-foreground">Opdruk kleur</dt>
+                <dd className="text-foreground">{earColor?.name ?? "—"}</dd>
               </div>
             </>
           ) : (
-            <div className="flex justify-between border-b border-border/60 pb-1.5">
-              <dt className="text-muted-foreground">Kleur</dt>
-              <dd className="text-foreground">{color?.name ?? "—"}</dd>
-            </div>
+            <>
+              <div className="flex justify-between border-b border-border/60 pb-1.5">
+                <dt className="text-muted-foreground">Ondergrond kleur</dt>
+                <dd className="text-foreground">{color?.name ?? "—"}</dd>
+              </div>
+              <div className="flex justify-between border-b border-border/60 pb-1.5">
+                <dt className="text-muted-foreground">Opdruk kleur</dt>
+                <dd className="text-foreground">{printColor?.name ?? "—"}</dd>
+              </div>
+            </>
           )}
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Maat</dt>
