@@ -254,7 +254,11 @@ export async function POST(request: Request) {
         },
         adminEmail,
         emailLanguage,
-        paymentMethodName,
+        // paymentMethodName is hierboven `string | null` (null als Mollie
+        // geen methode meegeeft) — sendOrderEmails verwacht altijd een
+        // tekst, vandaar hier dezelfde terugval als getPaymentMethodLabel
+        // zelf al gebruikt.
+        paymentMethodName: paymentMethodName ?? "onbekend",
         paidAtFormatted,
       });
 
