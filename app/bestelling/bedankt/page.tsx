@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PendingPaymentAutoRefresh } from "@/components/order/PendingPaymentAutoRefresh";
-import { PaymentIssueContact } from "@/components/order/PaymentIssueContact";
 import { siteContent } from "@/config/site-content";
 import { getOrderById } from "@/lib/mysql/client";
 import { formatEuroFromCents } from "@/lib/format/euro";
@@ -79,12 +78,14 @@ export default async function BestellingBedanktPage({
     // langer (zie hieronder, bij PendingPaymentAutoRefresh), dan verschijnt
     // er automatisch een extra regel bij — zie de toelichting daar.
     message =
-      "We wachten nog even op de bevestiging van je betaling. Dit duurt normaal maar een paar seconden — deze pagina ververst zichzelf vanzelf. Je hoeft hier niets voor te doen. Heb je een vraag over deze bestelling? Klik dan hieronder op 'Vraag over deze bestelling'.";
+      "We wachten nog even op de bevestiging van je betaling. Dit duurt normaal maar een paar seconden — deze pagina ververst zichzelf vanzelf. Je hoeft hier niets voor te doen.";
     showAutoRefresh = true;
     // Bewust GEEN "opnieuw bestellen"-knop hier — zie toelichting bij
-    // showRestartButton. Wél de "Vraag over deze bestelling"-knop
-    // hieronder (toegevoegd 16-9-2026, op verzoek van Christiaan), zodat
-    // een klant die hier langer blijft hangen contact kan opnemen.
+    // showRestartButton. Pas als het langer duurt dan een paar seconden
+    // (zie PendingPaymentAutoRefresh.tsx) verschijnen "Naar home" én de
+    // "Vraag over deze bestelling"-knop (toegevoegd 16-9-2026, op verzoek
+    // van Christiaan) — daarvóór is er niets bijzonders aan de hand en dus
+    // ook geen reden om al een knoppenrij te tonen.
   }
 
   return (
@@ -113,64 +114,64 @@ export default async function BestellingBedanktPage({
             <meta refresh>: die laatste bleek na wegnavigeren (bv. "Naar
             home") alsnog een ongevraagde terugkeer naar deze pagina te
             veroorzaken, zie de toelichting in dat bestand. Toont vanaf de
-            2e ververste weergave ook zelf een extra regel tekst als het
-            langer duurt dan een paar seconden — zie de toelichting in
-            PendingPaymentAutoRefresh.tsx. BEWUST hier, ná de {message}-
+            2e ververste weergave ook zelf een extra regel tekst, plus
+            (sinds 16-9-2026) meteen ook "Naar home" en de "Vraag over deze
+            bestelling"-knop, samen rechts uitgelijnd — zie de toelichting
+            in PendingPaymentAutoRefresh.tsx. BEWUST hier, ná de {message}-
             paragraaf, geplaatst (31-8-2026, na een layout-bug: dit
             component stond eerder helemaal bovenaan de pagina, vóór de
             Header — dat maakte niet uit zolang het altijd niets zichtbaars
             liet zien, maar sinds het soms ook echt tekst toont, moet het
-            gewoon op de juiste plek in de normale inhoud staan). */}
-        {showAutoRefresh && <PendingPaymentAutoRefresh />}
+            gewoon op de juiste plek in de normale inhoud staan). `order` is
+            hier altijd gezet (deze tak wordt alleen bereikt als de
+            bestelling bestaat), maar TypeScript onthoudt die vernauwing
+            niet meer tot hier — vandaar de expliciete `order &&`. */}
+        {showAutoRefresh && order && (
+          <PendingPaymentAutoRefresh
+            orderId={order.id}
+            contactName={order.contact_name}
+            contactEmail={order.contact_email}
+            contactPhone={order.contact_phone}
+            contactAddress={order.contact_address}
+            contactPostalCode={order.contact_postal_code}
+            contactCity={order.contact_city}
+            shapeName={order.shape_name}
+            finish={order.finish}
+            colorName={order.color_name}
+            earColorName={order.ear_color_name}
+            plateColorName={order.plate_color_name}
+            sizeName={order.size_name}
+            customText={order.custom_text}
+            extraLine1={order.extra_line_1}
+            extraLine2={order.extra_line_2}
+            priceLabel={formatEuroFromCents(order.price_total_cents)}
+          />
+        )}
 
-        <div className="mt-10 flex flex-wrap gap-4">
-          {/* Zie showRestartButton hierboven: deze knop verschijnt alleen
-              als "een nieuwe bestelling starten" ook echt de juiste
-              vervolgstap is (bestelling niet gevonden, of betaling
-              mislukt/verlopen/geannuleerd) — niet bij "in behandeling", en
-              niet meer bij een gelukte betaling. */}
-          {showRestartButton && (
+        {/* Deze algemene knoppenrij geldt voor alle andere gevallen
+            (betaald, mislukt/verlopen/geannuleerd, niet gevonden) — bij
+            "Betaling wordt verwerkt" (showAutoRefresh) toont
+            PendingPaymentAutoRefresh hierboven zijn eigen, rechts
+            uitgelijnde knoppenrij (pas zodra het langer duurt), dus blijft
+            deze rij dan bewust helemaal weg. */}
+        {!showAutoRefresh && (
+          <div className="mt-10 flex flex-wrap gap-4">
+            {showRestartButton && (
+              <Link
+                href="/configurator/vorm"
+                className="inline-flex items-center justify-center rounded-sm bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                {restartLabel}
+              </Link>
+            )}
             <Link
-              href="/configurator/vorm"
-              className="inline-flex items-center justify-center rounded-sm bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              href="/"
+              className="inline-flex items-center justify-center rounded-sm border border-border bg-secondary px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary/70"
             >
-              {restartLabel}
+              Naar home
             </Link>
-          )}
-          {/* Alleen tonen bij "Betaling wordt verwerkt" (showAutoRefresh) —
-              zie toelichting bij dat blok hierboven. `order` staat hier
-              altijd vast (deze tak wordt alleen bereikt als order bestaat),
-              maar TypeScript onthoudt die vernauwing niet meer tot hier —
-              vandaar de expliciete `order &&`. */}
-          {showAutoRefresh && order && (
-            <PaymentIssueContact
-              orderId={order.id}
-              paymentStatusLabel="in behandeling"
-              contactName={order.contact_name}
-              contactEmail={order.contact_email}
-              contactPhone={order.contact_phone}
-              contactAddress={order.contact_address}
-              contactPostalCode={order.contact_postal_code}
-              contactCity={order.contact_city}
-              shapeName={order.shape_name}
-              finish={order.finish}
-              colorName={order.color_name}
-              earColorName={order.ear_color_name}
-              plateColorName={order.plate_color_name}
-              sizeName={order.size_name}
-              customText={order.custom_text}
-              extraLine1={order.extra_line_1}
-              extraLine2={order.extra_line_2}
-              priceLabel={formatEuroFromCents(order.price_total_cents)}
-            />
-          )}
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center rounded-sm border border-border bg-secondary px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary/70"
-          >
-            Naar home
-          </Link>
-        </div>
+          </div>
+        )}
       </main>
 
       <Footer />

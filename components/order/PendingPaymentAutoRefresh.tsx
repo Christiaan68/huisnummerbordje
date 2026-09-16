@@ -2,6 +2,31 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { PaymentIssueContact } from "@/components/order/PaymentIssueContact";
+
+interface PendingPaymentAutoRefreshProps {
+  // Bestelgegevens voor de "Vraag over deze bestelling"-knop (zie
+  // PaymentIssueContact hieronder) — nodig zodra die knop, samen met "Naar
+  // home", verschijnt (zie de UITBREIDING 16-9-2026 hieronder).
+  orderId: number;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string | null;
+  contactAddress: string;
+  contactPostalCode: string;
+  contactCity: string;
+  shapeName: string;
+  finish: "vlak" | "gewelfd";
+  colorName: string | null;
+  earColorName: string | null;
+  plateColorName: string | null;
+  sizeName: string;
+  customText: string;
+  extraLine1: string | null;
+  extraLine2: string | null;
+  priceLabel: string;
+}
 
 /**
  * Vervangt de eerdere `<meta httpEquiv="refresh">` op de bedankt-pagina
@@ -68,8 +93,19 @@ import { useRouter } from "next/navigation";
  * keer verversen (dus na zo'n 8 seconden) verschijnt onderstaande extra
  * regel, zodat een klant bij een normale, snelle bevestiging niets van
  * deze tekst merkt, en 'm alleen ziet als het daadwerkelijk langer duurt.
+ *
+ * UITBREIDING (16-9-2026, op verzoek van Christiaan): tegelijk met de extra
+ * regel hierboven verschijnen nu ook pas "Naar home" en de "Vraag over deze
+ * bestelling"-knop (zie PaymentIssueContact) — samen in één, rechts
+ * uitgelijnde regel, met dezelfde breedte (max-w-md) als de tekst erboven,
+ * zodat de rechterkant van de knoppenrij precies onder de rechterkant van
+ * de tekst valt. Vóór dat moment (attempts < 2) toont dit component nog
+ * NIETS zichtbaars: de betaling duurt dan nog gewoon normaal, geen reden om
+ * al een knoppenrij te tonen — zie app/bestelling/bedankt/page.tsx, waar de
+ * algemene knoppenrij voor die reden bewust helemaal wordt overgeslagen
+ * zolang deze component nog niets toont.
  */
-export function PendingPaymentAutoRefresh() {
+export function PendingPaymentAutoRefresh(props: PendingPaymentAutoRefreshProps) {
   const router = useRouter();
   const [attempts, setAttempts] = useState(0);
 
@@ -87,11 +123,42 @@ export function PendingPaymentAutoRefresh() {
   }
 
   return (
-    <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-      Duurt dit langer dan verwacht? Dat kan gebeuren als een betaalpoging
-      niet is gelukt, verlopen of geannuleerd is — dat wordt door de bank of
-      betaalmethode soms pas na een paar minuten definitief bevestigd. Je
-      hoeft niets te doen, we blijven het voor je checken.
-    </p>
+    <>
+      <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
+        Duurt dit langer dan verwacht? Dat kan gebeuren als een betaalpoging
+        niet is gelukt, verlopen of geannuleerd is — dat wordt door de bank of
+        betaalmethode soms pas na een paar minuten definitief bevestigd. Je
+        hoeft niets te doen, we blijven het voor je checken.
+      </p>
+
+      <div className="mt-6 flex max-w-md flex-wrap items-center justify-end gap-4">
+        <Link
+          href="/"
+          className="inline-flex items-center justify-center rounded-sm border border-border bg-secondary px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary/70"
+        >
+          Naar home
+        </Link>
+        <PaymentIssueContact
+          orderId={props.orderId}
+          paymentStatusLabel="in behandeling"
+          contactName={props.contactName}
+          contactEmail={props.contactEmail}
+          contactPhone={props.contactPhone}
+          contactAddress={props.contactAddress}
+          contactPostalCode={props.contactPostalCode}
+          contactCity={props.contactCity}
+          shapeName={props.shapeName}
+          finish={props.finish}
+          colorName={props.colorName}
+          earColorName={props.earColorName}
+          plateColorName={props.plateColorName}
+          sizeName={props.sizeName}
+          customText={props.customText}
+          extraLine1={props.extraLine1}
+          extraLine2={props.extraLine2}
+          priceLabel={props.priceLabel}
+        />
+      </div>
+    </>
   );
 }
