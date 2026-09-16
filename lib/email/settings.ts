@@ -13,7 +13,14 @@ import { getPool } from "@/lib/mysql/client";
  * bestel- of vraagmelding blokkeren.
  */
 export async function getNotificationEmail(
-  key: "order_notification" | "question_notification" | "price_list",
+  key:
+    | "order_notification"
+    | "question_notification"
+    | "price_list"
+    // Toegevoegd 16-9-2026: vraag over een bestelling vanaf de bedankt-
+    // pagina (zie app/api/payment-issue/route.ts) — nieuwe instelling in
+    // de prijstool, label "Vraag betaalprobleem naar".
+    | "payment_issue_notification",
   fallback: string
 ): Promise<string> {
   try {
