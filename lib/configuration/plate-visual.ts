@@ -305,20 +305,25 @@ export function getOvalFrameBorderPath(
 // heeft van nature veel meer "lucht" nodig door de lussen/uithalen die
 // onder en boven de basislijn uitsteken (vergelijkbaar met, maar nog iets
 // ruimer dan, de blackletter "fette-fraktur").
+// 15-9-2026 (feedback Christiaan: mag best iets dichter op elkaar staan) —
+// alle waarden hieronder met zo'n 35% verkleind t.o.v. de oorspronkelijke
+// inschatting. De onderlinge verhouding (blackletter/verbonden schrijfletter
+// ruimer, geometrisch/condensed krapper) blijft bewust hetzelfde, alleen
+// het geheel staat nu dichter op elkaar.
 export const LINE_GAP_RATIO_BY_FONT: Record<string, number> = {
-  "fette-fraktur": 0.2,
-  bodoni: 0.16,
-  colonel: 0.06,
-  times: 0.1,
-  "schwitserland-schmal": 0.06,
-  "commercial-script": 0.22,
+  "fette-fraktur": 0.13,
+  bodoni: 0.1,
+  colonel: 0.04,
+  times: 0.07,
+  "schwitserland-schmal": 0.04,
+  "commercial-script": 0.14,
   // "ears-fixed-serif": geen door de klant kiesbaar lettertype, zie
   // EARS_AUTOFIT_FONT_KEY verderop in dit bestand — sinds 12-9-2026 zelfde
   // waarde als "bodoni" hierboven, want EARS_NUMBER_FONT_STACK IS nu het
   // Bodoni-lettertype (was eerder op "times"/Georgia gebaseerd).
-  "ears-fixed-serif": 0.16,
+  "ears-fixed-serif": 0.1,
 };
-export const DEFAULT_LINE_GAP_RATIO = 0.08;
+export const DEFAULT_LINE_GAP_RATIO = 0.05;
 
 // Lettergewicht per lettertype-optie, gebruikt door zowel de live preview
 // (ProductPreview.tsx) als de e-mailafbeelding (plate-preview-image.tsx,

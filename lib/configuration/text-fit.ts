@@ -60,20 +60,36 @@ export interface AutoFitResult {
 // plate-visual.ts — Pinyon Script heeft geen vette variant) — de
 // verhouding hieronder is dus niet zoals de andere bij 700 ingeschat, maar
 // meteen bij het daadwerkelijke gewicht 400.
+// 15-9-2026 (feedback Christiaan: "het vierhoekige veld moet beter gevuld
+// worden, voor elk lettertype") — deze verhoudingen waren tot nu toe een
+// "eerste, beredeneerde inschatting", nog nooit echt gemeten. Nu WEL echt
+// gemeten: elk lettertype (exact hetzelfde Google Font-bestand/gewicht als
+// hierboven bij next/font/google, zie app/layout.tsx) hier lokaal geladen
+// (via de @fontsource-npm-pakketten) in een headless browser, en met
+// canvas `measureText`/`actualBoundingBox*` de echte inkt-breedte gemeten
+// van een reeks huisnummer-achtige teksten (cijfers/losse tekens) én
+// naam-achtige tekstregels, gewogen 65/35 (huisnummer is beeldbepalender)
+// + 4% veiligheidsmarge tegen renderverschil tussen apparaten/browsers
+// (zelfde reden als de bestaande "nowrap"-regel). Bij 4 van de 6
+// lettertypes bleek de oude inschatting te VOORZICHTIG (te hoge
+// verhouding → tekst werd onnodig klein berekend, precies de klacht) —
+// bij "colonel" en "commercial-script" bleek de oude inschatting juist te
+// KRAP (te lage verhouding → risico op net te brede tekst/overloop), dus
+// die twee worden hier iets kleiner in plaats van groter.
 const CHAR_WIDTH_RATIO_BY_FONT: Record<string, number> = {
-  "fette-fraktur": 0.7, // UnifrakturCook — sierlijke gotische druletter, relatief brede vormen
-  bodoni: 0.66, // Bodoni Moda — hoog-contrast schreefletter, vergelijkbaar met Playfair Display
-  colonel: 0.55, // Saira Stencil One — geometrisch, vrij smal/condensed stencil-lettertype
-  times: 0.58, // Tinos (Times-vervanger) — van oudsher een compacte, smalle schreefletter
-  "schwitserland-schmal": 0.52, // Roboto Condensed — smal/condensed lettertype
-  "commercial-script": 0.55, // Pinyon Script (gewicht 400) — verbonden schrijfletter, gemiddelde tekenbreedte
+  "fette-fraktur": 0.47, // UnifrakturCook — was 0.7, ruim te voorzichtig ingeschat
+  bodoni: 0.574, // Bodoni Moda — was 0.66, te voorzichtig ingeschat
+  colonel: 0.566, // Saira Stencil One — was 0.55, juist te krap (overloop-risico)
+  times: 0.489, // Tinos — was 0.58, te voorzichtig ingeschat
+  "schwitserland-schmal": 0.463, // Roboto Condensed — was 0.52, te voorzichtig ingeschat
+  "commercial-script": 0.581, // Pinyon Script (gewicht 400) — was 0.55, juist te krap
   // "ears-fixed-serif": geen door de klant kiesbaar lettertype —
   // synthetische id voor de vaste typografie van de 3 "oren"-vormen
   // (EARS_NUMBER_FONT_STACK/EARS_AUTOFIT_FONT_KEY in plate-visual.ts).
   // Sinds 12-9-2026 zelfde waarde als "bodoni" hierboven, want
   // EARS_NUMBER_FONT_STACK IS nu het Bodoni-lettertype (was eerder op
   // "times"/Georgia gebaseerd).
-  "ears-fixed-serif": 0.66,
+  "ears-fixed-serif": 0.574,
 };
 const DEFAULT_CHAR_WIDTH_RATIO = 0.62;
 // De regelhoogte in de echte preview is exact gelijk aan de fontgrootte
