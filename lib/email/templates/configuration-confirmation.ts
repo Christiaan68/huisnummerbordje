@@ -173,8 +173,8 @@ const TRANSLATIONS = {
     // labelBaseColor/labelPrintColor: toegevoegd 16-9-2026, samen met de
     // Nederlandse labels hierboven — eigen (niet door Christiaan
     // geverifieerde) vertaling, zie het rapport van deze wijziging.
-    labelBaseColor: "Untergrundfarbe",
-    labelPrintColor: "Aufdruckfarbe",
+    labelBaseColor: "Grundfarbe",
+    labelPrintColor: "Druckfarbe",
     // Toegevoegd 9-9-2026, samen met de Nederlandse labels hierboven —
     // eigen (niet door Christiaan geverifieerde) vertaling, zie het
     // rapport van deze wijziging. Sinds 16-9-2026 niet meer gebruikt door de
