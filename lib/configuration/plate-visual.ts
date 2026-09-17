@@ -456,7 +456,16 @@ const EARS_FRAME_THICKNESS_RATIO = 0.025;
 const EARS_CORNER_TAB_EDGE_MARGIN_RATIO = 0.02; // afstand blokje tot de ware rand van het bordje
 const EARS_CORNER_TAB_RADIUS_RATIO = 0.3; // afronding van het blokje, t.o.v. zijn eigen zijde
 const EARS_CORNER_MAIN_BODY_INSET_RATIO = 0.05; // inspringing van het rechte-randen-hoofdvlak t.o.v. de ware rand
-const EARS_CORNER_FRAME_RING_RATIO = 0.09; // dikte van de kaderrand, van het hoofdvlak tot het middenvlak
+// Verkleind 17-9-2026 (van 0.09 naar 0.035), op verzoek van Christiaan na het
+// vergelijken van de eerste versie met de foto van het echte bordje ("59"):
+// de kaderrand was te dik, waardoor het middenvlak te ver van de rand af
+// stond. Een dunnere ring schuift het middenvlak dichter naar de rand (maar
+// blijft, per ontwerp, altijd een zichtbare kaderrand houden — het middenvlak
+// komt dus nooit tót of over de ware rand) én maakt de hoekblokjes vanzelf
+// kleiner, omdat hun afmeting is afgeleid van diezelfde afstand tot het
+// middenvlak (zie `tabSizeMm` hieronder) — precies de twee dingen die
+// Christiaan terugmeldde.
+const EARS_CORNER_FRAME_RING_RATIO = 0.035; // dikte van de kaderrand, van het hoofdvlak tot het middenvlak
 const EARS_CORNER_INNER_RADIUS_RATIO = 0.12; // afronding van het middenvlak, t.o.v. zijn eigen kortste zijde
 
 /**
