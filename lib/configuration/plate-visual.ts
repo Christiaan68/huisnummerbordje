@@ -463,6 +463,19 @@ const EARS_FRAME_THICKNESS_RATIO = 0.025;
 // tot de ware rand van het bordje.
 const EARS_CORNER_TAB_PROTRUSION_RATIO = 0.012; // hoever het blokje nog voorbij het hoofdvlak uitsteekt
 const EARS_CORNER_TAB_RADIUS_RATIO = 0.3; // afronding van het blokje, t.o.v. zijn eigen zijde
+// Toegevoegd 17-9-2026, op verzoek van Christiaan: de schroefstraal van de
+// andere vormen (getScrewRadiusMm, hieronder als `holeRadiusMm`) is een vaste
+// verhouding van de bordjeszijde, en werd tot nu toe ook hier hergebruikt.
+// Sinds het blokje zelf een stuk kleiner is geworden (zie
+// EARS_CORNER_FRAME_RING_RATIO/EARS_CORNER_TAB_PROTRUSION_RATIO hierboven)
+// is dat blokje inmiddels kleiner dan die vaste schroefdiameter — het
+// schroefje stak daardoor over de rand van het blokje heen, deels in het
+// middenvlak (wit) en deels erbuiten. Bij "vier-hoeken" wordt de straal
+// daarom nu afgeleid van de daadwerkelijke blokjesgrootte (tabSizeMm),
+// zodat het schroefje altijd ruim BINNEN het blokje blijft, met een vaste
+// zwarte marge rondom — nooit meer tot aan de rand van het blokje of het
+// middenvlak.
+const EARS_CORNER_TAB_HOLE_RADIUS_RATIO = 0.28; // schroefstraal, t.o.v. de zijde van het blokje
 const EARS_CORNER_MAIN_BODY_INSET_RATIO = 0.05; // inspringing van het rechte-randen-hoofdvlak t.o.v. de ware rand
 // Verkleind 17-9-2026 (van 0.09 naar 0.035), op verzoek van Christiaan na het
 // vergelijken van de eerste versie met de foto van het echte bordje ("59"):
@@ -688,11 +701,15 @@ export function getEarsGeometry(
     }));
     // De schroef komt precies in het midden van elk hoekblokje te staan —
     // dus afgeleid van diezelfde blokjespositie, in plaats van de eerdere,
-    // losse SCREW_INSET_RATIO-positie.
+    // losse SCREW_INSET_RATIO-positie. De straal komt NIET van de gedeelde
+    // `holeRadiusMm` (die is voor dit kleine blokje te groot, zie toelichting
+    // bij EARS_CORNER_TAB_HOLE_RADIUS_RATIO hierboven), maar van het blokje
+    // zelf, zodat de schroef altijd ruim binnen het blokje blijft.
+    const tabHoleRadiusMm = tabSizeMm * EARS_CORNER_TAB_HOLE_RADIUS_RATIO;
     const holes: EarHoleGeometry[] = tabCorners.map(([xMm, yMm]) => ({
       xMm: xMm + tabSizeMm / 2,
       yMm: yMm + tabSizeMm / 2,
-      radiusMm: holeRadiusMm,
+      radiusMm: tabHoleRadiusMm,
       style: "screw",
     }));
 
