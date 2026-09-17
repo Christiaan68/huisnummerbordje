@@ -449,11 +449,19 @@ const EARS_FRAME_THICKNESS_RATIO = 0.025;
 // blokje precies tot aan de rand van het middenvlak reikt (geen overlap, geen
 // gat): EARS_CORNER_TAB_SIZE_RATIO wordt namelijk NIET los ingesteld, maar in
 // getEarsGeometry afgeleid uit het verschil tussen de blokjesrand
-// (EARS_CORNER_TAB_EDGE_MARGIN_RATIO) en de rand van het middenvlak
-// (EARS_CORNER_MAIN_BODY_INSET_RATIO + EARS_CORNER_FRAME_RING_RATIO) — zie
-// daar. Zelfde bewuste vereenvoudiging als de rest van dit bestand: een net,
-// herkenbaar hoekblokje, geen fotorealistische reproductie.
-const EARS_CORNER_TAB_EDGE_MARGIN_RATIO = 0.02; // afstand blokje tot de ware rand van het bordje
+// (mainBodyInsetMm - EARS_CORNER_TAB_PROTRUSION_RATIO) en de rand van het
+// middenvlak (EARS_CORNER_MAIN_BODY_INSET_RATIO + EARS_CORNER_FRAME_RING_RATIO)
+// — zie daar. Zelfde bewuste vereenvoudiging als de rest van dit bestand: een
+// net, herkenbaar hoekblokje, geen fotorealistische reproductie.
+// Aangepast 17-9-2026, op verzoek van Christiaan na nogmaals vergelijken met
+// de foto van het echte bordje ("59"): eerst stak een blokje nog duidelijk
+// als los aanhangsel buiten het hoofdvlak uit; op de foto zitten de oren juist
+// bijna helemaal BINNEN het (afgeronde) hoofdvlak, met alleen de schroef net
+// zichtbaar in de hoek. Vandaar nu een uitsteekafstand (protrusion) i.p.v.
+// een eigen randafstand: het blokje steekt nog maar een fractie voorbij de
+// rand van het hoofdvlak uit, in plaats van een eigen, los bepaalde afstand
+// tot de ware rand van het bordje.
+const EARS_CORNER_TAB_PROTRUSION_RATIO = 0.012; // hoever het blokje nog voorbij het hoofdvlak uitsteekt
 const EARS_CORNER_TAB_RADIUS_RATIO = 0.3; // afronding van het blokje, t.o.v. zijn eigen zijde
 const EARS_CORNER_MAIN_BODY_INSET_RATIO = 0.05; // inspringing van het rechte-randen-hoofdvlak t.o.v. de ware rand
 // Verkleind 17-9-2026 (van 0.09 naar 0.035), op verzoek van Christiaan na het
@@ -646,14 +654,18 @@ export function getEarsGeometry(
       radiusMm: innerRadiusMm,
     });
 
-    // De 4 hoekblokjes ("oren") — elk vlak bij de ware rand van het bordje
-    // (EARS_CORNER_TAB_EDGE_MARGIN_RATIO), met als tegenoverliggende rand
+    // De 4 hoekblokjes ("oren") — de rand van een blokje ligt net iets vóór
+    // de rand van het hoofdvlak (mainBodyInsetMm - een kleine uitsteekafstand
+    // EARS_CORNER_TAB_PROTRUSION_RATIO), zodat het blokje grotendeels BINNEN
+    // het hoofdvlak valt en er nog maar een fractie voorbij uitsteekt — zie
+    // toelichting hierboven bij de constante. Als tegenoverliggende rand
     // PRECIES de rand van het middenvlak hierboven (innerInsetMm) — zo raakt
     // een blokje het middenvlak nooit (geen overlap: het middenvlak zou het
     // blokje anders deels overschilderen) én blijft er ook nooit een gat
     // openstaan (de kaderrand van het hoofdvlak vult de tussenruimte, zie
     // ProductPreview.tsx/plate-preview-image.tsx voor de tekenvolgorde).
-    const tabMarginMm = minDim * EARS_CORNER_TAB_EDGE_MARGIN_RATIO;
+    const tabProtrusionMm = minDim * EARS_CORNER_TAB_PROTRUSION_RATIO;
+    const tabMarginMm = mainBodyInsetMm - tabProtrusionMm;
     const tabSizeMm = innerInsetMm - tabMarginMm;
     const tabRadiusMm = tabSizeMm * EARS_CORNER_TAB_RADIUS_RATIO;
 
