@@ -77,6 +77,18 @@ export interface ProductSize {
   // globalPricingOptions.extraCharPriceCents) gaat gelden. Komt uit de
   // prijsbeheeromgeving ("Standaard maximaal aantal karakters").
   defaultMaxChars: number;
+  // Leveringskosten (toegevoegd 17-9-2026) — volledig bepaald door de
+  // prijsbeheeromgeving (Vervoerders + verzendstaffels, per product/maat
+  // gekoppeld): de klant kiest zelf geen vervoerder of staffel. Alle drie
+  // `null`/`undefined` zolang er (nog) geen geldige koppeling is — precies
+  // hetzelfde "prijs op aanvraag"-patroon als priceFlatCents/
+  // priceCurvedCents hierboven: calculatePrice() (lib/configuration/
+  // pricing.ts) laat dan de HELE prijs weg (geen checkout mogelijk) in
+  // plaats van de verzendkosten stilzwijgend op 0 te zetten. Zie
+  // lib/configuration/livePricing.ts voor hoe dit live opgehaald wordt.
+  shippingCarrierName?: string | null;
+  shippingTierName?: string | null;
+  shippingCostCents?: number | null;
   active: boolean;
   createdAt: string;
 }

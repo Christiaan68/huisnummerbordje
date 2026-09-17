@@ -247,6 +247,13 @@ export async function POST(request: Request) {
         priceExtraCharsCents: order.price_extra_chars_cents,
         priceExtraCharsCount: order.price_extra_chars_count,
         priceFrameSurchargeCents: order.price_frame_surcharge_cents,
+        // Leveringskosten (toegevoegd 17-9-2026) — komen rechtstreeks uit de
+        // opgeslagen bestelling (al bepaald bij het aanmaken van de
+        // betaling, zie app/api/create-payment/route.ts), niet opnieuw uit
+        // de (mogelijk intussen gewijzigde) live prijstool.
+        shippingCarrierName: order.shipping_carrier_name,
+        shippingTierName: order.shipping_tier_name,
+        shippingCostCents: order.shipping_cost_cents,
         contact: {
           name: order.contact_name,
           address: order.contact_address,

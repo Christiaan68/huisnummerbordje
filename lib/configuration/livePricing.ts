@@ -76,6 +76,15 @@ interface PrijstoolProduct {
   basePriceVlak: number;
   basePriceGewelfd: number;
   defaultMaxChars: number;
+  // Leveringskosten (toegevoegd 17-9-2026) — zie de toelichting bij
+  // ProductSize.shippingCostCents (types/product.ts). Optioneel gehouden
+  // (niet verplicht in isValidPrijstoolResponse hieronder) zodat een
+  // oudere versie van de prijstool die deze velden nog niet teruggeeft de
+  // webshop niet laat crashen — ontbreken ze, dan is er gewoon nog geen
+  // verzendkoppeling (`null`), net als bij een net nieuw product.
+  shippingCarrierName?: string | null;
+  shippingTierName?: string | null;
+  shippingCostCents?: number | null;
 }
 
 interface PrijstoolResponse {
@@ -191,6 +200,14 @@ export async function getLivePricingData(): Promise<LivePricingData> {
           live.basePriceVlak === 0 ? null : Math.round(live.basePriceVlak * 100),
         priceCurvedCents: Math.round(live.basePriceGewelfd * 100),
         defaultMaxChars: live.defaultMaxChars,
+        // Leveringskosten (toegevoegd 17-9-2026): rechtstreeks overgenomen
+        // van de prijstool — die heeft de koppeling met de vervoerder/
+        // verzendstaffel al opgelost (en `null` gemaakt bij een ontbrekende
+        // of kapotte koppeling, zie lib/carriers.js daar). Er wordt hier
+        // bewust NIETS zelf "verzonnen" of op 0 gezet.
+        shippingCarrierName: live.shippingCarrierName ?? null,
+        shippingTierName: live.shippingTierName ?? null,
+        shippingCostCents: live.shippingCostCents ?? null,
       };
     });
 

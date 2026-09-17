@@ -202,3 +202,20 @@ ALTER TABLE configurations ADD COLUMN payment_failure_reason VARCHAR(255) NULL;
 
 ALTER TABLE configurations ADD COLUMN print_color_id VARCHAR(64) NULL AFTER color_name;
 ALTER TABLE configurations ADD COLUMN print_color_name VARCHAR(100) NULL AFTER print_color_id;
+
+-- MIGRATIE 17-9-2026: leveringskosten toegevoegd. Welke vervoerder en
+-- verzendstaffel bij een bestelling horen, en wat de verzendkosten waren,
+-- wordt volledig bepaald door de prijsbeheeromgeving op basis van het
+-- gekozen product en de maat (zie lib/configuration/pricing.ts en
+-- app/api/create-payment/route.ts) — de klant kiest hier zelf niets. De
+-- kolommen bewaren, net als bij shape_name/color_name elders in deze
+-- tabel, zowel de vervoerders-/staffelnaam als de prijs op het moment van
+-- bestellen (in centen, zelfde eenheid als de overige price_*-kolommen),
+-- zodat een oude bestelling altijd correct leesbaar blijft, ook als er
+-- later iets in de vervoerderslijst verandert. Alle drie blijven NULL bij
+-- een bestelling van vóór deze migratie. Voer onderstaande drie regels
+-- ÉÉNMALIG uit in hetzelfde SQL-scherm om de tabel bij te werken:
+
+ALTER TABLE configurations ADD COLUMN shipping_carrier_name VARCHAR(100) NULL;
+ALTER TABLE configurations ADD COLUMN shipping_tier_name VARCHAR(100) NULL;
+ALTER TABLE configurations ADD COLUMN shipping_cost_cents INT NULL;

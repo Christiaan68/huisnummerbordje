@@ -28,6 +28,17 @@ export interface PriceBreakdown {
   extraCharsCount: number;
   extraCharsCents: number;
   frameSurchargeCents: number;
+  // Leveringskosten (toegevoegd 17-9-2026) — volledig bepaald door de
+  // prijsbeheeromgeving op basis van het gekozen product/maat, de klant
+  // kiest zelf geen vervoerder of verzendstaffel. shippingCostCents is
+  // altijd een concreet getal in een teruggegeven PriceBreakdown: is er
+  // (nog) geen geldige koppeling, dan geeft calculatePrice() hieronder
+  // `null` voor de HELE prijs terug (zie de toelichting daar) in plaats van
+  // een PriceBreakdown met een gok-waarde — er wordt dus nooit stilzwijgend
+  // 0/gratis verzending getoond of doorberekend.
+  shippingCarrierName: string | null;
+  shippingTierName: string | null;
+  shippingCostCents: number;
   totalCents: number;
 }
 
@@ -127,8 +138,26 @@ export function calculatePrice(
     ? globalPricingOptions.frameSurchargeCents
     : 0;
 
+  // Leveringskosten (toegevoegd 17-9-2026): net als bij een nog ontbrekende
+  // basisprijs hierboven (regel "if (basePriceCents === null...) return
+  // null") geldt hier hetzelfde "prijs op aanvraag"-pad — is er voor dit
+  // product/deze maat geen (geldige) vervoerder/verzendstaffel gekoppeld in
+  // de prijsbeheeromgeving, dan is de totaalprijs nog niet bekend en wordt
+  // er hier bewust GEEN PriceBreakdown teruggegeven (dus ook geen checkout
+  // mogelijk, zie app/api/create-payment/route.ts). Zo kan een ontbrekende
+  // koppeling nooit stilzwijgend tot gratis verzending leiden — zie het
+  // verzoek van Christiaan bij het toevoegen van deze functionaliteit.
+  if (size.shippingCostCents === null || size.shippingCostCents === undefined) {
+    return null;
+  }
+  const shippingCostCents = size.shippingCostCents;
+
   const totalCents =
-    basePriceCents + colorSurchargeCents + extraCharsCents + frameSurchargeCents;
+    basePriceCents +
+    colorSurchargeCents +
+    extraCharsCents +
+    frameSurchargeCents +
+    shippingCostCents;
 
   return {
     basePriceCents,
@@ -136,6 +165,9 @@ export function calculatePrice(
     extraCharsCount,
     extraCharsCents,
     frameSurchargeCents,
+    shippingCarrierName: size.shippingCarrierName ?? null,
+    shippingTierName: size.shippingTierName ?? null,
+    shippingCostCents,
     totalCents,
   };
 }

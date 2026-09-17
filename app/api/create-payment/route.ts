@@ -155,6 +155,11 @@ export async function POST(request: Request) {
       priceExtraCharsCents: price.extraCharsCents,
       priceExtraCharsCount: price.extraCharsCount,
       priceFrameSurchargeCents: price.frameSurchargeCents,
+      // Leveringskosten (toegevoegd 17-9-2026) — door de prijstool bepaald
+      // op basis van dit product/deze maat, zie lib/configuration/pricing.ts.
+      shippingCarrierName: price.shippingCarrierName,
+      shippingTierName: price.shippingTierName,
+      shippingCostCents: price.shippingCostCents,
     };
 
     try {
@@ -269,6 +274,11 @@ export async function POST(request: Request) {
       priceExtraCharsCents: price.extraCharsCents,
       priceExtraCharsCount: price.extraCharsCount,
       priceFrameSurchargeCents: price.frameSurchargeCents,
+      // Leveringskosten (toegevoegd 17-9-2026) — door de prijstool bepaald
+      // op basis van dit product/deze maat, zie lib/configuration/pricing.ts.
+      shippingCarrierName: price.shippingCarrierName,
+      shippingTierName: price.shippingTierName,
+      shippingCostCents: price.shippingCostCents,
     };
 
     try {

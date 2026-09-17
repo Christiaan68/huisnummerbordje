@@ -49,6 +49,12 @@ interface CustomerConfirmationData {
   priceExtraCharsCents?: number;
   priceExtraCharsCount?: number;
   priceFrameSurchargeCents?: number;
+  // Leveringskosten (toegevoegd 17-9-2026) — vervoerder + verzendstaffel +
+  // prijs, volledig bepaald door de prijsbeheeromgeving. Expliciet verzoek
+  // van Christiaan: dit MOET in de bevestigingsmail aan de klant staan.
+  shippingCarrierName?: string;
+  shippingTierName?: string;
+  shippingCostCents?: number;
   // Betaalgegevens via Mollie (toegevoegd 29-8-2026, na de eerste live
   // test — Christiaan wilde dat de klant hier ook zelf kan zien dát en
   // waarmee er betaald is). Al kant-en-klaar geformatteerd doorgegeven,
@@ -181,6 +187,14 @@ export function renderCustomerConfirmationEmail(
                         ? row(
                             `Meerprijs extra tekens (${data.priceExtraCharsCount}×)`,
                             formatPriceCents(data.priceExtraCharsCents)
+                          )
+                        : ""
+                    }
+                    ${
+                      data.shippingCostCents != null
+                        ? row(
+                            data.shippingCarrierName ? `Verzending (${data.shippingCarrierName})` : "Verzending",
+                            formatPriceCents(data.shippingCostCents)
                           )
                         : ""
                     }

@@ -108,6 +108,12 @@ export interface SendOrderEmailsInput {
   priceExtraCharsCents: number;
   priceExtraCharsCount: number;
   priceFrameSurchargeCents: number;
+  // Leveringskosten (toegevoegd 17-9-2026) — vervoerder + verzendstaffel +
+  // prijs, komt rechtstreeks uit de opgeslagen bestelling (zie
+  // lib/mysql/client.ts, OrderRow) door via app/api/mollie-webhook/route.ts.
+  shippingCarrierName?: string | null;
+  shippingTierName?: string | null;
+  shippingCostCents?: number | null;
   contact: {
     name: string;
     address: string;
@@ -147,6 +153,20 @@ export async function sendOrderEmails(
     priceExtraCharsCents: input.priceExtraCharsCents,
     priceExtraCharsCount: input.priceExtraCharsCount,
     priceFrameSurchargeCents: input.priceFrameSurchargeCents,
+  };
+
+  // shippingCarrierName/shippingTierName (toegevoegd 17-9-2026): welke
+  // vervoerder/staffel gekozen is, is GEEN prijsveld — dat mag (anders dan
+  // shippingCostCents hieronder) ook in de interne meldingsmail getoond
+  // worden, ondanks de "geen prijzen in de bevestigingsmails"-afspraak van
+  // 15-9-2026 (zie lib/email/templates/configuration-confirmation.ts):
+  // Christiaan moet immers weten hoe/met welke vervoerder er verstuurd
+  // moet worden. shippingCostCents wordt daarom hieronder bewust NIET in
+  // `priceFields` (gedeeld door beide mails) opgenomen, maar alleen los
+  // meegegeven aan de klantmail.
+  const shippingNameFields = {
+    shippingCarrierName: input.shippingCarrierName ?? undefined,
+    shippingTierName: input.shippingTierName ?? undefined,
   };
 
   // Zelfde autofit-berekening als voorheen in app/api/send-email/route.ts —
@@ -243,6 +263,7 @@ export async function sendOrderEmails(
       paidAt: input.paidAtFormatted,
       language: input.emailLanguage,
       ...priceFields,
+      ...shippingNameFields,
     });
 
     // Onderwerp van de interne meldingsmail volgt dezelfde, per vorm
@@ -307,6 +328,8 @@ export async function sendOrderEmails(
       paymentMethodName: input.paymentMethodName,
       paidAt: input.paidAtFormatted,
       ...priceFields,
+      ...shippingNameFields,
+      shippingCostCents: input.shippingCostCents ?? undefined,
     });
 
     const { error: customerError } = await resend.emails.send({

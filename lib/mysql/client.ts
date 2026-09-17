@@ -123,6 +123,18 @@ export interface NewOrderRow {
   priceExtraCharsCents: number;
   priceExtraCharsCount: number;
   priceFrameSurchargeCents: number;
+  // Leveringskosten (toegevoegd 17-9-2026) — vervoerder + verzendstaffel +
+  // prijs, volledig bepaald door de prijsbeheeromgeving op basis van het
+  // gekozen product/maat (zie lib/configuration/pricing.ts). `null` kan in
+  // de praktijk niet voorkomen op het moment dat een bestelling hier
+  // opgeslagen wordt: app/api/create-payment/route.ts blokkeert de
+  // betaling al eerder als er geen (geldige) koppeling is (zie
+  // calculatePrice — "prijs op aanvraag"-pad) — toch hier `| null`
+  // getypeerd, voor het (zeldzame) geval van een heel oude bestelling of
+  // een toekomstige aanroeper die dit veld nog niet meegeeft.
+  shippingCarrierName: string | null;
+  shippingTierName: string | null;
+  shippingCostCents: number | null;
   priceSource: "prijstool" | "reservekopie";
   contactName: string;
   contactAddress: string;
@@ -160,10 +172,12 @@ export async function saveOrderToDatabase(order: NewOrderRow): Promise<number> {
       custom_text, extra_line_1, extra_line_2, number_position,
       has_frame,
       price_total_cents, price_color_surcharge_cents, price_extra_chars_cents,
-      price_extra_chars_count, price_frame_surcharge_cents, price_source,
+      price_extra_chars_count, price_frame_surcharge_cents,
+      shipping_carrier_name, shipping_tier_name, shipping_cost_cents,
+      price_source,
       contact_name, contact_address, contact_postal_code, contact_city,
       contact_email, contact_phone, quantity
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       order.shapeId,
       order.shapeName,
@@ -194,6 +208,9 @@ export async function saveOrderToDatabase(order: NewOrderRow): Promise<number> {
       order.priceExtraCharsCents,
       order.priceExtraCharsCount,
       order.priceFrameSurchargeCents,
+      order.shippingCarrierName,
+      order.shippingTierName,
+      order.shippingCostCents,
       order.priceSource,
       order.contactName,
       order.contactAddress,
@@ -314,6 +331,11 @@ export interface OrderRow {
   price_extra_chars_cents: number;
   price_extra_chars_count: number;
   price_frame_surcharge_cents: number;
+  // Leveringskosten (toegevoegd 17-9-2026) — zie de toelichting bij
+  // NewOrderRow hierboven.
+  shipping_carrier_name: string | null;
+  shipping_tier_name: string | null;
+  shipping_cost_cents: number | null;
   price_source: "prijstool" | "reservekopie";
   contact_name: string;
   contact_address: string;

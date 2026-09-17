@@ -60,6 +60,12 @@ export function ConfigurationSummary() {
             value={formatPriceCents(price.extraCharsCents)}
           />
         )}
+        {price && (
+          <Row
+            label={price.shippingCarrierName ? `Verzending (${price.shippingCarrierName})` : "Verzending"}
+            value={formatPriceCents(price.shippingCostCents)}
+          />
+        )}
         <Row
           label="Totaalprijs"
           value={price ? formatPriceCents(price.totalCents) : "Prijs op aanvraag"}
@@ -131,6 +137,12 @@ export function ConfigurationSummary() {
         <Row
           label={`Meerprijs extra tekens (${price.extraCharsCount}×)`}
           value={formatPriceCents(price.extraCharsCents)}
+        />
+      )}
+      {price && (
+        <Row
+          label={price.shippingCarrierName ? `Verzending (${price.shippingCarrierName})` : "Verzending"}
+          value={formatPriceCents(price.shippingCostCents)}
         />
       )}
       <Row

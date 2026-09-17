@@ -66,6 +66,15 @@ interface ConfigurationEmailData {
   priceExtraCharsCents?: number;
   priceExtraCharsCount?: number;
   priceFrameSurchargeCents?: number;
+  // Leveringskosten (toegevoegd 17-9-2026): anders dan de prijsvelden
+  // hierboven wordt dit HIER WEL getoond (zie labelShipping bij
+  // TRANSLATIONS en de render-functie) — Christiaan moet in deze interne
+  // mail kunnen zien met welke vervoerder/staffel verstuurd moet worden.
+  // De KOSTEN zelf (shippingCostCents, zie lib/email/sendOrderEmails.ts)
+  // worden hier bewust NIET getoond, conform de "geen prijzen in de
+  // bevestigingsmails"-afspraak van 15-9-2026.
+  shippingCarrierName?: string;
+  shippingTierName?: string;
   // Betaalgegevens via Mollie (toegevoegd 29-8-2026, na de eerste live
   // test — Christiaan wilde in de mail kunnen zien dát en waarmee er
   // betaald is). Al kant-en-klaar geformatteerd doorgegeven, zie
@@ -128,6 +137,9 @@ const TRANSLATIONS = {
     labelFrame: "Kader",
     frameYes: "Ja",
     frameNo: "Nee",
+    // labelShipping (toegevoegd 17-9-2026): zie de toelichting bij
+    // shippingCarrierName/shippingTierName hierboven.
+    labelShipping: "Verzending",
     labelPaymentMethod: "Betaalmethode",
     labelPaidAt: "Betaald op",
     footer: "Deze e-mail is automatisch gegenereerd vanuit de configurator.",
@@ -193,6 +205,10 @@ const TRANSLATIONS = {
     labelFrame: "Rahmen",
     frameYes: "Ja",
     frameNo: "Nein",
+    // labelShipping: toegevoegd 17-9-2026, eigen (niet door Christiaan
+    // geverifieerde) vertaling, zelfde toelichting als labelBaseColor/
+    // labelPrintColor hierboven.
+    labelShipping: "Versand",
     labelPaymentMethod: "Zahlungsmethode",
     labelPaidAt: "Bezahlt am",
     footer: "Diese E-Mail wurde automatisch vom Konfigurator generiert.",
@@ -370,6 +386,16 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
                       isEarsOrder
                         ? ""
                         : row(t.labelFrame, data.hasFrame ? t.frameYes : t.frameNo)
+                    }
+                    ${
+                      data.shippingCarrierName
+                        ? row(
+                            t.labelShipping,
+                            data.shippingTierName
+                              ? `${data.shippingCarrierName} – ${data.shippingTierName}`
+                              : data.shippingCarrierName
+                          )
+                        : ""
                     }
                     ${
                       data.paymentMethodName && data.paidAt
