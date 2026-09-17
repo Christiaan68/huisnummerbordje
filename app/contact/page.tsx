@@ -33,7 +33,7 @@ export default function ContactPage() {
           Contact
         </h1>
         <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-          Emaille Huisnummers is een onderdeel van Langcat Emaille.
+          Emaille Huisnummerbordjes is onderdeel van
         </p>
 
         {/* Logo van Langcat, de fabrikant/het bedrijf achter Emaille
@@ -51,7 +51,6 @@ export default function ContactPage() {
         </LangcatTransitionLink>
 
         <div className="mt-6 space-y-1 text-left text-sm leading-relaxed text-foreground">
-          <p className="font-medium">{companyInfo.name}</p>
           <p>{companyInfo.street}</p>
           <p>
             {companyInfo.postalCode} {companyInfo.city}

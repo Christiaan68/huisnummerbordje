@@ -75,13 +75,6 @@ export function Header({
                   Christiaan (25-8-2026) uit dit hamburgermenu gehaald — deze
                   pagina's blijven wel gewoon bereikbaar via de links
                   onderaan iedere pagina, zie components/layout/Footer.tsx. */}
-              <Link
-                href="/contact"
-                onClick={closeMenu}
-                className="block px-4 py-2 text-sm text-foreground hover:bg-secondary"
-              >
-                Contact
-              </Link>
               {/* FAQ (toegevoegd 17-9-2026, op verzoek van Christiaan). */}
               <Link
                 href="/faq"
@@ -89,6 +82,15 @@ export function Header({
                 className="block px-4 py-2 text-sm text-foreground hover:bg-secondary"
               >
                 Veelgestelde vragen
+              </Link>
+              {/* Contact staat bewust als laatste item (verzoek Christiaan,
+                  17-9-2026). */}
+              <Link
+                href="/contact"
+                onClick={closeMenu}
+                className="block px-4 py-2 text-sm text-foreground hover:bg-secondary"
+              >
+                Contact
               </Link>
             </div>
           </details>
