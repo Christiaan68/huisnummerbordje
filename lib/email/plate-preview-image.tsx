@@ -481,7 +481,9 @@ export async function renderPlatePreviewPng(
                   rx={tab.radiusMm}
                   fill={earFillHex}
                   stroke={earNeedsOutline ? "#1a1a1a" : "none"}
-                  strokeWidth={earNeedsOutline ? Math.min(widthMm, heightMm) * 0.008 : 0}
+                  // Lijndikte t.o.v. het blokje zelf i.p.v. het hele bordje —
+                  // zelfde fix/toelichting als ProductPreview.tsx (17-9-2026).
+                  strokeWidth={earNeedsOutline ? tab.widthMm * 0.07 : 0}
                 />
               ))}
               <rect

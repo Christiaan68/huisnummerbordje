@@ -569,9 +569,14 @@ export function ProductPreview() {
                     rx={tab.radiusMm}
                     fill={earFill}
                     stroke={earNeedsOutline ? "#1a1a1a" : "none"}
-                    strokeWidth={
-                      earNeedsOutline ? Math.min(plateWidth, plateHeight) * 0.008 : 0
-                    }
+                    // Lijndikte t.o.v. het BLOKJE zelf (tab.widthMm), niet t.o.v.
+                    // het hele bordje zoals bij framePath hierboven — bevestigd
+                    // door Christiaan (screenshots, 17-9-2026) bij een (bijna)
+                    // witte oren-kleur: de hele-bordje-verhouding (0.008) gaf op
+                    // dit kleine blokje een veel te dikke lijn, die het schroefje
+                    // (dat zelf ook al klein is, zie EARS_CORNER_TAB_HOLE_RADIUS_
+                    // RATIO in plate-visual.ts) leek te raken/overschrijden.
+                    strokeWidth={earNeedsOutline ? tab.widthMm * 0.07 : 0}
                   />
                 ))}
                 <rect
