@@ -552,6 +552,28 @@ export function ProductPreview() {
                     earNeedsOutline ? Math.min(plateWidth, plateHeight) * 0.008 : 0
                   }
                 />
+                {/* De 4 uitstekende hoekblokjes van "vier-hoeken" (toegevoegd
+                    17-9-2026, n.a.v. een foto van het echte bordje "59") —
+                    bewust als losse rechthoeken getekend, NA framePath maar
+                    VÓÓR het middenvlak, zie de toelichting bij `cornerTabs`
+                    in lib/configuration/plate-visual.ts. Leeg bij
+                    "horizontaal"/"verticaal" (die tekenen hun puntige oren al
+                    als onderdeel van framePath zelf). */}
+                {earsGeometry.cornerTabs.map((tab, index) => (
+                  <rect
+                    key={`tab-${index}`}
+                    x={tab.xMm}
+                    y={tab.yMm}
+                    width={tab.widthMm}
+                    height={tab.heightMm}
+                    rx={tab.radiusMm}
+                    fill={earFill}
+                    stroke={earNeedsOutline ? "#1a1a1a" : "none"}
+                    strokeWidth={
+                      earNeedsOutline ? Math.min(plateWidth, plateHeight) * 0.008 : 0
+                    }
+                  />
+                ))}
                 <rect
                   x={earsGeometry.innerRect.xMm}
                   y={earsGeometry.innerRect.yMm}

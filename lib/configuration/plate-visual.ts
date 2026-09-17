@@ -440,6 +440,25 @@ const EARS_MAIN_RECT_CORNER_RADIUS_RATIO = 0.04;
 // is dit kader een dunne rand, geen brede lijst.
 const EARS_FRAME_THICKNESS_RATIO = 0.025;
 
+// "Vier-hoeken"-stijl: op verzoek van Christiaan (17-9-2026, n.a.v. een foto
+// van het echte bordje "59") — de eerdere benadering (gewoon een vlakke
+// rechthoek met 4 losse schroefjes dicht bij de hoek) oogde totaal niet als
+// "oren": op de foto steken de 4 hoeken duidelijk uit als eigen, afgeronde
+// blokjes (de daadwerkelijke oren van déze vorm), met de schroef precies in
+// het midden van elk blokje. De 4 waarden hieronder zijn zo gekozen dat het
+// blokje precies tot aan de rand van het middenvlak reikt (geen overlap, geen
+// gat): EARS_CORNER_TAB_SIZE_RATIO wordt namelijk NIET los ingesteld, maar in
+// getEarsGeometry afgeleid uit het verschil tussen de blokjesrand
+// (EARS_CORNER_TAB_EDGE_MARGIN_RATIO) en de rand van het middenvlak
+// (EARS_CORNER_MAIN_BODY_INSET_RATIO + EARS_CORNER_FRAME_RING_RATIO) — zie
+// daar. Zelfde bewuste vereenvoudiging als de rest van dit bestand: een net,
+// herkenbaar hoekblokje, geen fotorealistische reproductie.
+const EARS_CORNER_TAB_EDGE_MARGIN_RATIO = 0.02; // afstand blokje tot de ware rand van het bordje
+const EARS_CORNER_TAB_RADIUS_RATIO = 0.3; // afronding van het blokje, t.o.v. zijn eigen zijde
+const EARS_CORNER_MAIN_BODY_INSET_RATIO = 0.05; // inspringing van het rechte-randen-hoofdvlak t.o.v. de ware rand
+const EARS_CORNER_FRAME_RING_RATIO = 0.09; // dikte van de kaderrand, van het hoofdvlak tot het middenvlak
+const EARS_CORNER_INNER_RADIUS_RATIO = 0.12; // afronding van het middenvlak, t.o.v. zijn eigen kortste zijde
+
 /**
  * Bouwt een gesloten SVG-(sub)pad voor een rechthoek met afgeronde hoeken —
  * los stuk gereedschap zodat we zowel de buiten- als de binnencontour van
@@ -540,7 +559,20 @@ export interface EarsGeometry {
    * voort in plaats van als los aanhangsel.
    */
   framePath: string;
-  /** Bevestigingsgaten (in de oren, of bij "vier-hoeken" in de hoeken van het kader). */
+  /**
+   * De 4 uitstekende hoekblokjes bij "vier-hoeken" (toegevoegd 17-9-2026) —
+   * losse, afgeronde vierkantjes (earColor), elk met de schroef in het
+   * midden, die net buiten `framePath`'s hoofdvlak uitsteken tot vlak bij de
+   * ware rand van het bordje. Bewust GEEN onderdeel van `framePath` zelf
+   * (dat zou een gecombineerd evenodd-pad met overlappende deelpaden geven,
+   * met het risico op een onbedoeld "gat" waar blokje en hoofdvlak
+   * overlappen) — worden in plaats daarvan als eigen, losse vorm getekend,
+   * vóór het middenvlak (innerRect) maar ná `framePath`. Leeg bij
+   * "horizontaal"/"verticaal": die 2 stijlen tekenen hun puntige oren al
+   * rechtstreeks als onderdeel van `framePath` zelf.
+   */
+  cornerTabs: { xMm: number; yMm: number; widthMm: number; heightMm: number; radiusMm: number }[];
+  /** Bevestigingsgaten (in de oren, of bij "vier-hoeken" in het midden van elk hoekblokje). */
   holes: EarHoleGeometry[];
 }
 
@@ -577,51 +609,78 @@ export function getEarsGeometry(
   const holeRadiusMm = getScrewRadiusMm(widthMm, heightMm);
 
   if (earsStyle === "vier-hoeken") {
-    const holes: EarHoleGeometry[] = getScrewPositions(false, widthMm, heightMm).map(
-      ([xr, yr]) => ({
-        xMm: widthMm * xr,
-        yMm: heightMm * yr,
-        radiusMm: holeRadiusMm,
-        style: "screw",
-      })
-    );
-    // Kaderdikte HIER bewust niet EARS_FRAME_THICKNESS_RATIO (die is voor
-    // de puntige oren van "horizontaal"/"verticaal"): bij "vier-hoeken"
-    // zitten de bevestigingsgaten IN het kader, dicht bij de hoek (zie
-    // getScrewPositions/SCREW_INSET_RATIO hierboven — dezelfde
-    // hoekpositie als de bestaande rechthoekige vorm), dus de kaderdikte
-    // moet minstens tot voorbij die schroef reiken, anders valt de schroef
-    // over het middenvlak heen i.p.v. erbuiten (gemeld door Christiaan,
-    // 12-9-2026, n.a.v. de eerdere, te dunne, vaste kaderdikte). Vandaar
-    // hier een AFGELEIDE kaderdikte: de afstand van de rand tot het
-    // schroefmiddelpunt, plus de schroefstraal zelf, plus een kleine
-    // marge — zodat de schroef bij elke bordjesmaat gegarandeerd volledig
-    // binnen het kader valt, met wat lucht eromheen.
-    // Verkleind (12-9-2026, feedback Christiaan: middenvlak moet groter)
-    // van 0.6 naar 0.25 — nog net genoeg lucht om de schroef niet
-    // letterlijk te raken, maar niet meer dan dat.
-    const screwMarginMm = holeRadiusMm * 0.25;
-    const frameMm =
-      Math.max(widthMm, heightMm) * SCREW_INSET_RATIO + holeRadiusMm + screwMarginMm;
-    // Duidelijk zichtbaar afgeronde hoeken op het middenvlak (op verzoek
-    // van Christiaan, vergelijkbaar met de aangeleverde productfoto) — een
-    // eigen, aan de bordjesmaat gekoppelde verhouding, los van
-    // outerRadiusMm/frameMm (die twee zijn hier te klein resp. te groot om
-    // er een prettige afronding uit af te leiden).
-    const innerRadiusMm = Math.min(widthMm, heightMm) * 0.07;
+    const minDim = Math.min(widthMm, heightMm);
+
+    // Rechte-randen-hoofdvlak: lichtjes ingesprongen t.o.v. de ware rand
+    // (EARS_CORNER_MAIN_BODY_INSET_RATIO) — de hoekblokjes hieronder steken
+    // daar zo dadelijk voorbij uit, dat geeft het "oren die uitsteken"-effect
+    // dat op Christiaans foto van het echte bordje ("59") te zien is.
+    const mainBodyInsetMm = minDim * EARS_CORNER_MAIN_BODY_INSET_RATIO;
+    const mainBodyRadiusMm = minDim * EARS_MAIN_RECT_CORNER_RADIUS_RATIO;
+
+    // Middenvlak: net zo ver ingesprongen dat de kaderrand (frameRingMm)
+    // overal even dik is — zelfde basisidee als de andere 2 "oren"-stijlen
+    // (EARS_FRAME_THICKNESS_RATIO), maar hier als eigen verhouding omdat het
+    // hoofdvlak zelf ook al is ingesprongen.
+    const frameRingMm = minDim * EARS_CORNER_FRAME_RING_RATIO;
+    const innerInsetMm = mainBodyInsetMm + frameRingMm;
+    const innerRadiusMm =
+      Math.min(widthMm - 2 * innerInsetMm, heightMm - 2 * innerInsetMm) *
+      EARS_CORNER_INNER_RADIUS_RATIO;
     // toSquareRect: bij "vier-hoeken" (altijd 160×160mm) heeft dit geen
     // effect (al vierkant) — zie de toelichting bij toSquareRect hierboven.
     const innerRect = toSquareRect({
-      xMm: frameMm,
-      yMm: frameMm,
-      widthMm: widthMm - 2 * frameMm,
-      heightMm: heightMm - 2 * frameMm,
+      xMm: innerInsetMm,
+      yMm: innerInsetMm,
+      widthMm: widthMm - 2 * innerInsetMm,
+      heightMm: heightMm - 2 * innerInsetMm,
       radiusMm: innerRadiusMm,
     });
+
+    // De 4 hoekblokjes ("oren") — elk vlak bij de ware rand van het bordje
+    // (EARS_CORNER_TAB_EDGE_MARGIN_RATIO), met als tegenoverliggende rand
+    // PRECIES de rand van het middenvlak hierboven (innerInsetMm) — zo raakt
+    // een blokje het middenvlak nooit (geen overlap: het middenvlak zou het
+    // blokje anders deels overschilderen) én blijft er ook nooit een gat
+    // openstaan (de kaderrand van het hoofdvlak vult de tussenruimte, zie
+    // ProductPreview.tsx/plate-preview-image.tsx voor de tekenvolgorde).
+    const tabMarginMm = minDim * EARS_CORNER_TAB_EDGE_MARGIN_RATIO;
+    const tabSizeMm = innerInsetMm - tabMarginMm;
+    const tabRadiusMm = tabSizeMm * EARS_CORNER_TAB_RADIUS_RATIO;
+
+    const tabCorners: [number, number][] = [
+      [tabMarginMm, tabMarginMm],
+      [widthMm - tabMarginMm - tabSizeMm, tabMarginMm],
+      [tabMarginMm, heightMm - tabMarginMm - tabSizeMm],
+      [widthMm - tabMarginMm - tabSizeMm, heightMm - tabMarginMm - tabSizeMm],
+    ];
+    const cornerTabs = tabCorners.map(([xMm, yMm]) => ({
+      xMm,
+      yMm,
+      widthMm: tabSizeMm,
+      heightMm: tabSizeMm,
+      radiusMm: tabRadiusMm,
+    }));
+    // De schroef komt precies in het midden van elk hoekblokje te staan —
+    // dus afgeleid van diezelfde blokjespositie, in plaats van de eerdere,
+    // losse SCREW_INSET_RATIO-positie.
+    const holes: EarHoleGeometry[] = tabCorners.map(([xMm, yMm]) => ({
+      xMm: xMm + tabSizeMm / 2,
+      yMm: yMm + tabSizeMm / 2,
+      radiusMm: holeRadiusMm,
+      style: "screw",
+    }));
+
     return {
       innerRect,
       framePath: [
-        roundedRectPath(0, 0, widthMm, heightMm, outerRadiusMm),
+        roundedRectPath(
+          mainBodyInsetMm,
+          mainBodyInsetMm,
+          widthMm - 2 * mainBodyInsetMm,
+          heightMm - 2 * mainBodyInsetMm,
+          mainBodyRadiusMm
+        ),
         roundedRectPath(
           innerRect.xMm,
           innerRect.yMm,
@@ -630,6 +689,7 @@ export function getEarsGeometry(
           innerRect.radiusMm
         ),
       ].join(" "),
+      cornerTabs,
       holes,
     };
   }
@@ -679,6 +739,7 @@ export function getEarsGeometry(
           innerRect.radiusMm
         ),
       ].join(" "),
+      cornerTabs: [],
       holes: [
         { xMm: holeDistanceFromTipMm, yMm: midY, radiusMm: holeRadiusMm, style: "plain" },
         {
@@ -730,6 +791,7 @@ export function getEarsGeometry(
         innerRect.radiusMm
       ),
     ].join(" "),
+    cornerTabs: [],
     holes: [
       { xMm: midX, yMm: holeDistanceFromTipMm, radiusMm: holeRadiusMm, style: "plain" },
       {

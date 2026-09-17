@@ -466,6 +466,24 @@ export async function renderPlatePreviewPng(
                 stroke={earNeedsOutline ? "#1a1a1a" : "none"}
                 strokeWidth={earNeedsOutline ? Math.min(widthMm, heightMm) * 0.008 : 0}
               />
+              {/* De 4 uitstekende hoekblokjes van "vier-hoeken" (toegevoegd
+                  17-9-2026) — zelfde tekenvolgorde/reden als de live preview
+                  (ProductPreview.tsx), zie de toelichting bij `cornerTabs` in
+                  lib/configuration/plate-visual.ts. Leeg bij
+                  "horizontaal"/"verticaal". */}
+              {earsGeometry.cornerTabs.map((tab, index) => (
+                <rect
+                  key={`tab-${index}`}
+                  x={tab.xMm}
+                  y={tab.yMm}
+                  width={tab.widthMm}
+                  height={tab.heightMm}
+                  rx={tab.radiusMm}
+                  fill={earFillHex}
+                  stroke={earNeedsOutline ? "#1a1a1a" : "none"}
+                  strokeWidth={earNeedsOutline ? Math.min(widthMm, heightMm) * 0.008 : 0}
+                />
+              ))}
               <rect
                 x={earsGeometry.innerRect.xMm}
                 y={earsGeometry.innerRect.yMm}
