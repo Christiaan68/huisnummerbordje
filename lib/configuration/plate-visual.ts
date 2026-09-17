@@ -487,7 +487,14 @@ const EARS_CORNER_TAB_RADIUS_RATIO = 0.3; // afronding van het blokje, t.o.v. zi
 // het hoofdvlak) of de vlaklijn (rand van het middenvlak) raakt of
 // overschrijdt — en, omdat frameRingMm ruim binnen tabSizeMm valt, ook nooit
 // buiten het blokje zelf komt.
-const EARS_CORNER_HOLE_GAP_RADIUS_RATIO = 0.32; // schroefstraal, t.o.v. de dikte van de kaderrand (frameRingMm)
+// Eerste versie van deze straal (0.32×frameRingMm) bleek bij live-controle
+// (17-9-2026, rechtstreeks vergeleken met de gedeployde site) nog te weinig
+// marge over te laten tot de rand van het blokje zelf — die rand valt op
+// deze plek namelijk EXACT samen met de vlaklijn (het blokje raakt het
+// middenvlak met opzet precies, zie tabSizeMm hierboven), dus juist daar was
+// extra marge nodig. Verkleind naar 0.2 zodat er aan beide kanten van het
+// gaatje duidelijk zichtbare, niet-rakende ruimte overblijft.
+const EARS_CORNER_HOLE_GAP_RADIUS_RATIO = 0.2; // schroefstraal, t.o.v. de dikte van de kaderrand (frameRingMm)
 const EARS_CORNER_MAIN_BODY_INSET_RATIO = 0.05; // inspringing van het rechte-randen-hoofdvlak t.o.v. de ware rand
 // Verkleind 17-9-2026 (van 0.09 naar 0.035), op verzoek van Christiaan na het
 // vergelijken van de eerste versie met de foto van het echte bordje ("59"):
