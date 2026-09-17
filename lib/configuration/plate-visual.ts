@@ -473,7 +473,11 @@ const EARS_CORNER_MAIN_BODY_INSET_RATIO = 0.05; // inspringing van het rechte-ra
 // kleiner, omdat hun afmeting is afgeleid van diezelfde afstand tot het
 // middenvlak (zie `tabSizeMm` hieronder) — precies de twee dingen die
 // Christiaan terugmeldde.
-const EARS_CORNER_FRAME_RING_RATIO = 0.035; // dikte van de kaderrand, van het hoofdvlak tot het middenvlak
+// Nogmaals verkleind 17-9-2026 (van 0.035 naar 0.02), op verzoek van
+// Christiaan na nóg een keer vergelijken met de foto van "59": het
+// middenvlak mocht nog dichter naar de rand — met behoud van een zichtbare
+// kaderrand (komt dus nooit tót of over de rand).
+const EARS_CORNER_FRAME_RING_RATIO = 0.02; // dikte van de kaderrand, van het hoofdvlak tot het middenvlak
 const EARS_CORNER_INNER_RADIUS_RATIO = 0.12; // afronding van het middenvlak, t.o.v. zijn eigen kortste zijde
 
 /**
