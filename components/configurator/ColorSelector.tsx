@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Check } from "lucide-react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { usePricingData } from "@/lib/configuration/PricingDataContext";
@@ -90,6 +91,32 @@ function ColorOptionGrid({
   );
 }
 
+/**
+ * Korte toelichting bij de meerprijs voor een niet-standaardkleur (toegevoegd
+ * 17-9-2026, op verzoek van Christiaan) — het bedrag zelf staat al dynamisch
+ * bij elke kleurkaart ("Meerprijs +€X", zie ColorOptionGrid hierboven, direct
+ * uit de live prijsgegevens). Deze tekst voegt daar alleen uitleg aan toe en
+ * linkt naar de FAQ voor een compleet rekenvoorbeeld (inclusief het geval dat
+ * zowel ondergrond als opdruk een meerprijskleur krijgen) — dezelfde
+ * inhoud/prijsbron als hier, dus nooit tegenstrijdig.
+ */
+function ColorSurchargeHint() {
+  return (
+    <p className="text-xs text-muted-foreground">
+      Zwart, wit en donkerblauw zijn onze standaardkleuren, zonder meerprijs.
+      Voor elke andere kleur geldt een meerprijs — apart voor de ondergrond en
+      de opdruk. Zie de{" "}
+      <Link
+        href="/faq#personaliseren"
+        className="underline underline-offset-4 hover:text-foreground"
+      >
+        FAQ
+      </Link>{" "}
+      voor een rekenvoorbeeld.
+    </p>
+  );
+}
+
 export function ColorSelector() {
   const { selection, dispatch } = useConfigurator();
   const { globalPricingOptions } = usePricingData();
@@ -117,6 +144,7 @@ export function ColorSelector() {
 
     return (
       <div className="space-y-8">
+        <ColorSurchargeHint />
         <div>
           <p className="mb-3 text-sm font-medium text-foreground">
             Ondergrond kleur
@@ -157,6 +185,7 @@ export function ColorSelector() {
   // lib/configuration/pricing.ts voor de (per kleur losse) meerprijs.
   return (
     <div className="space-y-8">
+      <ColorSurchargeHint />
       <div>
         <p className="mb-3 text-sm font-medium text-foreground">
           Ondergrond kleur

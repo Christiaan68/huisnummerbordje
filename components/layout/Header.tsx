@@ -82,6 +82,14 @@ export function Header({
               >
                 Contact
               </Link>
+              {/* FAQ (toegevoegd 17-9-2026, op verzoek van Christiaan). */}
+              <Link
+                href="/faq"
+                onClick={closeMenu}
+                className="block px-4 py-2 text-sm text-foreground hover:bg-secondary"
+              >
+                Veelgestelde vragen
+              </Link>
             </div>
           </details>
 

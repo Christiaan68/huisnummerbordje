@@ -68,11 +68,18 @@ export function SizeSelector() {
     selection.finish === "vlak" ? size.priceFlatCents : size.priceCurvedCents;
 
   return (
-    <div
-      role="radiogroup"
-      aria-label="Kies een maat"
-      className="grid grid-cols-1 gap-3 sm:grid-cols-2"
-    >
+    <div>
+      {/* Korte toelichting bij de maatnotatie (toegevoegd 17-9-2026, op
+          verzoek van Christiaan) — de maten hieronder staan altijd als
+          hoogte × breedte. */}
+      <p className="mb-3 text-xs text-muted-foreground">
+        Maten worden weergegeven als hoogte × breedte, in millimeters.
+      </p>
+      <div
+        role="radiogroup"
+        aria-label="Kies een maat"
+        className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+      >
       {sizes.map((size) => {
         const isSelected = selection.sizeId === size.id;
 
@@ -100,6 +107,7 @@ export function SizeSelector() {
           </button>
         );
       })}
+      </div>
     </div>
   );
 }

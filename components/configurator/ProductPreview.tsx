@@ -784,6 +784,18 @@ export function ProductPreview() {
           mogelijkheden van het materiaal en gereedschap. Daarbij zorgen zij
           voor een nauwkeurige uitlijning van het eindresultaat.
         </p>
+
+        {/* Aparte, korte disclaimer over schermkleuren (toegevoegd
+            17-9-2026, op verzoek van Christiaan, i.h.k.v. de nieuwe FAQ) —
+            bewust NIET samengevoegd met de handwerk-disclaimer hierboven,
+            die woordelijk gelijk moet blijven aan de klantbevestigingsmail
+            (zie de toelichting daarboven). Zelfde punt staat uitgebreider in
+            de FAQ (vraag "Wordt mijn bordje precies hetzelfde als de
+            preview?"). */}
+        <p className="mt-1 text-center text-[10px] italic leading-snug text-muted-foreground/70">
+          Kleuren kunnen op een beeldscherm iets afwijken van het
+          uiteindelijke product.
+        </p>
       </div>
     </div>
   );

@@ -26,6 +26,14 @@ export function Footer() {
             (ongewijzigd gelaten om de URL niet te breken), alleen de
             zichtbare linktekst is aangepast. */}
         <div className="flex flex-wrap gap-x-4 gap-y-1">
+          {/* FAQ (toegevoegd 17-9-2026, op verzoek van Christiaan) — zelfde
+              stijl als de overige links hieronder. */}
+          <Link
+            href="/faq"
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            Veelgestelde vragen
+          </Link>
           <Link
             href="/leveringsvoorwaarden"
             className="underline underline-offset-4 hover:text-foreground"
