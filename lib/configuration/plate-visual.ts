@@ -440,77 +440,38 @@ const EARS_MAIN_RECT_CORNER_RADIUS_RATIO = 0.04;
 // is dit kader een dunne rand, geen brede lijst.
 const EARS_FRAME_THICKNESS_RATIO = 0.025;
 
-// "Vier-hoeken"-stijl: op verzoek van Christiaan (17-9-2026, n.a.v. een foto
-// van het echte bordje "59") — de eerdere benadering (gewoon een vlakke
-// rechthoek met 4 losse schroefjes dicht bij de hoek) oogde totaal niet als
-// "oren": op de foto steken de 4 hoeken duidelijk uit als eigen, afgeronde
-// blokjes (de daadwerkelijke oren van déze vorm), met de schroef precies in
-// het midden van elk blokje. De 4 waarden hieronder zijn zo gekozen dat het
-// blokje precies tot aan de rand van het middenvlak reikt (geen overlap, geen
-// gat): EARS_CORNER_TAB_SIZE_RATIO wordt namelijk NIET los ingesteld, maar in
-// getEarsGeometry afgeleid uit het verschil tussen de blokjesrand
-// (mainBodyInsetMm - EARS_CORNER_TAB_PROTRUSION_RATIO) en de rand van het
-// middenvlak (EARS_CORNER_MAIN_BODY_INSET_RATIO + EARS_CORNER_FRAME_RING_RATIO)
-// — zie daar. Zelfde bewuste vereenvoudiging als de rest van dit bestand: een
-// net, herkenbaar hoekblokje, geen fotorealistische reproductie.
-// Aangepast 17-9-2026, op verzoek van Christiaan na nogmaals vergelijken met
-// de foto van het echte bordje ("59"): eerst stak een blokje nog duidelijk
-// als los aanhangsel buiten het hoofdvlak uit; op de foto zitten de oren juist
-// bijna helemaal BINNEN het (afgeronde) hoofdvlak, met alleen de schroef net
-// zichtbaar in de hoek. Vandaar nu een uitsteekafstand (protrusion) i.p.v.
-// een eigen randafstand: het blokje steekt nog maar een fractie voorbij de
-// rand van het hoofdvlak uit, in plaats van een eigen, los bepaalde afstand
-// tot de ware rand van het bordje.
-const EARS_CORNER_TAB_PROTRUSION_RATIO = 0.012; // hoever het blokje nog voorbij het hoofdvlak uitsteekt
-const EARS_CORNER_TAB_RADIUS_RATIO = 0.3; // afronding van het blokje, t.o.v. zijn eigen zijde
-// De schroefstraal van de andere vormen (getScrewRadiusMm, hieronder als
-// `holeRadiusMm`) is een vaste verhouding van de bordjeszijde, en werd tot nu
-// toe ook hier hergebruikt. Sinds het blokje zelf een stuk kleiner is
-// geworden (zie EARS_CORNER_FRAME_RING_RATIO/EARS_CORNER_TAB_PROTRUSION_RATIO
-// hierboven) is dat blokje inmiddels kleiner dan die vaste schroefdiameter —
-// het schroefje stak daardoor over de rand van het blokje heen (bevestigd
-// door Christiaan aan de hand van screenshots, 17-9-2026: schroef stond over
-// de lijn, niet tussen kaderlijn en vlaklijn in). Bij "vier-hoeken" werd de
-// straal daarom eerst afgeleid van de blokjesgrootte (tabSizeMm) — dat hield
-// de schroef wel binnen het blokje, maar niet uit de buurt van de rand van
-// het HOOFDVLAK zelf (mainBodyInsetMm): die lijn loopt dwars door het
-// blokje heen (het blokje steekt er immers met opzet voorbij uit), en de
-// oude, blokje-gecentreerde positie kwam daar bovenop te liggen (opnieuw
-// bevestigd door Christiaan, 17-9-2026, met een rood aangegeven punt op een
-// ingezoomde hoek: de schroef moet tussen de kaderlijn en de vlaklijn in
-// zitten, geen van beide raken). Daarom nu zowel POSITIE als STRAAL afgeleid
-// van diezelfde tussenruimte (frameRingMm, tussen mainBodyInsetMm en
-// innerInsetMm) in plaats van van het blokje: het middelpunt komt op de
-// helft van die tussenruimte (EARS_CORNER_HOLE_GAP_OFFSET_RATIO = 0.5), de
-// straal blijft ruim binnen die tussenruimte over (EARS_CORNER_HOLE_GAP_
-// RADIUS_RATIO), zodat de schroef gegarandeerd nooit de kaderlijn (rand van
-// het hoofdvlak) of de vlaklijn (rand van het middenvlak) raakt of
-// overschrijdt — en, omdat frameRingMm ruim binnen tabSizeMm valt, ook nooit
-// buiten het blokje zelf komt.
-// Eerste versie van deze straal (0.32×frameRingMm) bleek bij live-controle
-// (17-9-2026, rechtstreeks vergeleken met de gedeployde site) nog te weinig
-// marge over te laten tot de rand van het blokje zelf — die rand valt op
-// deze plek namelijk EXACT samen met de vlaklijn (het blokje raakt het
-// middenvlak met opzet precies, zie tabSizeMm hierboven), dus juist daar was
-// extra marge nodig. Verkleind naar 0.2 zodat er aan beide kanten van het
-// gaatje duidelijk zichtbare, niet-rakende ruimte overblijft.
-const EARS_CORNER_HOLE_GAP_RADIUS_RATIO = 0.2; // schroefstraal, t.o.v. de dikte van de kaderrand (frameRingMm)
+// "Vier-hoeken"-stijl: op verzoek van Christiaan, n.a.v. een foto van het
+// echte bordje "59", kreeg deze stijl op 17-9-2026 eerst losse, uitstekende
+// hoekblokjes ("oren") met de schroef erin. Na een aantal rondes bleek dat
+// niet te werken: het blokje-met-piepklein-gaatje oogde als een los
+// aanhangsel aan de rand (Christiaan: "Je hebt een apart vierkantje aan de
+// rand hangen met een piepklein schroefgaatje"). De blokjes zijn daarom
+// weer verwijderd (cornerTabs is bij deze stijl nu altijd leeg) en de
+// schroef staat weer los van zo'n blokje, in de kaderring zelf — zie de
+// toelichting bij de schroefgaatjes-constanten hieronder.
 const EARS_CORNER_MAIN_BODY_INSET_RATIO = 0.05; // inspringing van het rechte-randen-hoofdvlak t.o.v. de ware rand
 // Verkleind 17-9-2026 (van 0.09 naar 0.035), op verzoek van Christiaan na het
 // vergelijken van de eerste versie met de foto van het echte bordje ("59"):
 // de kaderrand was te dik, waardoor het middenvlak te ver van de rand af
 // stond. Een dunnere ring schuift het middenvlak dichter naar de rand (maar
 // blijft, per ontwerp, altijd een zichtbare kaderrand houden — het middenvlak
-// komt dus nooit tót of over de ware rand) én maakt de hoekblokjes vanzelf
-// kleiner, omdat hun afmeting is afgeleid van diezelfde afstand tot het
-// middenvlak (zie `tabSizeMm` hieronder) — precies de twee dingen die
-// Christiaan terugmeldde.
+// komt dus nooit tót of over de ware rand).
 // Nogmaals verkleind 17-9-2026 (van 0.035 naar 0.02), op verzoek van
 // Christiaan na nóg een keer vergelijken met de foto van "59": het
 // middenvlak mocht nog dichter naar de rand — met behoud van een zichtbare
 // kaderrand (komt dus nooit tót of over de rand).
 const EARS_CORNER_FRAME_RING_RATIO = 0.02; // dikte van de kaderrand, van het hoofdvlak tot het middenvlak
 const EARS_CORNER_INNER_RADIUS_RATIO = 0.12; // afronding van het middenvlak, t.o.v. zijn eigen kortste zijde
+// Schroefstraal bij "vier-hoeken": als verhouding van de gewone, vaste
+// schroefstraal (getScrewRadiusMm) die de rechthoekige vormen gebruiken —
+// op verzoek van Christiaan (17-9-2026) "iets groter, zoals bij de andere
+// huisnummerbordjes". Niet 1:1 diezelfde straal, want de kaderring is hier
+// veel dunner (zie EARS_CORNER_FRAME_RING_RATIO); bij de volle, gewone
+// straal zou het gaatje alsnog de kaderlijn of de vlaklijn raken. Deze
+// verhouding is zo gekozen dat er, gemeten vanaf het middelpunt van het
+// gaatje (zie holeOffsetMm in getEarsGeometry) tot aan beide lijnen, ruim
+// een millimeter vrije, niet-rakende ruimte overblijft.
+const EARS_CORNER_HOLE_RADIUS_SCREW_RATIO = 0.7;
 
 /**
  * Bouwt een gesloten SVG-(sub)pad voor een rechthoek met afgeronde hoeken —
@@ -690,42 +651,39 @@ export function getEarsGeometry(
       radiusMm: innerRadiusMm,
     });
 
-    // De 4 hoekblokjes ("oren") — de rand van een blokje ligt net iets vóór
-    // de rand van het hoofdvlak (mainBodyInsetMm - een kleine uitsteekafstand
-    // EARS_CORNER_TAB_PROTRUSION_RATIO), zodat het blokje grotendeels BINNEN
-    // het hoofdvlak valt en er nog maar een fractie voorbij uitsteekt — zie
-    // toelichting hierboven bij de constante. Als tegenoverliggende rand
-    // PRECIES de rand van het middenvlak hierboven (innerInsetMm) — zo raakt
-    // een blokje het middenvlak nooit (geen overlap: het middenvlak zou het
-    // blokje anders deels overschilderen) én blijft er ook nooit een gat
-    // openstaan (de kaderrand van het hoofdvlak vult de tussenruimte, zie
-    // ProductPreview.tsx/plate-preview-image.tsx voor de tekenvolgorde).
-    const tabProtrusionMm = minDim * EARS_CORNER_TAB_PROTRUSION_RATIO;
-    const tabMarginMm = mainBodyInsetMm - tabProtrusionMm;
-    const tabSizeMm = innerInsetMm - tabMarginMm;
-    const tabRadiusMm = tabSizeMm * EARS_CORNER_TAB_RADIUS_RATIO;
+    // De losse hoekblokjes ("oren") zijn op verzoek van Christiaan
+    // (17-9-2026, n.a.v. de schroefgaatjes-discussie hieronder) weer
+    // verwijderd: hij vond het blokje-met-piepklein-gaatje eruitzien als
+    // een los aanhangsel aan de rand. `cornerTabs` blijft als leeg array
+    // bestaan (net als bij "horizontaal"/"verticaal") zodat ProductPreview
+    // .tsx/plate-preview-image.tsx niets hoeven te weten van dit verschil —
+    // ze tekenen gewoon 0 blokjes.
+    const cornerTabs: EarsGeometry["cornerTabs"] = [];
 
-    const tabCorners: [number, number][] = [
-      [tabMarginMm, tabMarginMm],
-      [widthMm - tabMarginMm - tabSizeMm, tabMarginMm],
-      [tabMarginMm, heightMm - tabMarginMm - tabSizeMm],
-      [widthMm - tabMarginMm - tabSizeMm, heightMm - tabMarginMm - tabSizeMm],
-    ];
-    const cornerTabs = tabCorners.map(([xMm, yMm]) => ({
-      xMm,
-      yMm,
-      widthMm: tabSizeMm,
-      heightMm: tabSizeMm,
-      radiusMm: tabRadiusMm,
-    }));
-    // De schroef komt NIET in het midden van het hoekblokje te staan (dat
-    // bleek nog te dicht bij/over de rand van het hoofdvlak te liggen, zie
-    // toelichting bij EARS_CORNER_HOLE_GAP_RADIUS_RATIO hierboven), maar
-    // gecentreerd in de eigenlijke kaderrand-tussenruimte tussen die rand
-    // (mainBodyInsetMm) en de rand van het middenvlak (innerInsetMm) — dus
-    // op dezelfde afstand tot de hoek als het midden van frameRingMm.
-    const holeOffsetMm = mainBodyInsetMm + frameRingMm / 2;
-    const holeGapRadiusMm = frameRingMm * EARS_CORNER_HOLE_GAP_RADIUS_RATIO;
+    // Schroefgaatjes: liggen op de diagonaal van elke hoek, in de kaderring
+    // zelf (dus niet meer "in een blokje", zie hierboven) — net als bij de
+    // gewone rechthoekige vorm (getScrewPositions/getScrewRadiusMm), maar
+    // met een eigen positie/straal omdat de kaderring hier veel dunner is
+    // dan bij die vorm (zie EARS_CORNER_FRAME_RING_RATIO) en de gewone,
+    // vaste schroefstraal (getScrewRadiusMm) hier straal over de kaderlijn
+    // of de vlaklijn heen zou steken. In plaats daarvan: het punt waar de
+    // buitenkant van het hoofdvlak (mainBodyInsetMm/mainBodyRadiusMm) de
+    // hoek-diagonaal kruist, en het punt waar de rand van het middenvlak
+    // (innerInsetMm/innerRadiusMm) diezelfde diagonaal kruist — het gaatje
+    // komt precies in het midden daartussen, met een straal die aan beide
+    // kanten ruim marge overlaat (bevestigd door Christiaan, 17-9-2026, met
+    // een rode stip op een ingezoomde hoek-screenshot: “niet de zwarte
+    // lijnen raken of overschrijden”).
+    const mainBodyDiagMm =
+      mainBodyInsetMm + mainBodyRadiusMm * (1 - Math.SQRT1_2);
+    const fieldDiagMm = innerInsetMm + innerRadiusMm * (1 - Math.SQRT1_2);
+    const holeOffsetMm = (mainBodyDiagMm + fieldDiagMm) / 2;
+    // "Iets groter, zoals bij de andere bordjes" (Christiaan, 17-9-2026) —
+    // dichter bij getScrewRadiusMm (de vaste schroefstraal van de overige
+    // vormen) dan de vorige, kleinere straal, maar met een eigen, kleinere
+    // verhouding omdat de beschikbare ruimte hier (zie hierboven) simpelweg
+    // kleiner is dan bij die andere vormen.
+    const holeRadiusMm = getScrewRadiusMm(widthMm, heightMm) * EARS_CORNER_HOLE_RADIUS_SCREW_RATIO;
     const holes: EarHoleGeometry[] = [
       [holeOffsetMm, holeOffsetMm],
       [widthMm - holeOffsetMm, holeOffsetMm],
@@ -734,7 +692,7 @@ export function getEarsGeometry(
     ].map(([xMm, yMm]) => ({
       xMm,
       yMm,
-      radiusMm: holeGapRadiusMm,
+      radiusMm: holeRadiusMm,
       style: "screw",
     }));
 
