@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { siteContent } from "@/config/site-content";
+import { siteContent, companyInfo } from "@/config/site-content";
 import { getLivePricingData } from "@/lib/configuration/livePricing";
 import { getFaqItems } from "@/lib/faq/fetchFaq";
 import { resolveFaqTokens } from "@/lib/faq/resolveTokens";
 import { FAQ_CATEGORIES } from "@/lib/faq/categories";
+import { getNotificationEmail } from "@/lib/email/settings";
 
 export const metadata: Metadata = {
   title: "Veelgestelde vragen | Emaille Huisnummers",
@@ -20,11 +21,17 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function FaqPage() {
-  // Beide onafhankelijke aanroepen, parallel — dezelfde live prijsgegevens
-  // (met dezelfde automatische terugval-op-reservekopie) als de configurator
+  // 3 onafhankelijke aanroepen, parallel — dezelfde live prijsgegevens (met
+  // dezelfde automatische terugval-op-reservekopie) als de configurator
   // gebruikt, zodat een bedrag in de FAQ nooit kan afwijken van wat de klant
-  // in de configurator ziet.
-  const [pricingData, faqData] = await Promise.all([getLivePricingData(), getFaqItems()]);
+  // in de configurator ziet. contactEmail (toegevoegd 18-9-2026) is voor het
+  // "{{contact-email}}"-token in een FAQ-antwoord — zelfde adres en zelfde
+  // terugvalgedrag als de vraag-pop-up in de configurator zelf gebruikt.
+  const [pricingData, faqData, contactEmail] = await Promise.all([
+    getLivePricingData(),
+    getFaqItems(),
+    getNotificationEmail("question_notification", companyInfo.email),
+  ]);
 
   const itemsByCategory = new Map<string, typeof faqData.items>();
   faqData.items.forEach((item) => {
@@ -100,7 +107,7 @@ export default async function FaqPage() {
                           </span>
                         </summary>
                         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                          {resolveFaqTokens(item.answer, pricingData)}
+                          {resolveFaqTokens(item.answer, pricingData, contactEmail)}
                         </p>
                       </details>
                     ))}

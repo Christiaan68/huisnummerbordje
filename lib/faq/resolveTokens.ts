@@ -3,19 +3,30 @@ import { formatPriceCents } from "@/lib/configuration/pricing";
 import { productColors } from "@/config/product-options";
 
 /**
- * Vult prijs-tokens in een FAQ-antwoord in tegen de LIVE prijsgegevens (of,
- * bij een storing, dezelfde reservekopie als de configurator gebruikt — zie
- * lib/configuration/livePricing.ts, waar `pricingData` hier al doorheen is
- * gegaan). Dit is de enige plek waar een bedrag in de FAQ ontstaat: de
- * antwoordtekst zelf (beheerd in de prijsbeheeromgeving, zie lib/faq.js
- * daar) bevat nooit een vast bedrag, alleen een token zoals
- * "{{kleur-voorbeeld-enkel}}".
+ * Vult prijs-tokens (en het e-mail-token, zie hieronder) in een FAQ-antwoord
+ * in tegen de LIVE prijsgegevens (of, bij een storing, dezelfde reservekopie
+ * als de configurator gebruikt — zie lib/configuration/livePricing.ts, waar
+ * `pricingData` hier al doorheen is gegaan). Dit is de enige plek waar een
+ * bedrag in de FAQ ontstaat: de antwoordtekst zelf (beheerd in de
+ * prijsbeheeromgeving, zie lib/faq.js daar) bevat nooit een vast bedrag,
+ * alleen een token zoals "{{kleur-voorbeeld-enkel}}".
  *
  * Kan een token niet betrouwbaar ingevuld worden (bv. geen enkel product
  * heeft een geldige verzendkoppeling), dan wordt NOOIT een verzonnen bedrag
  * getoond — in plaats daarvan een neutrale tekst die dat expliciet meldt.
+ *
+ * `contactEmail` (toegevoegd 18-9-2026, op verzoek van Christiaan): het
+ * e-mailadres voor "{{contact-email}}", al opgehaald door de aanroeper (zie
+ * app/faq/page.tsx) via dezelfde `getNotificationEmail("question_notification",
+ * ...)` die ook de configurator-vraag-pop-up gebruikt — zo blijft ook dit
+ * token, net als de prijs-tokens, altijd actueel zonder dat Christiaan het
+ * adres los in een FAQ-antwoord hoeft te typen of bij te werken.
  */
-export function resolveFaqTokens(text: string, pricingData: PricingData): string {
+export function resolveFaqTokens(
+  text: string,
+  pricingData: PricingData,
+  contactEmail: string
+): string {
   return text.replace(/\{\{([a-z0-9-]+)\}\}/g, (match, token: string) => {
     switch (token) {
       case "kleur-voorbeeld-enkel":
@@ -28,6 +39,8 @@ export function resolveFaqTokens(text: string, pricingData: PricingData): string
         return formatPriceCents(pricingData.globalPricingOptions.frameSurchargeCents);
       case "verzend-voorbeeld":
         return verzendVoorbeeld(pricingData);
+      case "contact-email":
+        return contactEmail;
       default:
         // Onbekend/verwijderd token — laat de tekst ongemoeid staan i.p.v.
         // te crashen; een verkeerd getypt token in de beheertool valt zo
