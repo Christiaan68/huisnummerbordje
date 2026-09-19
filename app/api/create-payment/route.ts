@@ -368,7 +368,15 @@ export async function POST(request: Request) {
       method: ["ideal", "creditcard"] as any,
     });
 
-    await setOrderMolliePaymentId(orderId, payment.id);
+    // payment.createdAt (toegevoegd 19-9-2026, voor "Order handmatig
+    // bevestigen" in het beheertool) is Mollie's EIGEN moment van aanmaken —
+    // zie de toelichting bij setOrderMolliePaymentId (lib/mysql/client.ts)
+    // voor waarom dit iets anders is dan de eigen created_at-kolom hierboven.
+    await setOrderMolliePaymentId(
+      orderId,
+      payment.id,
+      payment.createdAt ? new Date(payment.createdAt) : null
+    );
 
     const checkoutUrl = payment._links.checkout?.href;
     if (!checkoutUrl) {

@@ -229,15 +229,32 @@ export async function saveOrderToDatabase(order: NewOrderRow): Promise<number> {
  * app/api/create-payment/route.ts), Mollie's eigen kenmerk van de betaling
  * op de net aangemaakte bestelling — zodat de webhook straks, als Mollie
  * alleen dat kenmerk teruggeeft, de bijbehorende bestelling kan terugvinden.
+ *
+ * mollieCreatedAt (toegevoegd 19-9-2026, voor "Order handmatig bevestigen"
+ * in het beheertool): Mollie's eigen `payment.createdAt` — het moment
+ * waarop Mollie de betaalopdracht heeft aangemaakt/ontvangen, NIET hetzelfde
+ * als de kolom `created_at` hierboven (die wordt door onze eigen server
+ * gezet, vóórdat deze functie ooit wordt aangeroepen — zie het uitgebreide
+ * onderzoek in database/mysql/orders-schema.sql, migratie 19-9-2026). Wordt
+ * hier bewust als `Date` verwacht (niet Mollie's ruwe ISO-8601-tekst) — de
+ * `mysql2`-driver zet een `Date`-object correct om naar het datumformaat dat
+ * de database verwacht; Mollie's tekstvorm ("2026-09-19T17:54:25.000Z")
+ * zou de database anders als een ongeldige datum kunnen afwijzen. De
+ * aanroeper doet dus `new Date(payment.createdAt)` vóór het aanroepen van
+ * deze functie. Optioneel gehouden (een aanroeper die het niet heeft, mag
+ * deze functie nog steeds gebruiken — dan blijft mollie_created_at leeg, en
+ * verschijnt de handmatige-bevestigingsknop voor die order later terecht
+ * niet, zie lib/mollie/manualConfirmEligibility.ts).
  */
 export async function setOrderMolliePaymentId(
   orderId: number,
-  molliePaymentId: string
+  molliePaymentId: string,
+  mollieCreatedAt?: Date | null
 ): Promise<void> {
   const db = getPool();
   await db.execute(
-    "UPDATE configurations SET mollie_payment_id = ? WHERE id = ?",
-    [molliePaymentId, orderId]
+    "UPDATE configurations SET mollie_payment_id = ?, mollie_created_at = ? WHERE id = ?",
+    [molliePaymentId, mollieCreatedAt ?? null, orderId]
   );
 }
 
@@ -250,17 +267,27 @@ export async function setOrderMolliePaymentId(
  * getBankName in lib/mollie/client.ts) en worden bewaard zodat het
  * beheertool ze in het orderoverzicht kan tonen — banknaam is optioneel
  * (`null` als Mollie 'm niet meegeeft, bv. bij creditcard).
+ *
+ * molliePaidAt (toegevoegd 19-9-2026, voor "Order handmatig bevestigen"):
+ * Mollie's eigen `payment.paidAt`, als `Date` (zie de toelichting bij
+ * mollieCreatedAt/setOrderMolliePaymentId hierboven voor waarom een `Date`
+ * i.p.v. Mollie's ruwe ISO-tekst). Dit is BEWUST een aparte kolom naast de
+ * bestaande `paid_at = NOW()` hieronder — `paid_at` blijft ongewijzigd
+ * "wanneer onze applicatie deze rij heeft bijgewerkt" (voor het geval daar
+ * elders al op vertrouwd wordt), `mollie_paid_at` is Mollie's eigen,
+ * onafhankelijk bepaalde moment van "betaald".
  */
 export async function markOrderAsPaid(
   orderId: number,
   molliePaymentId: string,
   paymentMethodName?: string | null,
-  paymentBankName?: string | null
+  paymentBankName?: string | null,
+  molliePaidAt?: Date | null
 ): Promise<void> {
   const db = getPool();
   await db.execute(
-    "UPDATE configurations SET payment_status = 'paid', mollie_payment_id = ?, paid_at = NOW(), payment_method_name = ?, payment_bank_name = ? WHERE id = ?",
-    [molliePaymentId, paymentMethodName ?? null, paymentBankName ?? null, orderId]
+    "UPDATE configurations SET payment_status = 'paid', mollie_payment_id = ?, paid_at = NOW(), mollie_paid_at = ?, payment_method_name = ?, payment_bank_name = ? WHERE id = ?",
+    [molliePaymentId, molliePaidAt ?? null, paymentMethodName ?? null, paymentBankName ?? null, orderId]
   );
 }
 
@@ -354,6 +381,15 @@ export interface OrderRow {
   payment_bank_name: string | null;
   payment_failure_reason: string | null;
   created_at: string;
+  // Toegevoegd 19-9-2026, voor "Order handmatig bevestigen" (zie
+  // database/mysql/orders-schema.sql, migratie 19-9-2026, voor de volledige
+  // toelichting waarom dit NIET hetzelfde is als created_at/paid_at
+  // hierboven). mollie_created_at/mollie_paid_at blijven `null` voor elke
+  // order van vóór deze wijziging, en voor een order die nooit betaald is.
+  mollie_created_at: string | null;
+  mollie_paid_at: string | null;
+  manually_confirmed_at: string | null;
+  manually_confirmed_by: string | null;
 }
 
 /**
@@ -370,4 +406,75 @@ export async function getOrderById(orderId: number): Promise<OrderRow | null> {
     [orderId]
   )) as unknown as [OrderRow[], unknown];
   return rows.length > 0 ? rows[0] : null;
+}
+
+/**
+ * Zet een bestelling op "handmatig bevestigd", op verzoek van een beheerder
+ * (zie app/api/admin/resend-order-emails/route.ts) — toegevoegd 19-9-2026.
+ *
+ * BEWUST een voorwaardelijke UPDATE (`WHERE manually_confirmed_at IS NULL`)
+ * in plaats van eerst te lezen en dan pas te schrijven: dat voorkomt dat
+ * twee (bijna) gelijktijdige aanvragen voor dezelfde order allebei de
+ * "nog niet bevestigd"-controle doorstaan vóórdat de één 'm al bevestigd
+ * heeft (een klassieke race condition). Het aantal daadwerkelijk
+ * aangepaste rijen (`affectedRows`) vertelt de aanroeper of DEZE aanvraag
+ * degene was die de bevestiging heeft "gewonnen" — bij 0 aangepaste rijen
+ * was een andere (eerdere) aanvraag net iets sneller, en mag de aanroeper
+ * geen mails versturen.
+ */
+export async function confirmOrderManually(
+  orderId: number,
+  confirmedBy: string
+): Promise<boolean> {
+  const db = getPool();
+  const [result] = (await db.execute(
+    "UPDATE configurations SET manually_confirmed_at = NOW(), manually_confirmed_by = ? WHERE id = ? AND manually_confirmed_at IS NULL",
+    [confirmedBy, orderId]
+  )) as unknown as [{ affectedRows: number }, unknown];
+  return result.affectedRows > 0;
+}
+
+export interface ManualConfirmationLogEntry {
+  orderId: number;
+  molliePaymentId: string | null;
+  mollieCreatedAt: Date | null;
+  molliePaidAt: Date | null;
+  delaySeconds: number | null;
+  confirmedBy: string;
+  internalEmailSent: boolean;
+  customerEmailSent: boolean;
+  errorMessage: string | null;
+}
+
+/**
+ * Registreert een handmatige-bevestigingspoging in de aparte auditlogtabel
+ * (zie database/mysql/orders-schema.sql, migratie 19-9-2026) — los van
+ * confirmOrderManually hierboven, zodat er ook een logregel ontstaat als de
+ * bevestiging zelf wel lukt, maar één (of beide) mails niet.
+ *
+ * Bevat bewust GEEN klantgegevens (naam/adres/e-mail) — die staan al bij de
+ * order zelf; hier alleen wat nodig is om de actie achteraf te controleren.
+ */
+export async function insertManualConfirmationLog(
+  entry: ManualConfirmationLogEntry
+): Promise<void> {
+  const db = getPool();
+  await db.execute(
+    `INSERT INTO manual_confirmation_log (
+      order_id, mollie_payment_id, mollie_created_at, mollie_paid_at,
+      delay_seconds, confirmed_by, internal_email_sent, customer_email_sent,
+      error_message
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      entry.orderId,
+      entry.molliePaymentId,
+      entry.mollieCreatedAt,
+      entry.molliePaidAt,
+      entry.delaySeconds,
+      entry.confirmedBy,
+      entry.internalEmailSent,
+      entry.customerEmailSent,
+      entry.errorMessage,
+    ]
+  );
 }

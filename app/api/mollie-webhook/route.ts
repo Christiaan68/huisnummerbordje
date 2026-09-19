@@ -5,20 +5,15 @@ import {
   getBankName,
   getFailureReasonLabel,
 } from "@/lib/mollie/client";
-import { formatDutchDateTime } from "@/lib/formatDate";
 import {
   getOrderById,
   markOrderAsPaid,
   updateOrderPaymentStatus,
 } from "@/lib/mysql/client";
-import { sendOrderEmails } from "@/lib/email/sendOrderEmails";
-import { getLivePricingData } from "@/lib/configuration/livePricing";
-import { getNotificationEmail } from "@/lib/email/settings";
-import { getShapeLanguage } from "@/lib/email/shapeLanguage";
-import { productShapes, productColors } from "@/config/product-options";
-import { buildOrderLabel } from "@/lib/configuration/orderLabel";
-import { isEarsShape, getEarsColorOptions } from "@/lib/configuration/shape-helpers";
-import { getEarsStyleForShapeId } from "@/lib/configuration/plate-visual";
+import {
+  buildAndSendOrderEmailsForOrder,
+  OrderEmailBuildError,
+} from "@/lib/email/sendPaidOrderEmails";
 
 /**
  * Ontvangt Mollie's betaalbevestigingen ("webhook"), toegevoegd 29-8-2026.
@@ -111,7 +106,17 @@ export async function POST(request: Request) {
 
   if (payment.status === "paid") {
     try {
-      await markOrderAsPaid(orderId, paymentId, paymentMethodName, paymentBankName);
+      // payment.paidAt (toegevoegd 19-9-2026, voor "Order handmatig
+      // bevestigen" in het beheertool) wordt hier als `Date` doorgegeven —
+      // zie de toelichting bij markOrderAsPaid (lib/mysql/client.ts) voor
+      // waarom dit een ANDER, eigen kolom is dan de bestaande `paid_at`.
+      await markOrderAsPaid(
+        orderId,
+        paymentId,
+        paymentMethodName,
+        paymentBankName,
+        payment.paidAt ? new Date(payment.paidAt) : null
+      );
     } catch (err) {
       console.error(
         `Mollie-webhook: kon bestelling #${orderId} niet op 'paid' zetten:`,
@@ -120,158 +125,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Kon bestelling niet bijwerken." }, { status: 500 });
     }
 
-    // De prijs zelf komt NIET opnieuw uit de (live) prijstool — die kan
-    // intussen gewijzigd zijn — maar uit de database, waar bij het
-    // aanmaken van de betaling (app/api/create-payment/route.ts) al de
-    // prijs staat die de klant daadwerkelijk betaald heeft. Alleen de
-    // afmetingen/kleur (nodig om de voorbeeldafbeelding opnieuw te
-    // tekenen) worden hier opnieuw opgezocht, via dezelfde vorm/maat/
-    // kleur-ID's als bij het bestellen.
+    // De opbouw van de mail-invoer (vorm/maat/kleur opnieuw opzoeken,
+    // sjablonen vullen, versturen) staat sinds 19-9-2026 in een gedeelde
+    // functie (lib/email/sendPaidOrderEmails.ts) — dezelfde functie die ook
+    // app/api/admin/resend-order-emails/route.ts gebruikt voor een
+    // handmatige bevestiging, zodat er nooit twee losse implementaties van
+    // dezelfde mails kunnen ontstaan.
     try {
-      const shape = productShapes.find((s) => s.id === order.shape_id);
-      const pricingData = await getLivePricingData();
-      const size = pricingData.productSizes.find((s) => s.id === order.size_id);
-
-      if (!shape || !size) {
-        console.error(
-          `Mollie-webhook: bestelling #${orderId} is betaald, maar vorm/maat (${order.shape_id}/${order.size_id}) kon niet meer teruggevonden worden — mails NIET verstuurd. Handmatig navragen bij de klant is nodig.`
-        );
-        return NextResponse.json({ received: true, warning: "product-lookup-failed" });
-      }
-
-      // Sinds 9-9-2026 (uitbreiding naar 7 vormen, zie
-      // config/product-options.ts) heeft een bestelling óf één kleur
-      // (color_id/color_name, de 4 oorspronkelijke vormen) óf twee losse
-      // kleuren (ear_color_id/plate_color_id, de 3 nieuwe "oren"-vormen) —
-      // zie lib/configuration/shape-helpers.ts (isEarsShape) en
-      // types/configuration.ts.
-      const earsShape = isEarsShape(shape);
-      let color: (typeof productColors)[number] | undefined;
-      let printColor: (typeof productColors)[number] | undefined;
-      let earColor: ReturnType<typeof getEarsColorOptions>[number] | undefined;
-      let plateColor: ReturnType<typeof getEarsColorOptions>[number] | undefined;
-
-      if (earsShape) {
-        const earsColors = getEarsColorOptions();
-        earColor = earsColors.find((c) => c.id === order.ear_color_id);
-        plateColor = earsColors.find((c) => c.id === order.plate_color_id);
-
-        if (!earColor || !plateColor) {
-          console.error(
-            `Mollie-webhook: bestelling #${orderId} is betaald, maar de oren-/vlakkleur (${order.ear_color_id}/${order.plate_color_id}) kon niet meer teruggevonden worden — mails NIET verstuurd. Handmatig navragen bij de klant is nodig.`
-          );
-          return NextResponse.json({ received: true, warning: "product-lookup-failed" });
-        }
-      } else {
-        color = productColors.find((c) => c.id === order.color_id);
-        printColor = productColors.find((c) => c.id === order.print_color_id);
-
-        if (!color || !printColor) {
-          console.error(
-            `Mollie-webhook: bestelling #${orderId} is betaald, maar de ondergrond-/opdrukkleur (${order.color_id}/${order.print_color_id}) kon niet meer teruggevonden worden — mails NIET verstuurd. Handmatig navragen bij de klant is nodig.`
-          );
-          return NextResponse.json({ received: true, warning: "product-lookup-failed" });
-        }
-      }
-
-      const fallbackAdminEmail = process.env.ADMIN_EMAIL;
-      if (!fallbackAdminEmail) {
-        console.error(
-          `Mollie-webhook: bestelling #${orderId} is betaald, maar ADMIN_EMAIL ontbreekt — mails NIET verstuurd.`
-        );
-        return NextResponse.json({ received: true, warning: "admin-email-missing" });
-      }
-      const adminEmail = await getNotificationEmail("order_notification", fallbackAdminEmail);
-
-      // Taal van de interne meldingsmail ("Configuratie bestelling
-      // webshop") — per vorm ingesteld in de prijstool ("Taal per vorm"),
-      // Nederlands als er nog niets ingesteld is. Alleen deze interne mail
-      // wordt vertaald; de bevestigingsmail aan de klant zelf blijft altijd
-      // Nederlands.
-      const emailLanguage = await getShapeLanguage(shape.id);
-
-      const orderLabel = buildOrderLabel(shape, order.number_position);
-
-      // Op verzoek van Christiaan (29-8-2026, na de eerste test) laten de
-      // mails voortaan ook zien DAT en WAARMEE er betaald is — Mollie geeft
-      // dat door via payment.method (bv. "ideal") en payment.paidAt (het
-      // exacte moment). paidAt kan in theorie ontbreken (bv. bij een heel
-      // ongebruikelijke edge-case) — dan valt dit terug op "nu" in plaats
-      // van de mail te laten mislukken.
-      const paidAtFormatted = formatDutchDateTime(payment.paidAt ?? new Date());
-
-      const result = await sendOrderEmails({
-        orderId,
-        shape: { id: shape.id, name: shape.name, extraLines: shape.extraLines },
-        finish: order.finish,
-        // colorName (colorMode "single") vs. earColorName/plateColorName
-        // (colorMode "ears-and-plate") — nooit allebei tegelijk gevuld, zie
-        // lib/email/sendOrderEmails.ts.
-        colorName: earsShape ? undefined : color!.name,
-        printColorName: earsShape ? undefined : printColor!.name,
-        earColorName: earsShape ? earColor!.name : undefined,
-        plateColorName: earsShape ? plateColor!.name : undefined,
-        // colorHex: kleur bij colorMode "single" (bestaand gedrag). Bij
-        // colorMode "ears-and-plate" ("oren"-vormen) is dit een fallback
-        // (zie lib/email/sendOrderEmails.ts/plate-preview-image.tsx) —
-        // gevuld met de kleur van het VLAK (het grootste, meest bepalende
-        // kleurvlak) zodat een eventuele toekomstige aanroeper die
-        // earColorHex/plateColorHex niet leest, alsnog een bruikbare
-        // (eenkleurige) afbeelding krijgt. De voorbeeldafbeelding zelf
-        // gebruikt hieronder wél de 2 losse kleuren, via earColorHex/
-        // plateColorHex + shapeKind/earsStyle.
-        colorHex: earsShape ? plateColor!.hex : color!.hex,
-        printColorHex: earsShape ? undefined : printColor!.hex,
-        earColorHex: earsShape ? earColor!.hex : undefined,
-        plateColorHex: earsShape ? plateColor!.hex : undefined,
-        shapeKind: earsShape ? "ears" : shape.id === "ovaal" ? "oval" : "rect",
-        earsStyle: earsShape ? getEarsStyleForShapeId(shape.id) ?? undefined : undefined,
-        isOval: shape.id === "ovaal",
-        widthMm: size.width,
-        heightMm: size.height,
-        sizeName: order.size_name,
-        numberFontId: order.font_id,
-        numberFontName: order.font_name,
-        line1FontId: order.line1_font_id,
-        line1FontName: order.line1_font_name,
-        line2FontId: order.line2_font_id,
-        line2FontName: order.line2_font_name,
-        customText: order.custom_text,
-        extraLine1: order.extra_line_1,
-        extraLine2: order.extra_line_2,
-        numberPosition: order.number_position,
-        hasFrame: Boolean(order.has_frame),
-        orderLabel,
-        priceTotalCents: order.price_total_cents,
-        priceColorSurchargeCents: order.price_color_surcharge_cents,
-        priceExtraCharsCents: order.price_extra_chars_cents,
-        priceExtraCharsCount: order.price_extra_chars_count,
-        priceFrameSurchargeCents: order.price_frame_surcharge_cents,
-        // Leveringskosten (toegevoegd 17-9-2026) — komen rechtstreeks uit de
-        // opgeslagen bestelling (al bepaald bij het aanmaken van de
-        // betaling, zie app/api/create-payment/route.ts), niet opnieuw uit
-        // de (mogelijk intussen gewijzigde) live prijstool.
-        shippingCarrierName: order.shipping_carrier_name,
-        shippingTierName: order.shipping_tier_name,
-        shippingCostCents: order.shipping_cost_cents,
-        contact: {
-          name: order.contact_name,
-          address: order.contact_address,
-          postalCode: order.contact_postal_code,
-          city: order.contact_city,
-          email: order.contact_email,
-          phone: order.contact_phone,
-          quantity: order.quantity,
-        },
-        adminEmail,
-        emailLanguage,
-        // paymentMethodName is hierboven `string | null` (null als Mollie
-        // geen methode meegeeft) — sendOrderEmails verwacht altijd een
-        // tekst, vandaar hier dezelfde terugval als getPaymentMethodLabel
-        // zelf al gebruikt.
-        paymentMethodName: paymentMethodName ?? "onbekend",
-        paidAtFormatted,
-      });
+      const result = await buildAndSendOrderEmailsForOrder(
+        order,
+        paymentMethodName,
+        payment.paidAt ?? null
+      );
 
       if (!result.internalEmailSent || !result.customerEmailSent) {
         console.error(
@@ -279,6 +144,12 @@ export async function POST(request: Request) {
         );
       }
     } catch (err) {
+      if (err instanceof OrderEmailBuildError) {
+        console.error(
+          `Mollie-webhook: bestelling #${orderId} is betaald, maar de mails konden niet opgebouwd worden (${err.reason}): ${err.message} — mails NIET verstuurd. Handmatig navragen bij de klant is nodig.`
+        );
+        return NextResponse.json({ received: true, warning: err.reason });
+      }
       console.error(
         `Mollie-webhook: bestelling #${orderId} is betaald, maar het versturen van de mails is onverwacht mislukt:`,
         err instanceof Error ? err.message : err

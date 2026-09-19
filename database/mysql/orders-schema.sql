@@ -219,3 +219,64 @@ ALTER TABLE configurations ADD COLUMN print_color_name VARCHAR(100) NULL AFTER p
 ALTER TABLE configurations ADD COLUMN shipping_carrier_name VARCHAR(100) NULL;
 ALTER TABLE configurations ADD COLUMN shipping_tier_name VARCHAR(100) NULL;
 ALTER TABLE configurations ADD COLUMN shipping_cost_cents INT NULL;
+
+-- MIGRATIE 19-9-2026: "Order handmatig bevestigen" in het beheertool, op
+-- verzoek van Christiaan, voor het geval Mollie een betaling pas na een
+-- opvallende vertraging als geslaagd doorgeeft (bijvoorbeeld een trage
+-- bankbevestiging) — dan kan een beheerder de bestaande bevestigingsmails
+-- (klant + webshop) alsnog handmatig opnieuw laten versturen.
+--
+-- BELANGRIJK, uitgezocht vóór deze migratie (zie het uitgebreide onderzoek
+-- van diezelfde datum): de bestaande kolommen `created_at` en `paid_at`
+-- hierboven zijn GEEN Mollie-timestamps — `created_at` wordt gezet vóórdat
+-- de Mollie-betaling wordt aangemaakt (bij het opslaan van de nog niet
+-- betaalde bestelling, zie app/api/create-payment/route.ts), en `paid_at`
+-- is `NOW()` op het moment dat ONZE server de webhook verwerkt (zie
+-- markOrderAsPaid in lib/mysql/client.ts) — niet het moment dat Mollie zelf
+-- de betaling als geslaagd registreert. Voor een betrouwbare vertragings-
+-- meting zijn daarom 2 NIEUWE kolommen nodig, rechtstreeks gevuld met
+-- Mollie's eigen `payment.createdAt`/`payment.paidAt` (zie
+-- lib/mollie/manualConfirmEligibility.ts voor de berekening die deze twee
+-- vergelijkt, en app/api/create-payment/route.ts / app/api/mollie-webhook/
+-- route.ts voor waar ze gevuld worden). Voor bestellingen van vóór deze
+-- migratie blijven deze kolommen NULL — er is dan geen betrouwbare meting
+-- mogelijk, en de knop "Order handmatig bevestigen" verschijnt dan bewust
+-- niet (zie isEligibleForManualConfirmation).
+--
+-- manually_confirmed_at/manually_confirmed_by registreren de handmatige
+-- bevestiging zelf. Er is in dit project geen apart inlogsysteem per
+-- beheerder (zie middleware.js — één gedeeld wachtwoord voor iedereen), dus
+-- manually_confirmed_by is een vrij ingevulde naam, geen geverifieerde
+-- identiteit — op uitdrukkelijk verzoek van Christiaan bewust zo gehouden
+-- (nog geen aparte beheerders-accounts).
+--
+-- Voer onderstaande vier regels ÉÉNMALIG uit in hetzelfde SQL-scherm om de
+-- tabel bij te werken:
+
+ALTER TABLE configurations ADD COLUMN mollie_created_at TIMESTAMP NULL;
+ALTER TABLE configurations ADD COLUMN mollie_paid_at TIMESTAMP NULL;
+ALTER TABLE configurations ADD COLUMN manually_confirmed_at TIMESTAMP NULL;
+ALTER TABLE configurations ADD COLUMN manually_confirmed_by VARCHAR(100) NULL;
+
+-- Aparte auditlogtabel voor elke (poging tot een) handmatige bevestiging —
+-- blijft ook bewaard als een order ooit opnieuw bekeken/bevestigd zou
+-- worden. Bevat expliciet GEEN klantgegevens (naam/adres/e-mail e.d.) — dat
+-- staat al bij de order zelf, hier alleen wat nodig is om de actie achteraf
+-- te kunnen controleren (op verzoek van Christiaan: "Log geen gevoelige
+-- persoonsgegevens als dat niet noodzakelijk is").
+
+CREATE TABLE IF NOT EXISTS manual_confirmation_log (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  order_id INT NOT NULL,
+  mollie_payment_id VARCHAR(64) NULL,
+  mollie_created_at TIMESTAMP NULL,
+  mollie_paid_at TIMESTAMP NULL,
+  delay_seconds INT NULL,
+  confirmed_by VARCHAR(100) NOT NULL,
+  confirmed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  internal_email_sent BOOLEAN NOT NULL DEFAULT FALSE,
+  customer_email_sent BOOLEAN NOT NULL DEFAULT FALSE,
+  error_message VARCHAR(500) NULL,
+
+  INDEX idx_order_id (order_id)
+);
