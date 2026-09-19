@@ -434,6 +434,39 @@ export async function confirmOrderManually(
   return result.affectedRows > 0;
 }
 
+/**
+ * "Handmatig bevestigen zonder dat Mollie zelf 'betaald' meldt" (toegevoegd
+ * 19-9-2026, later dezelfde dag als confirmOrderManually hierboven) — voor
+ * een order die bij Mollie nog 'open'/'pending' of 'expired' staat, maar
+ * waarvan een beheerder (buiten Mollie om) weet dat de klant wél betaald
+ * heeft. Zie app/api/admin/force-confirm-order/route.ts, dat dit pas
+ * aanroept nadat een VERSE controle bij Mollie zelf nogmaals bevestigt dat
+ * de betaling niet (al) op 'paid', 'failed', 'expired' of 'canceled' staat.
+ *
+ * Anders dan confirmOrderManually hierboven (dat een order gebruikt die al
+ * lang op payment_status = 'paid' staat) zet deze functie payment_status
+ * ZELF ook op 'paid' + paid_at = NOW() — deze order is voor de rest van de
+ * applicatie (orderoverzicht, "Betaalstatus"-kolom) vanaf nu een gewone
+ * betaalde order, ondanks dat Mollie dat zelf niet bevestigt. De Mollie-
+ * eigen kolommen (mollie_paid_at e.d.) blijven bewust ongewijzigd/leeg — die
+ * blijven de waarheid van Mollie zelf weerspiegelen, niet deze overschrijving.
+ *
+ * Zelfde atomaire "claim"-opzet (WHERE manually_confirmed_at IS NULL) als
+ * confirmOrderManually, om dezelfde reden (nooit een dubbele bevestiging/
+ * dubbele mails bij een race condition).
+ */
+export async function forceConfirmOrderWithoutMolliePaid(
+  orderId: number,
+  confirmedBy: string
+): Promise<boolean> {
+  const db = getPool();
+  const [result] = (await db.execute(
+    "UPDATE configurations SET payment_status = 'paid', paid_at = NOW(), manually_confirmed_at = NOW(), manually_confirmed_by = ? WHERE id = ? AND manually_confirmed_at IS NULL",
+    [confirmedBy, orderId]
+  )) as unknown as [{ affectedRows: number }, unknown];
+  return result.affectedRows > 0;
+}
+
 export interface ManualConfirmationLogEntry {
   orderId: number;
   molliePaymentId: string | null;
@@ -444,6 +477,12 @@ export interface ManualConfirmationLogEntry {
   internalEmailSent: boolean;
   customerEmailSent: boolean;
   errorMessage: string | null;
+  // Toegevoegd 19-9-2026 (aanvulling): Mollie's eigen status op het moment
+  // van bevestigen — 'paid' bij de gewone (vertraagde) bevestiging, iets
+  // anders (bv. 'open'/'expired') bij een handmatige overschrijving via
+  // forceConfirmOrderWithoutMolliePaid. Optioneel gehouden zodat dit geen
+  // bestaande aanroep breekt; `null` als de aanroeper 'm niet meegeeft.
+  mollieStatusAtConfirmation?: string | null;
 }
 
 /**
@@ -463,8 +502,8 @@ export async function insertManualConfirmationLog(
     `INSERT INTO manual_confirmation_log (
       order_id, mollie_payment_id, mollie_created_at, mollie_paid_at,
       delay_seconds, confirmed_by, internal_email_sent, customer_email_sent,
-      error_message
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      error_message, mollie_status_at_confirmation
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       entry.orderId,
       entry.molliePaymentId,
@@ -475,6 +514,7 @@ export async function insertManualConfirmationLog(
       entry.internalEmailSent,
       entry.customerEmailSent,
       entry.errorMessage,
+      entry.mollieStatusAtConfirmation ?? null,
     ]
   );
 }

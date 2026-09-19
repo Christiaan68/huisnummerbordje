@@ -216,6 +216,10 @@ export async function POST(request: Request) {
     internalEmailSent,
     customerEmailSent,
     errorMessage,
+    // Toegevoegd 19-9-2026 (aanvulling): hier altijd 'paid' (eligibility
+    // hierboven vereist dat al) — zie de toelichting bij
+    // ManualConfirmationLogEntry in lib/mysql/client.ts.
+    mollieStatusAtConfirmation: payment.status,
   });
 
   // De bevestiging zelf staat al vast (geclaimd, hierboven) — dat wordt nooit

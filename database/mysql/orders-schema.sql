@@ -280,3 +280,30 @@ CREATE TABLE IF NOT EXISTS manual_confirmation_log (
 
   INDEX idx_order_id (order_id)
 );
+
+-- MIGRATIE 19-9-2026 (aanvulling, later dezelfde dag): "handmatig bevestigen
+-- zonder dat Mollie zelf 'betaald' meldt" toegevoegd, op verzoek van
+-- Christiaan — voor een order die bij Mollie nog 'Open'/'pending' of
+-- 'Verlopen'/'expired' staat, kan een beheerder eerst laten CONTROLEREN bij
+-- Mollie zelf (dat kan de status alsnog bijwerken, zonder mails, of juist
+-- alsnog tot een normale betaalbevestiging leiden) en, als de betaling dan
+-- nog steeds niet bevestigd is, bewust een HANDMATIGE OVERSCHRIJVING
+-- uitvoeren (de order alsnog als betaald behandelen en de bevestigingsmails
+-- versturen, ook al zegt Mollie zelf van niet). Zie app/api/admin/
+-- check-order-payment/route.ts en app/api/admin/force-confirm-order/route.ts.
+--
+-- Nadrukkelijk NIET toegestaan voor een order die Mollie als 'failed' of
+-- 'canceled' meldt (dat is, anders dan 'open'/'pending'/'expired', een
+-- ondubbelzinnige eindstatus) — zie isEligibleForForceConfirm in
+-- lib/mollie/applyMolliePaymentStatus.ts.
+--
+-- mollie_status_at_confirmation registreert, voor ELKE regel in deze
+-- auditlogtabel (dus ook de al bestaande, hierboven), wat Mollie op het
+-- moment van bevestigen zelf als status teruggaf — bij de normale
+-- (vertraagde) bevestiging altijd 'paid', bij een handmatige overschrijving
+-- juist NIET 'paid' (bijvoorbeeld 'open' of 'expired'). Zo is achteraf altijd
+-- te zien of een bevestiging een gewone, door Mollie bevestigde betaling was,
+-- of een bewuste overschrijving. Voer onderstaande regel ÉÉNMALIG uit in
+-- hetzelfde SQL-scherm om de tabel bij te werken:
+
+ALTER TABLE manual_confirmation_log ADD COLUMN mollie_status_at_confirmation VARCHAR(20) NULL;
