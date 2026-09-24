@@ -5,6 +5,7 @@ import { getNotificationEmail } from "@/lib/email/settings";
 import { renderPaymentIssueNotificationEmail } from "@/lib/email/templates/payment-issue-notification";
 import { formatEuroFromCents } from "@/lib/format/euro";
 import { getOrderById } from "@/lib/mysql/client";
+import { resolveNotificationFromAddress } from "@/lib/email/isValidEmailFormat";
 
 const PAYMENT_STATUS_LABELS: Record<string, string> = {
   pending: "in behandeling",
@@ -97,12 +98,17 @@ export async function POST(request: Request) {
   try {
     const resend = createResendClient();
     const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+    // Zichtbaar afzenderadres = de instelling "Vraag betaalprobleem naar"
+    // (payment_issue_notification, adminEmail hierboven) — maar alleen als
+    // dat adres op hetzelfde geverifieerde domein staat als fromAddress,
+    // anders zou versturen mislukken. Klantadres staat in Reply-To.
+    const visibleFromAddress = resolveNotificationFromAddress(
+      adminEmail,
+      fromAddress
+    );
 
     const { error } = await resend.emails.send({
-      // Klantadres niet als From gebruikt (SPF/DKIM/DMARC-risico op een
-      // niet bij Resend geverifieerd domein) — wel zichtbaar in Reply-To,
-      // zodat "Beantwoorden" gewoon naar de klant gaat.
-      from: `Vraag over betaling <${fromAddress}>`,
+      from: `Vraag over betaling <${visibleFromAddress}>`,
       to: adminEmail,
       replyTo: order.contact_email,
       subject: `Vraag over bestelling #${order.id} (betaling ${paymentStatusLabel})`,

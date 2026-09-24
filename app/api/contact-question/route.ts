@@ -3,6 +3,7 @@ import { createConfigurationSchema } from "@/lib/validation/configuration.schema
 import { questionDetailsSchema } from "@/lib/validation/question.schema";
 import { createResendClient } from "@/lib/email/resend";
 import { getNotificationEmail } from "@/lib/email/settings";
+import { resolveNotificationFromAddress } from "@/lib/email/isValidEmailFormat";
 import { renderQuestionNotificationEmail } from "@/lib/email/templates/question-notification";
 import { getLivePricingData } from "@/lib/configuration/livePricing";
 import {
@@ -158,11 +159,17 @@ export async function POST(request: Request) {
   try {
     const resend = createResendClient();
     const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+    // Zichtbaar afzenderadres = de instelling "Vraag klant naar"
+    // (question_notification, adminEmail hierboven) — maar alleen als dat
+    // adres op hetzelfde geverifieerde domein staat als fromAddress,
+    // anders zou versturen mislukken. Klantadres staat in Reply-To.
+    const visibleFromAddress = resolveNotificationFromAddress(
+      adminEmail,
+      fromAddress
+    );
 
     const { error } = await resend.emails.send({
-      // Klantadres niet als From (SPF/DKIM/DMARC-risico), wel als
-      // Reply-To — "Beantwoorden" gaat zo naar de klant.
-      from: `Vraag van de klant <${fromAddress}>`,
+      from: `Vraag van de klant <${visibleFromAddress}>`,
       to: adminEmail,
       replyTo: question.email,
       subject: `Vraag van ${question.name} over een configuratie`,

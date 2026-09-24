@@ -1,4 +1,5 @@
 import { createResendClient } from "@/lib/email/resend";
+import { resolveNotificationFromAddress } from "@/lib/email/isValidEmailFormat";
 import {
   renderConfigurationEmail,
   translateShapeName,
@@ -216,17 +217,14 @@ export async function sendOrderEmails(
 
   const resend = createResendClient();
   const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
-  // Simpele formaatcheck (geen zod hier, geen netwerkcheck) — voorkomt dat
-  // een leeg/kapot ingevuld adres uit de "Configuratie bestelling webshop
-  // naar:"-instelling (prijstool) in een e-mailheader terechtkomt. Bij een
-  // ongeldig formaat valt het interne afzenderadres terug op fromAddress
-  // (RESEND_FROM_EMAIL); het "aan"-adres (input.adminEmail) blijft
-  // ongewijzigd zoals het al was.
-  const isValidEmailFormat = (value: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-  const internalFromAddress = isValidEmailFormat(input.adminEmail)
-    ? input.adminEmail
-    : fromAddress;
+  // Alleen als zichtbaar afzenderadres gebruikt als het op hetzelfde
+  // (geverifieerde) domein staat als fromAddress — anders terugval op
+  // fromAddress, zodat versturen nooit mislukt door een niet-geverifieerd
+  // domein. Het "aan"-adres (input.adminEmail) blijft ongewijzigd.
+  const internalFromAddress = resolveNotificationFromAddress(
+    input.adminEmail,
+    fromAddress
+  );
   const attachments = previewImageBuffer
     ? [
         {
