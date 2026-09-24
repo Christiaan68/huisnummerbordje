@@ -428,7 +428,25 @@ export function getEarsStyleForShapeId(
 // herkenbare punt houden (13% i.p.v. 19% van de kortste zijde), maar
 // worden wel wat korter dan voorheen; mocht dat nu te kort ogen t.o.v. de
 // productfoto's, is dit de ene plek om opnieuw bij te stellen.
-const EARS_PROTRUSION_RATIO = 0.13;
+//
+// Iets vergroot (24-9-2026, vervolgfeedback Christiaan: aan de kant zonder
+// oren zat het middenvlak te dicht op de buitenrand, en aan de kant met de
+// oren moesten de oren juist dichter bij het middenvlak komen — met de
+// uitdrukkelijke eis dat hoek en lengte van de oren gelijk zouden blijven).
+// Bij uitzoeken bleek dat wiskundig niet allebei tegelijk te kunnen zonder
+// de oorlengte aan te passen: bij een vaste oorlengte is de marge aan de
+// oor-kant ALTIJD exact (breedte − 2×oorlengte − hoogte)/2 groter dan de
+// marge aan de kant zonder oren (bij 130×100mm en de toenmalige 13mm:
+// (130−26−100)/2 = 2mm groter, hoe je de kaderdikte ook instelt — zie
+// EARS_FRAME_THICKNESS_RATIO). Om de marge aan BEIDE kanten weer gelijk te
+// trekken (en dus effectief kleiner aan de oor-kant, groter aan de andere
+// kant) moet die 2mm verschil ergens vandaan komen: hier opgelost door de
+// oren een fractie langer te maken (13mm → 15mm, zodat 130−2×15−100 = 0,
+// oftewel geen verschil meer tussen de twee kanten). Dit is dus een héél
+// kleine (2mm) afwijking van "oorlengte moet gelijk blijven" — voorgelegd
+// aan Christiaan met een gerenderde vergelijking (variant B/C tegenover de
+// oude 13mm), die dit bevestigde als goede oplossing ("C is goed").
+const EARS_PROTRUSION_RATIO = 0.15;
 
 // Breedte van een oor waar het de hoofdrechthoek raakt ("basis"), als
 // fractie van de DWARSAFMETING (bij horizontale oren: de hoogte van het
@@ -476,7 +494,17 @@ const EARS_MAIN_RECT_CORNER_RADIUS_RATIO = 0.04;
 // toSquareRect, begrensd door de kortste zijde min 2× deze kaderdikte) over
 // de hele reeks bordjesmaten ruim voldoende marge tot de buitenrand — de
 // eis blijft dus gegarandeerd, ook al is de rand nu smaller.
-const EARS_FRAME_THICKNESS_RATIO = 0.012;
+//
+// Weer vergroot (24-9-2026, samen met EARS_PROTRUSION_RATIO hierboven, zie
+// de toelichting daar): nu de oorlengte is aangepast zodat de marge aan
+// beide kanten van het middenvlak precies gelijk is, is de kaderdikte hier
+// ook verruimd van 1,2% naar 2,0% (van 1,2mm naar 2,0mm bij 130×100/
+// 100×130mm) — dit lost de klacht "middenvlak te dicht op de rand aan de
+// kant zonder oren" op, en omdat de marge nu aan beide kanten identiek is,
+// wordt de oor-kant tegelijk krapper (van 3,2mm naar 2,0mm) in plaats van
+// ruimer — precies de gevraagde richting. Bevestigd door Christiaan via
+// een gerenderde 3-weg vergelijking (variant C, "allebei").
+const EARS_FRAME_THICKNESS_RATIO = 0.02;
 
 // "Vier-hoeken"-stijl: op verzoek van Christiaan, n.a.v. een foto van het
 // echte bordje "59", kreeg deze stijl op 17-9-2026 eerst losse, uitstekende
