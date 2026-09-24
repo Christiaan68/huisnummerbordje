@@ -216,6 +216,17 @@ export async function sendOrderEmails(
 
   const resend = createResendClient();
   const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+  // Simpele formaatcheck (geen zod hier, geen netwerkcheck) — voorkomt dat
+  // een leeg/kapot ingevuld adres uit de "Configuratie bestelling webshop
+  // naar:"-instelling (prijstool) in een e-mailheader terechtkomt. Bij een
+  // ongeldig formaat valt het interne afzenderadres terug op fromAddress
+  // (RESEND_FROM_EMAIL); het "aan"-adres (input.adminEmail) blijft
+  // ongewijzigd zoals het al was.
+  const isValidEmailFormat = (value: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  const internalFromAddress = isValidEmailFormat(input.adminEmail)
+    ? input.adminEmail
+    : fromAddress;
   const attachments = previewImageBuffer
     ? [
         {
@@ -284,7 +295,7 @@ export async function sendOrderEmails(
         : `Nieuwe (betaalde) bestelling van ${input.contact.name}: ${translatedShapeName} — ${input.customText}`;
 
     const { error } = await resend.emails.send({
-      from: `Huisnummerbordjes configurator <${fromAddress}>`,
+      from: `Emaillehuisnummerbordjes <${internalFromAddress}>`,
       to: input.adminEmail,
       subject: internalSubject,
       html,

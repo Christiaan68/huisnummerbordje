@@ -73,7 +73,9 @@ export async function POST(request: Request) {
     const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
     const { error } = await resend.emails.send({
-      from: `Huisnummerbordjes configurator <${fromAddress}>`,
+      // Klantadres niet als From (SPF/DKIM/DMARC-risico), wel als
+      // Reply-To — "Beantwoorden" gaat zo naar de klant.
+      from: `Vraag van de klant <${fromAddress}>`,
       to: adminEmail,
       replyTo: question.email,
       subject: `Vraag van ${question.name} via het contactformulier`,

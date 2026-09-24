@@ -99,7 +99,10 @@ export async function POST(request: Request) {
     const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
     const { error } = await resend.emails.send({
-      from: `Huisnummerbordjes bestelling <${fromAddress}>`,
+      // Klantadres niet als From gebruikt (SPF/DKIM/DMARC-risico op een
+      // niet bij Resend geverifieerd domein) — wel zichtbaar in Reply-To,
+      // zodat "Beantwoorden" gewoon naar de klant gaat.
+      from: `Vraag over betaling <${fromAddress}>`,
       to: adminEmail,
       replyTo: order.contact_email,
       subject: `Vraag over bestelling #${order.id} (betaling ${paymentStatusLabel})`,
