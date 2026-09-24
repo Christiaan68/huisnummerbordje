@@ -459,7 +459,24 @@ const EARS_MAIN_RECT_CORNER_RADIUS_RATIO = 0.04;
 // losse oor-tabjes), en groeien de oren daar organisch uit voort.
 // Verkleind (12-9-2026, zelfde feedback) van 0.07 naar 0.025 — op de foto's
 // is dit kader een dunne rand, geen brede lijst.
-const EARS_FRAME_THICKNESS_RATIO = 0.025;
+//
+// Nogmaals verkleind (24-9-2026, feedback Christiaan n.a.v. een met de hand
+// getekende rode lijn op een screenshot van "verticaal", vlak bij de hoek
+// waar het oor begint: "moet het oor korter bij het vlak beginnen met oor
+// zijn"). Via AskUserQuestion is dit stapsgewijs vastgesteld: de oorlengte
+// zelf (EARS_PROTRUSION_RATIO) bleek al goed ("A: huidig" bevestigd) — het
+// ging dus niet om de punt van het oor, maar om de kaderrand rond het
+// middenvlak, die bij "horizontaal"/"verticaal" (anders dan bij
+// "vier-hoeken", zie EARS_CORNER_FRAME_RING_RATIO) in de hoeken bij de oren
+// extra breed oogt (diagonale afstand van de scherpe buitenhoek tot de
+// afgeronde binnenhoek is langer dan de loodrechte kaderdikte elders).
+// Getest met een 3-weg vergelijking (2,5% "huidig" / 1,2% "dunner" / ~0%
+// "minimaal"); Christiaan koos 1,2% ("D"), met de expliciete eis dat het
+// vierkant de buitenrand nooit mag raken. Bij 1,2% houdt het vierkant (via
+// toSquareRect, begrensd door de kortste zijde min 2× deze kaderdikte) over
+// de hele reeks bordjesmaten ruim voldoende marge tot de buitenrand — de
+// eis blijft dus gegarandeerd, ook al is de rand nu smaller.
+const EARS_FRAME_THICKNESS_RATIO = 0.012;
 
 // "Vier-hoeken"-stijl: op verzoek van Christiaan, n.a.v. een foto van het
 // echte bordje "59", kreeg deze stijl op 17-9-2026 eerst losse, uitstekende
