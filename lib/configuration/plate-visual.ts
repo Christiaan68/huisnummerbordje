@@ -407,7 +407,28 @@ export function getEarsStyleForShapeId(
 // uitstekende oren daar, zie getEarsGeometry).
 // Verkleind (12-9-2026, feedback Christiaan: middenvlak te klein/te veel
 // marge t.o.v. de aangeleverde productfoto's) van 0.22 naar 0.19.
-const EARS_PROTRUSION_RATIO = 0.19;
+//
+// Nogmaals verkleind (24-9-2026, feedback Christiaan n.a.v. "vier-hoeken",
+// die hij inmiddels "heel goed" vond: het middenvlak bij "horizontaal"/
+// "verticaal" moest daar ook veel dichter naar de randen komen, zonder te
+// overschrijden en vierkant te blijven). Bij "horizontaal"/"verticaal" is
+// het middenvlak een VIERKANT (toSquareRect), dus de kortste zijde van het
+// bordje (bij 130×100mm: de hoogte, 100mm) bepaalt hoe groot dat vierkant
+// maximaal kan worden — dat maximum (min(breedte,hoogte) - 2×
+// EARS_FRAME_THICKNESS_RATIO) wordt pas daadwerkelijk gehaald als de
+// resterende (langere) as breed genoeg is om diezelfde vierkante maat +
+// kaderrand te herbergen NAAST de twee oren. Met de oude 0.19 ging daar
+// 2× 19% van de kortste zijde aan oren-uitsteeksel vanaf — te veel om dat
+// maximum te halen, dus werd het vierkant zelf (niet alleen zijn marge)
+// kleiner dan nodig. Bij 0.13 blijft er over de hele reeks bordjesmaten
+// (130×100/100×130mm) ruim voldoende buitenmaat over voor het vierkant op
+// zijn maximale grootte, mét een kaderrand rond het vierkant die nooit
+// dunner wordt dan bij "vier-hoeken" — het vierkant kan dus nooit over de
+// schuine oor-rand heen steken. De oren zelf blijven een duidelijk
+// herkenbare punt houden (13% i.p.v. 19% van de kortste zijde), maar
+// worden wel wat korter dan voorheen; mocht dat nu te kort ogen t.o.v. de
+// productfoto's, is dit de ene plek om opnieuw bij te stellen.
+const EARS_PROTRUSION_RATIO = 0.13;
 
 // Breedte van een oor waar het de hoofdrechthoek raakt ("basis"), als
 // fractie van de DWARSAFMETING (bij horizontale oren: de hoogte van het
