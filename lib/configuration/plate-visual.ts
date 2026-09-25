@@ -928,3 +928,49 @@ export const EARS_AUTOFIT_FONT_KEY = "ears-fixed-serif";
 // getEarsGeometry) — daar mag dus een kleinere marge, en dat maakt het
 // huisnummer navenant groter, zonder de rand van het middenvlak te raken.
 export const EARS_TEXT_MARGIN_RATIO = 0.04;
+
+// Superscript-weergave van letters achter een huisnummer (bv. "12A" →
+// cijfers "12" gewoon groot, letter "A" kleiner en boven uitgelijnd) —
+// toegevoegd 25-9-2026 op verzoek van Christiaan. Zuiver presentatie: de
+// opgeslagen/verzonden tekst (customText) blijft altijd de volledige,
+// platte string ("12A") — dit splitst alleen de tekst in cijfer-/
+// letterreeksen zodat elke renderer (ProductPreview.tsx,
+// plate-preview-image.tsx, ConfigurationSummary.tsx, PaymentIssueContact.tsx)
+// zelf de bijpassende JSX/HTML voor de superscript-weergave kan opbouwen —
+// vandaar hier alleen de splitsing zelf (geen JSX), want de renderers
+// verschillen te veel in opbouw (React-DOM met Tailwind, Satori met alleen
+// inline "display:flex", en kale HTML-strings) om één gedeelde
+// weergavefunctie voor te schrijven.
+export interface HouseNumberSegment {
+  text: string;
+  isLetters: boolean;
+}
+
+export function splitHouseNumberSegments(text: string): HouseNumberSegment[] {
+  const matches = text.match(/[0-9]+|[^0-9]+/g);
+  if (!matches) return [{ text, isLetters: false }];
+  return matches.map((segment) => ({
+    text: segment,
+    isLetters: !/[0-9]/.test(segment),
+  }));
+}
+
+// Lettergrootte van de superscript-letters t.o.v. de cijfers (bv. bij "12A"
+// wordt de "A" 62% van de cijfergrootte) — gebruikt door zowel de live
+// preview als de e-mailafbeelding, zodat beide er hetzelfde uitzien.
+export const HOUSE_NUMBER_SUPERSCRIPT_RATIO = 0.62;
+
+// Zelfde superscript-weergave, maar als kant-en-klare HTML-string voor de 4
+// e-mailtemplates (lib/email/templates/*.ts) — die bouwen hun HTML via
+// simpele template strings, geen React/Satori, dus native <sup> volstaat
+// daar (in tegenstelling tot ProductPreview.tsx/plate-preview-image.tsx,
+// die geen HTML maar JSX/Satori-elementen opbouwen). Veilig om ongeëscaped
+// in die templates te interpoleren, zoals ze dat al met elke andere waarde
+// doen: customText bestaat altijd alleen uit cijfers/letters
+// (lib/validation/text-input.schema.ts, houseNumberSchema), dus hier kan
+// nooit HTML uit gebruikersinvoer in terechtkomen.
+export function formatHouseNumberHtml(text: string): string {
+  return splitHouseNumberSegments(text)
+    .map((segment) => (segment.isLetters ? `<sup>${segment.text}</sup>` : segment.text))
+    .join("");
+}

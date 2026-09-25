@@ -32,6 +32,8 @@ import {
   getScrewClearanceMarginsMm,
   getScrewPositions,
   getScrewRadiusMm,
+  splitHouseNumberSegments,
+  HOUSE_NUMBER_SUPERSCRIPT_RATIO,
   type EarsGeometry,
 } from "@/lib/configuration/plate-visual";
 
@@ -339,6 +341,17 @@ export function ProductPreview() {
   // — in het (zeldzame) geval dat de tekst toch iets te breed uitvalt,
   // steekt die dan liever een klein stukje buiten het bordje uit dan dat
   // hij in tweeën splitst.
+  // Letters achter het huisnummer (bv. de "A" in "12A") worden sinds
+  // 25-9-2026 kleiner en boven uitgelijnd weergegeven (superscript) — zuiver
+  // presentatie, zie splitHouseNumberSegments/HOUSE_NUMBER_SUPERSCRIPT_RATIO
+  // in plate-visual.ts. Cijfers blijven ongewijzigd op numberFontSize; een
+  // huisnummer zonder letters (bv. "12") levert altijd 1 segment op en ziet
+  // er dus exact zo uit als voorheen. display:flex/alignItems:flex-start op
+  // de buitenste span zorgt ervoor dat het kleinere lettersegment met zijn
+  // bovenkant uitlijnt met de bovenkant van de cijfers — dezelfde techniek
+  // als in de e-mailafbeelding (plate-preview-image.tsx), zodat beide er
+  // hetzelfde uitzien.
+  const numberSegments = splitHouseNumberSegments(numberText);
   const numberNode = (
     <span
       key="number"
@@ -350,9 +363,19 @@ export function ProductPreview() {
           ? EARS_NUMBER_FONT_WEIGHT
           : FONT_WEIGHT_BY_ID[numberFont?.id ?? ""] ?? DEFAULT_FONT_WEIGHT,
         whiteSpace: "nowrap",
+        display: "flex",
+        alignItems: "flex-start",
       }}
     >
-      {numberText}
+      {numberSegments.map((segment, index) =>
+        segment.isLetters ? (
+          <span key={index} style={{ fontSize: `${HOUSE_NUMBER_SUPERSCRIPT_RATIO}em` }}>
+            {segment.text}
+          </span>
+        ) : (
+          <span key={index}>{segment.text}</span>
+        )
+      )}
     </span>
   );
   const line1Node = hasLine1 ? (

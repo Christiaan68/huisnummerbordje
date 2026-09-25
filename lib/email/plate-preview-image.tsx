@@ -14,6 +14,8 @@ import {
   getScrewClearanceMarginsMm,
   getScrewPositions,
   getScrewRadiusMm,
+  splitHouseNumberSegments,
+  HOUSE_NUMBER_SUPERSCRIPT_RATIO,
   type EarsStyle,
 } from "@/lib/configuration/plate-visual";
 
@@ -614,6 +616,17 @@ export async function renderPlatePreviewPng(
                 key={index}
                 style={{
                   display: "flex",
+                  // Letters achter het huisnummer (bv. de "A" in "12A")
+                  // worden, net als in de live preview (ProductPreview.tsx),
+                  // kleiner en met hun bovenkant uitgelijnd getoond
+                  // (superscript) — zuiver presentatie, zie
+                  // splitHouseNumberSegments/HOUSE_NUMBER_SUPERSCRIPT_RATIO
+                  // in plate-visual.ts. Alleen de huisnummer-regel splitst
+                  // ooit in meerdere segmenten; line1/line2 blijven altijd 1
+                  // stuk platte tekst. Satori (next/og) heeft geen
+                  // vertical-align, vandaar deze flex-aanpak i.p.v. de
+                  // eenvoudigere CSS die in een gewone browser zou volstaan.
+                  alignItems: "flex-start",
                   marginTop:
                     index === 0
                       ? 0
@@ -631,7 +644,25 @@ export async function renderPlatePreviewPng(
                   whiteSpace: "nowrap",
                 }}
               >
-                {line.text}
+                {line === numberLine
+                  ? splitHouseNumberSegments(line.text).map((segment, segIndex) =>
+                      segment.isLetters ? (
+                        <div
+                          key={segIndex}
+                          style={{
+                            display: "flex",
+                            fontSize: line.sizePx * HOUSE_NUMBER_SUPERSCRIPT_RATIO,
+                          }}
+                        >
+                          {segment.text}
+                        </div>
+                      ) : (
+                        <div key={segIndex} style={{ display: "flex" }}>
+                          {segment.text}
+                        </div>
+                      )
+                    )
+                  : line.text}
               </div>
             ))}
           </div>

@@ -1,3 +1,5 @@
+import { formatHouseNumberHtml } from "@/lib/configuration/plate-visual";
+
 interface PaymentIssueEmailData {
   orderId: number;
   paymentStatusLabel: string;
@@ -113,7 +115,7 @@ export function renderPaymentIssueNotificationEmail(data: PaymentIssueEmailData)
                     ${data.plateColorName ? row("Ondergrond kleur", data.plateColorName) : ""}
                     ${data.earColorName ? row("Opdruk kleur", data.earColorName) : ""}
                     ${row("Maat", data.sizeName)}
-                    ${row("Huisnummer", data.customText)}
+                    ${row("Huisnummer", formatHouseNumberHtml(data.customText))}
                     ${data.extraLine1 ? row("Tekstregel 1", data.extraLine1) : ""}
                     ${data.extraLine2 ? row("Tekstregel 2", data.extraLine2) : ""}
                     ${row("Prijs", data.priceLabel)}

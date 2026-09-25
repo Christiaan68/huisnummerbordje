@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { usePricingData } from "@/lib/configuration/PricingDataContext";
 import {
@@ -10,8 +11,9 @@ import {
 import { getEarsColorOptions, isEarsShape } from "@/lib/configuration/shape-helpers";
 import { calculatePrice, formatPriceCents } from "@/lib/configuration/pricing";
 import { buildOrderLabel } from "@/lib/configuration/orderLabel";
+import { HouseNumberDisplay } from "./HouseNumberDisplay";
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex justify-between border-b border-border py-3 text-sm">
       <dt className="text-muted-foreground">{label}</dt>
@@ -46,7 +48,10 @@ export function ConfigurationSummary() {
         <Row label="Maat" value={size?.name ?? "—"} />
         <Row label="Ondergrond kleur" value={plateColor?.name ?? "—"} />
         <Row label="Opdruk kleur" value={earColor?.name ?? "—"} />
-        <Row label="Huisnummer" value={selection.customText || "—"} />
+        <Row
+          label="Huisnummer"
+          value={selection.customText ? <HouseNumberDisplay text={selection.customText} /> : "—"}
+        />
         {orderLabel && <Row label="Volgorde" value={orderLabel} />}
         {price && price.colorSurchargeCents > 0 && (
           <Row
@@ -102,7 +107,10 @@ export function ConfigurationSummary() {
       <Row label="Ondergrond kleur" value={color?.name ?? "—"} />
       <Row label="Opdruk kleur" value={printColor?.name ?? "—"} />
       <Row label="Maat" value={size?.name ?? "—"} />
-      <Row label="Huisnummer" value={selection.customText || "—"} />
+      <Row
+        label="Huisnummer"
+        value={selection.customText ? <HouseNumberDisplay text={selection.customText} /> : "—"}
+      />
       <Row label="Lettertype huisnummer" value={numberFont?.name ?? "—"} />
       {hasLine1 && (
         <>

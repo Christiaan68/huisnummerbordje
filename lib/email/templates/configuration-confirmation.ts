@@ -1,3 +1,5 @@
+import { formatHouseNumberHtml } from "@/lib/configuration/plate-visual";
+
 interface ConfigurationEmailData {
   // Het eigen bestelnummer van de webshop (bv. "#630002"), toegevoegd
   // 29-8-2026 op verzoek van Christiaan — al kant-en-klaar geformatteerd
@@ -375,7 +377,7 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
                           (data.printColorName ? row(t.labelPrintColor, data.printColorName) : "")
                     }
                     ${row(t.labelSize, data.sizeName)}
-                    ${row(t.labelHouseNumber, data.customText)}
+                    ${row(t.labelHouseNumber, formatHouseNumberHtml(data.customText))}
                     ${data.extraLine1 ? row(t.labelExtraLine1, data.extraLine1) : ""}
                     ${data.extraLine2 ? row(t.labelExtraLine2, data.extraLine2) : ""}
                     ${data.orderLabel ? row(t.labelOrderLabel, data.orderLabel) : ""}

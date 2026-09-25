@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { HouseNumberDisplay } from "@/components/configurator/HouseNumberDisplay";
 
 interface PaymentIssueContactProps {
   orderId: number;
@@ -98,7 +99,7 @@ export function PaymentIssueContact(props: PaymentIssueContactProps) {
     }
   }
 
-  const summaryRows: Array<[string, string]> = [
+  const summaryRows: Array<[string, ReactNode]> = [
     ["Ordernummer", `#${props.orderId}`],
     ["Betaalstatus", props.paymentStatusLabel],
     ["Naam", props.contactName],
@@ -116,7 +117,7 @@ export function PaymentIssueContact(props: PaymentIssueContactProps) {
       : []),
     ...(props.earColorName ? ([["Opdruk kleur", props.earColorName]] as [string, string][]) : []),
     ["Maat", props.sizeName],
-    ["Huisnummer", props.customText],
+    ["Huisnummer", props.customText ? <HouseNumberDisplay text={props.customText} /> : "—"],
     ...(props.extraLine1 ? ([["Tekstregel 1", props.extraLine1]] as [string, string][]) : []),
     ...(props.extraLine2 ? ([["Tekstregel 2", props.extraLine2]] as [string, string][]) : []),
     ["Prijs", props.priceLabel],
