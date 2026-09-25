@@ -171,8 +171,7 @@ export default function RetournerenReclamerenPage() {
           </h2>
           <div className="mt-3 space-y-3 text-sm leading-relaxed text-foreground">
             <p>
-              Is het huisnummerbordje beschadigd bij je aangekomen? Neem
-              dan bij voorkeur zo snel mogelijk contact met ons op.
+              Is het huisnummerbordje beschadigd bij je aangekomen? Neem zo snel mogelijk, maar uiterlijk binnen 3 dagen, contact met ons op.
             </p>
             <p>Stuur indien mogelijk mee:</p>
             <ul className="list-disc space-y-1 pl-5">
