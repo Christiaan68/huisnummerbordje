@@ -104,7 +104,7 @@ export async function buildAndSendOrderEmailsForOrder(
     fallbackAdminEmail
   );
   const emailLanguage = await getShapeLanguage(shape.id);
-  const orderLabel = buildOrderLabel(shape, order.number_position);
+  const orderLabel = buildOrderLabel(shape, order.number_position, emailLanguage);
   const paidAtFormatted = formatDutchDateTime(paidAt ?? new Date());
 
   return sendOrderEmails({
