@@ -960,17 +960,10 @@ export function splitHouseNumberSegments(text: string): HouseNumberSegment[] {
 // preview als de e-mailafbeelding, zodat beide er hetzelfde uitzien.
 export const HOUSE_NUMBER_SUPERSCRIPT_RATIO = 0.62;
 
-// Zelfde superscript-weergave, maar als kant-en-klare HTML-string voor de 4
-// e-mailtemplates (lib/email/templates/*.ts) — die bouwen hun HTML via
-// simpele template strings, geen React/Satori, dus native <sup> volstaat
-// daar (in tegenstelling tot ProductPreview.tsx/plate-preview-image.tsx,
-// die geen HTML maar JSX/Satori-elementen opbouwen). Veilig om ongeëscaped
-// in die templates te interpoleren, zoals ze dat al met elke andere waarde
-// doen: customText bestaat altijd alleen uit cijfers/letters
-// (lib/validation/text-input.schema.ts, houseNumberSchema), dus hier kan
-// nooit HTML uit gebruikersinvoer in terechtkomen.
-export function formatHouseNumberHtml(text: string): string {
-  return splitHouseNumberSegments(text)
-    .map((segment) => (segment.isLetters ? `<sup>${segment.text}</sup>` : segment.text))
-    .join("");
-}
+// Bewust NIET gebruikt in de "Huisnummer"-tekstregel van de 4
+// e-mailsjablonen (lib/email/templates/*.ts): op verzoek van Christiaan
+// (25-9-2026) toont die regel daar altijd gewoon platte tekst ("12A") —
+// alleen de meegestuurde voorbeeldafbeelding van het bordje (hierboven,
+// plate-preview-image.tsx) toont de letter(s) als superscript. Er stond
+// hier eerder ook een `formatHouseNumberHtml()`-helper (native <sup> in de
+// e-mail-HTML) — die is om diezelfde reden weer verwijderd.

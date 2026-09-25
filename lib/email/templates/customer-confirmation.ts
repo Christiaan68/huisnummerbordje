@@ -1,5 +1,4 @@
 import { formatPriceCents } from "@/lib/configuration/pricing";
-import { formatHouseNumberHtml } from "@/lib/configuration/plate-visual";
 
 interface CustomerConfirmationData {
   // Het eigen bestelnummer van de webshop (bv. "#630002"), toegevoegd
@@ -156,7 +155,7 @@ export function renderCustomerConfirmationEmail(
                           (data.printColorName ? row("Opdruk kleur", data.printColorName) : "")
                     }
                     ${row("Maat", data.sizeName)}
-                    ${row("Huisnummer", formatHouseNumberHtml(data.customText))}
+                    ${row("Huisnummer", data.customText)}
                     ${data.extraLine1 ? row("Tekstregel 1", data.extraLine1) : ""}
                     ${data.extraLine2 ? row("Tekstregel 2", data.extraLine2) : ""}
                     ${data.orderLabel ? row("Volgorde", data.orderLabel) : ""}

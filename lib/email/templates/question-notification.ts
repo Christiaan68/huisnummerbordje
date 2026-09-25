@@ -1,5 +1,3 @@
-import { formatHouseNumberHtml } from "@/lib/configuration/plate-visual";
-
 interface QuestionEmailData {
   // Optioneel: alleen aanwezig als de vraag gesteld is via de configurator
   // (met een configuratie in uitvoering, zie
@@ -151,7 +149,7 @@ export function renderQuestionNotificationEmail(data: QuestionEmailData): string
                     ${data.plateColorName ? row("Ondergrond kleur", data.plateColorName) : ""}
                     ${data.earColorName ? row("Opdruk kleur", data.earColorName) : ""}
                     ${row("Maat", data.sizeName ?? "")}
-                    ${row("Huisnummer", formatHouseNumberHtml(data.customText ?? ""))}
+                    ${row("Huisnummer", data.customText ?? "")}
                     ${data.extraLine1 ? row("Tekstregel 1", data.extraLine1) : ""}
                     ${data.extraLine2 ? row("Tekstregel 2", data.extraLine2) : ""}
                     ${data.numberFontName ? row("Lettertype huisnummer", data.numberFontName) : ""}
