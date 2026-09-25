@@ -77,7 +77,7 @@ export default function LeveringsvoorwaardenPage() {
           </h2>
           <ol className="mt-3 list-decimal space-y-3 pl-5 text-sm leading-relaxed text-foreground">
             <li>
-              Verkoper vervaardigt ge&euml;mailleerde huisnummerbordjes en
+              Verkoper levert ge&euml;mailleerde huisnummerbordjes en
               eventueel daarmee samenhangende producten.
             </li>
             <li>
