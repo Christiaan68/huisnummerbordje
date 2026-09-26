@@ -152,7 +152,18 @@ export async function getLivePricingData(): Promise<LivePricingData> {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    // Timeout omhoog van 4 naar 8 seconden (26-9-2026, n.a.v. meldingen van
+    // Christiaan dat de kaderprijs soms de vaste reservekopie-waarde
+    // (€10,00) liet zien i.p.v. de actuele prijs uit de prijstool, en de
+    // totaalprijs dan "—" toonde). In de Vercel-logs stond hierbij telkens
+    // "This operation was aborted" — dat is deze eigen timeout die
+    // toesloeg, niet een echte fout van de prijstool zelf. Vermoedelijke
+    // oorzaak: een "cold start" van de (weinig bezochte) prijstool-functie
+    // op Vercel, die af en toe iets langer dan 4 seconden nodig heeft om op
+    // te starten en te antwoorden. 8 seconden geeft daar meer ruimte voor,
+    // ten koste van een iets langere wachttijd voor de bezoeker in het
+    // (zeldzame) geval dat de prijstool écht onbereikbaar is.
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     let res: Response;
     try {
