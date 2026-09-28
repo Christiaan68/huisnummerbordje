@@ -3,9 +3,9 @@ import { createConfigurationSchema } from "@/lib/validation/configuration.schema
 import { contactDetailsSchema } from "@/lib/validation/contact.schema";
 import { calculatePrice } from "@/lib/configuration/pricing";
 import { getLivePricingData } from "@/lib/configuration/livePricing";
-import { saveOrderToDatabase, setOrderMolliePaymentId } from "@/lib/mysql/client";
+import { saveOrderToDatabase } from "@/lib/mysql/client";
 import { buildOrderLabel } from "@/lib/configuration/orderLabel";
-import { createMollie, getSiteUrl } from "@/lib/mollie/client";
+import { createMolliePaymentForOrder } from "@/lib/mollie/client";
 import { isEarsShape, getEarsColorOptions } from "@/lib/configuration/shape-helpers";
 import {
   productShapes,
@@ -330,58 +330,16 @@ export async function POST(request: Request) {
   }
 
   try {
-    const siteUrl = getSiteUrl();
-    const mollie = createMollie();
-
-    const payment = await mollie.payments.create({
-      amount: {
-        currency: "EUR",
-        value: (priceTotalCentsForPayment / 100).toFixed(2),
-      },
-      description: `Huisnummerbordje bestelling #${orderId}`,
-      redirectUrl: `${siteUrl}/bestelling/bedankt?order=${orderId}`,
-      webhookUrl: `${siteUrl}/api/mollie-webhook`,
-      metadata: { orderId: String(orderId) },
-      // Op verzoek van Christiaan (31-8-2026) beperkt tot deze
-      // betaalmethodes — zonder dit veld toont Mollie's betaalpagina ALLE
-      // methodes die in het Mollie-account geactiveerd staan. Zie ook
-      // components/layout/PaymentMethodIcons.tsx, dat dezelfde methodes
-      // (los, als informatie vooraf) aan de klant toont op de webshop
-      // zelf — deze twee plekken moeten dus bij elkaar blijven passen als
-      // dit ooit wijzigt.
-      //
-      // "applepay" staat hier BEWUST nog niet bij: Christiaan heeft Apple
-      // Pay nog niet geactiveerd in Mollie (dat kan pas zodra het
-      // Mollie-account volledig gevalideerd is) — voeg "applepay" pas aan
-      // deze array toe (en aan PAYMENT_METHODS in PaymentMethodIcons.tsx)
-      // zodra dat wél zo is.
-      //
-      // De "as any" hieronder: @mollie/api-client verwacht hier zijn
-      // eigen `PaymentMethod`-type, maar exporteert dat type zelf niet
-      // publiek (dus niet los te importeren/te gebruiken) — vandaar dat
-      // Vercel's typecontrole struikelde over kale tekst als "ideal"
-      // (31-8-2026, twee mislukte deploys; foutmelding: Type '"ideal"' is
-      // not assignable to type 'PaymentMethod'). De waarden hieronder
-      // ("ideal", "creditcard") zijn wel exact wat Mollie's eigen API en
-      // dit pakket intern verwachten — alleen de TypeScript-typecontrole
-      // kan het (door die ontbrekende export) niet zelf bevestigen.
-      method: ["ideal", "creditcard"] as any,
-    });
-
-    // payment.createdAt (toegevoegd 19-9-2026, voor "Order handmatig
-    // bevestigen" in het beheertool) is Mollie's EIGEN moment van aanmaken —
-    // zie de toelichting bij setOrderMolliePaymentId (lib/mysql/client.ts)
-    // voor waarom dit iets anders is dan de eigen created_at-kolom hierboven.
-    await setOrderMolliePaymentId(
+    // Verplaatst naar lib/mollie/client.ts (28-9-2026, samen met "Aan de
+    // klant melden" bij een verlopen betaling) zodat die logica ook door
+    // app/api/orders/[id]/retry-payment/route.ts hergebruikt kan worden —
+    // functioneel ongewijzigd, zie createMolliePaymentForOrder daar voor de
+    // volledige toelichting (incl. de "as any"-uitleg bij de beperkte
+    // betaalmethodes).
+    const { checkoutUrl } = await createMolliePaymentForOrder(
       orderId,
-      payment.id,
-      payment.createdAt ? new Date(payment.createdAt) : null
+      priceTotalCentsForPayment
     );
-
-    const checkoutUrl = payment._links.checkout?.href;
-    if (!checkoutUrl) {
-      throw new Error("Mollie gaf geen betaal-URL terug.");
-    }
 
     return NextResponse.json({ checkoutUrl, orderId });
   } catch (err) {

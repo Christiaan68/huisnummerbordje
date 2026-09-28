@@ -390,6 +390,11 @@ export interface OrderRow {
   mollie_paid_at: string | null;
   manually_confirmed_at: string | null;
   manually_confirmed_by: string | null;
+  // Toegevoegd 28-9-2026, voor "Aan de klant melden" (verlopen betaling) in
+  // het beheertool — zie claimExpiredNotification hieronder. Blijven `null`
+  // zolang een klant nog niet over een verlopen betaling gemaild is.
+  expired_notified_at: string | null;
+  expired_notified_by: string | null;
 }
 
 /**
@@ -435,34 +440,23 @@ export async function confirmOrderManually(
 }
 
 /**
- * "Handmatig bevestigen zonder dat Mollie zelf 'betaald' meldt" (toegevoegd
- * 19-9-2026, later dezelfde dag als confirmOrderManually hierboven) — voor
- * een order die bij Mollie nog 'open'/'pending' of 'expired' staat, maar
- * waarvan een beheerder (buiten Mollie om) weet dat de klant wél betaald
- * heeft. Zie app/api/admin/force-confirm-order/route.ts, dat dit pas
- * aanroept nadat een VERSE controle bij Mollie zelf nogmaals bevestigt dat
- * de betaling niet (al) op 'paid', 'failed', 'expired' of 'canceled' staat.
- *
- * Anders dan confirmOrderManually hierboven (dat een order gebruikt die al
- * lang op payment_status = 'paid' staat) zet deze functie payment_status
- * ZELF ook op 'paid' + paid_at = NOW() — deze order is voor de rest van de
- * applicatie (orderoverzicht, "Betaalstatus"-kolom) vanaf nu een gewone
- * betaalde order, ondanks dat Mollie dat zelf niet bevestigt. De Mollie-
- * eigen kolommen (mollie_paid_at e.d.) blijven bewust ongewijzigd/leeg — die
- * blijven de waarheid van Mollie zelf weerspiegelen, niet deze overschrijving.
- *
- * Zelfde atomaire "claim"-opzet (WHERE manually_confirmed_at IS NULL) als
- * confirmOrderManually, om dezelfde reden (nooit een dubbele bevestiging/
- * dubbele mails bij een race condition).
+ * Zet een bestelling op "klant gemeld over verlopen betaling", op verzoek
+ * van een beheerder (zie app/api/admin/report-expired-order/route.ts) —
+ * toegevoegd 28-9-2026. Exact hetzelfde patroon als confirmOrderManually
+ * hierboven: een voorwaardelijke UPDATE (`WHERE expired_notified_at IS
+ * NULL`) i.p.v. eerst lezen en dan pas schrijven, zodat twee (bijna)
+ * gelijktijdige aanvragen voor dezelfde order nooit allebei een mail
+ * versturen — bij 0 aangepaste rijen was een andere aanvraag net iets
+ * sneller, en mag de aanroeper geen mail versturen.
  */
-export async function forceConfirmOrderWithoutMolliePaid(
+export async function claimExpiredNotification(
   orderId: number,
-  confirmedBy: string
+  notifiedBy: string
 ): Promise<boolean> {
   const db = getPool();
   const [result] = (await db.execute(
-    "UPDATE configurations SET payment_status = 'paid', paid_at = NOW(), manually_confirmed_at = NOW(), manually_confirmed_by = ? WHERE id = ? AND manually_confirmed_at IS NULL",
-    [confirmedBy, orderId]
+    "UPDATE configurations SET expired_notified_at = NOW(), expired_notified_by = ? WHERE id = ? AND expired_notified_at IS NULL",
+    [notifiedBy, orderId]
   )) as unknown as [{ affectedRows: number }, unknown];
   return result.affectedRows > 0;
 }
@@ -477,12 +471,6 @@ export interface ManualConfirmationLogEntry {
   internalEmailSent: boolean;
   customerEmailSent: boolean;
   errorMessage: string | null;
-  // Toegevoegd 19-9-2026 (aanvulling): Mollie's eigen status op het moment
-  // van bevestigen — 'paid' bij de gewone (vertraagde) bevestiging, iets
-  // anders (bv. 'open'/'expired') bij een handmatige overschrijving via
-  // forceConfirmOrderWithoutMolliePaid. Optioneel gehouden zodat dit geen
-  // bestaande aanroep breekt; `null` als de aanroeper 'm niet meegeeft.
-  mollieStatusAtConfirmation?: string | null;
 }
 
 /**
@@ -502,8 +490,8 @@ export async function insertManualConfirmationLog(
     `INSERT INTO manual_confirmation_log (
       order_id, mollie_payment_id, mollie_created_at, mollie_paid_at,
       delay_seconds, confirmed_by, internal_email_sent, customer_email_sent,
-      error_message, mollie_status_at_confirmation
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      error_message
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       entry.orderId,
       entry.molliePaymentId,
@@ -514,7 +502,6 @@ export async function insertManualConfirmationLog(
       entry.internalEmailSent,
       entry.customerEmailSent,
       entry.errorMessage,
-      entry.mollieStatusAtConfirmation ?? null,
     ]
   );
 }

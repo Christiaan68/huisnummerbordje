@@ -1,4 +1,5 @@
 import createMollieClient from "@mollie/api-client";
+import { setOrderMolliePaymentId } from "@/lib/mysql/client";
 
 /**
  * Mollie-client voor het aanmaken/opvragen van betalingen (zie
@@ -35,6 +36,57 @@ export function getSiteUrl(): string {
     );
   }
   return siteUrl.replace(/\/+$/, "");
+}
+
+/**
+ * Maakt bij Mollie een betaling aan voor een bestaande (al opgeslagen)
+ * bestelling en koppelt het betalings-id terug aan die order — toegevoegd
+ * 28-9-2026, samen met "Aan de klant melden" (verlopen betaling) in het
+ * beheertool. Dit is exact het stuk logica dat tot dan toe alleen inline in
+ * app/api/create-payment/route.ts stond (de eerste, normale betaalpoging);
+ * hierheen verplaatst zodat zowel die route als de nieuwe
+ * app/api/orders/[id]/retry-payment/route.ts (de link "Alsnog betalen" in
+ * de "betaling verlopen"-mail) 'm identiek hergebruiken — op uitdrukkelijk
+ * verzoek van Christiaan geen tweede, losstaande implementatie hiervan.
+ *
+ * Gooit door bij een Mollie-fout (of een ontbrekende checkout-URL) — de
+ * aanroeper beslist zelf hoe dat afgehandeld/getoond wordt, net als
+ * voorheen in create-payment/route.ts.
+ */
+export async function createMolliePaymentForOrder(
+  orderId: number,
+  priceTotalCents: number
+): Promise<{ checkoutUrl: string }> {
+  const siteUrl = getSiteUrl();
+  const mollie = createMollie();
+
+  const payment = await mollie.payments.create({
+    amount: {
+      currency: "EUR",
+      value: (priceTotalCents / 100).toFixed(2),
+    },
+    description: `Huisnummerbordje bestelling #${orderId}`,
+    redirectUrl: `${siteUrl}/bestelling/bedankt?order=${orderId}`,
+    webhookUrl: `${siteUrl}/api/mollie-webhook`,
+    metadata: { orderId: String(orderId) },
+    // Zelfde beperkte lijst en zelfde "as any"-toelichting als voorheen in
+    // create-payment/route.ts — zie daar voor de volledige uitleg
+    // (@mollie/api-client exporteert zijn eigen PaymentMethod-type niet).
+    method: ["ideal", "creditcard"] as any,
+  });
+
+  await setOrderMolliePaymentId(
+    orderId,
+    payment.id,
+    payment.createdAt ? new Date(payment.createdAt) : null
+  );
+
+  const checkoutUrl = payment._links.checkout?.href;
+  if (!checkoutUrl) {
+    throw new Error("Mollie gaf geen betaal-URL terug.");
+  }
+
+  return { checkoutUrl };
 }
 
 /**
