@@ -5,8 +5,8 @@ import { BackToTopButton } from "@/components/layout/BackToTopButton";
 import { companyInfo, siteContent } from "@/config/site-content";
 
 export const metadata: Metadata = {
-  title: "Retourneren | Emaille Huisnummers",
-  description: "Retourneren en reclameren bij Emaille Huisnummers.",
+  title: "Retourneren | Emaille Huisnummerborden",
+  description: "Retourneren en reclameren bij Emaille Huisnummerborden.",
 };
 
 // Volledige tekst aangeleverd door Christiaan op 25-8-2026 — vervangt de

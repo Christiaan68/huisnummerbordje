@@ -8,7 +8,7 @@ import { getOrderById } from "@/lib/mysql/client";
 import { formatEuroFromCents } from "@/lib/format/euro";
 
 export const metadata: Metadata = {
-  title: "Bedankt voor je bestelling | Emaille Huisnummers",
+  title: "Bedankt voor je bestelling | Emaille Huisnummerborden",
   description: "Status van je betaling.",
 };
 

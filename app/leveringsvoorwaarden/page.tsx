@@ -6,8 +6,8 @@ import { BackToTopButton } from "@/components/layout/BackToTopButton";
 import { companyInfo, siteContent } from "@/config/site-content";
 
 export const metadata: Metadata = {
-  title: "Leveringsvoorwaarden | Emaille Huisnummers",
-  description: "Leveringsvoorwaarden van Emaille Huisnummers.",
+  title: "Leveringsvoorwaarden | Emaille Huisnummerborden",
+  description: "Leveringsvoorwaarden van Emaille Huisnummerborden.",
 };
 
 // Volledige tekst van de leveringsvoorwaarden, aangeleverd door Christiaan

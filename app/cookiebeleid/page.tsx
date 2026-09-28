@@ -6,8 +6,8 @@ import { BackToTopButton } from "@/components/layout/BackToTopButton";
 import { companyInfo, siteContent } from "@/config/site-content";
 
 export const metadata: Metadata = {
-  title: "Cookiebeleid | Emaille Huisnummers",
-  description: "Welke cookies Emaille Huisnummers gebruikt en waarom.",
+  title: "Cookiebeleid | Emaille Huisnummerborden",
+  description: "Welke cookies Emaille Huisnummerborden gebruikt en waarom.",
 };
 
 // Cookiebeleid, toegevoegd 27-8-2026 in het kader van de AVG/cookie-

@@ -5,7 +5,7 @@ import { ContactQuestionForm } from "@/components/contact/ContactQuestionForm";
 import { siteContent } from "@/config/site-content";
 
 export const metadata: Metadata = {
-  title: "Stel een vraag | Emaille Huisnummers",
+  title: "Stel een vraag | Emaille Huisnummerborden",
   description: "Stel je vraag over onze geëmailleerde Huisnummerborden.",
 };
 

@@ -10,7 +10,7 @@ import { FAQ_CATEGORIES } from "@/lib/faq/categories";
 import { getNotificationEmail } from "@/lib/email/settings";
 
 export const metadata: Metadata = {
-  title: "Veelgestelde vragen | Emaille Huisnummers",
+  title: "Veelgestelde vragen | Emaille Huisnummerborden",
   description:
     "Antwoorden op veelgestelde vragen over het kiezen, personaliseren en bestellen van een emaille Huisnummerbord.",
 };

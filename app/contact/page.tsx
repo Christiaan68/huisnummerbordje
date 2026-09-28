@@ -7,8 +7,8 @@ import { LangcatTransitionLink } from "@/components/layout/LangcatTransitionLink
 import { companyInfo, siteContent } from "@/config/site-content";
 
 export const metadata: Metadata = {
-  title: "Contact | Emaille Huisnummers",
-  description: "Bedrijfsgegevens en contactgegevens van Emaille Huisnummers.",
+  title: "Contact | Emaille Huisnummerborden",
+  description: "Bedrijfsgegevens en contactgegevens van Emaille Huisnummerborden.",
 };
 
 export default function ContactPage() {

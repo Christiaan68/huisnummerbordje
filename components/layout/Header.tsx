@@ -99,7 +99,7 @@ export function Header({
             href="/"
             className="font-serif text-lg tracking-wide text-foreground"
           >
-            Emaille Huisnummers
+            Emaille Huisnummerborden
           </Link>
         </div>
 
