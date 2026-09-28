@@ -6,19 +6,21 @@ import { renderPaymentExpiredEmail } from "@/lib/email/templates/payment-expired
 import { formatEuroFromCents } from "@/lib/format/euro";
 
 /**
- * "Aan de klant melden" (verlopen betaling), toegevoegd 28-9-2026 op
- * verzoek van Christiaan — wordt aangeroepen door het BEHEERTOOL (een apart
- * project), nooit rechtstreeks door een browser. Zelfde opzet/beveiliging
- * als app/api/admin/resend-order-emails/route.ts: het beheertool stuurt
- * alleen het order-id en de ingetypte naam van de beheerder door, en deze
- * route controleert ALLES zelf opnieuw (nooit vertrouwen op wat het
- * beheertool toevallig al op het scherm had staan) vóórdat er iets
- * verstuurd wordt:
- * 1. de betaling staat bij Mollie zelf ECHT (nog steeds) op "expired" —
- *    vers opgevraagd, niet de eigen (mogelijk verouderde) database-kolom;
+ * "Aan de klant melden" (verlopen óf mislukte betaling), toegevoegd
+ * 28-9-2026 op verzoek van Christiaan, uitgebreid 30-9-2026 met "mislukt" —
+ * wordt aangeroepen door het BEHEERTOOL (een apart project), nooit
+ * rechtstreeks door een browser. Zelfde opzet/beveiliging als
+ * app/api/admin/resend-order-emails/route.ts: het beheertool stuurt alleen
+ * het order-id en de ingetypte naam van de beheerder door, en deze route
+ * controleert ALLES zelf opnieuw (nooit vertrouwen op wat het beheertool
+ * toevallig al op het scherm had staan) vóórdat er iets verstuurd wordt:
+ * 1. de betaling staat bij Mollie zelf ECHT (nog steeds) op "expired" of
+ *    "failed" — vers opgevraagd, niet de eigen (mogelijk verouderde)
+ *    database-kolom;
  * 2. deze order is nog niet eerder gemeld (claimExpiredNotification,
  *    lib/mysql/client.ts) — voorkomt dubbel mailen bij een dubbelklik, een
- *    tweede beheerder, of een herhaald verzoek.
+ *    tweede beheerder, of een herhaald verzoek. Dezelfde "melding"-claim
+ *    geldt voor beide gevallen (er staat geen apart veld per reden).
  */
 
 interface RequestBody {
@@ -109,12 +111,17 @@ export async function POST(request: Request) {
     );
   }
 
-  if (paymentStatus !== "expired") {
+  // Uitgebreid 30-9-2026 (op verzoek van Christiaan): naast "verlopen" ook
+  // toegestaan bij "mislukt" (bv. een door de bank/creditcard geweigerde
+  // betaling) — beide zijn voor de klant hetzelfde soort situatie ("nog niet
+  // betaald, wel nog een kans om het alsnog te doen"), zie de `reason` in
+  // renderPaymentExpiredEmail voor het enige inhoudelijke verschil.
+  if (paymentStatus !== "expired" && paymentStatus !== "failed") {
     return NextResponse.json(
       {
         ok: false,
         reason: "not-expired",
-        message: `Deze betaling staat bij Mollie niet (meer) op 'verlopen' (huidige status: ${paymentStatus}).`,
+        message: `Deze betaling staat bij Mollie niet (meer) op 'verlopen' of 'mislukt' (huidige status: ${paymentStatus}).`,
       },
       { status: 409 }
     );
@@ -140,11 +147,17 @@ export async function POST(request: Request) {
       {
         ok: false,
         reason: "already-notified",
-        message: "Deze klant is al eerder over deze verlopen betaling gemaild.",
+        message: "Deze klant is al eerder over deze betaling gemaild.",
       },
       { status: 409 }
     );
   }
+
+  // TypeScript onthoudt de controle hierboven niet als een vernauwing van
+  // paymentStatus (die blijft gewoon `string`) — vandaar deze expliciete
+  // omzetting naar de twee-waardige `reason` die renderPaymentExpiredEmail
+  // verwacht.
+  const reason: "expired" | "failed" = paymentStatus === "expired" ? "expired" : "failed";
 
   const siteUrl = getSiteUrl();
   let emailSent = false;
@@ -153,6 +166,7 @@ export async function POST(request: Request) {
   try {
     const html = renderPaymentExpiredEmail({
       orderId: order.id,
+      reason,
       contactName: order.contact_name,
       contactAddress: order.contact_address,
       contactPostalCode: order.contact_postal_code,
@@ -178,7 +192,10 @@ export async function POST(request: Request) {
     const { error } = await resend.emails.send({
       from: `Emaillehuisnummerbordjes <${fromAddress}>`,
       to: order.contact_email,
-      subject: `Je betaling voor bestelling #${order.id} is verlopen — Huisnummerbordjes`,
+      subject:
+        reason === "expired"
+          ? `Je betaling voor bestelling #${order.id} is verlopen — Huisnummerbordjes`
+          : `Je betaling voor bestelling #${order.id} is niet gelukt — Huisnummerbordjes`,
       html,
     });
 

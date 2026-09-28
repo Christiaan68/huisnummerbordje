@@ -1,5 +1,12 @@
 interface PaymentExpiredEmailData {
   orderId: number;
+  // reason (toegevoegd 30-9-2026): dezelfde mail/knop wordt sinds die datum
+  // ook gebruikt als Mollie een betaling als "mislukt" afwijst (bv. een
+  // geweigerde creditcard), niet alleen bij een verlopen betaalsessie — zie
+  // app/api/admin/report-expired-order/route.ts. Bepaalt alleen de titel/
+  // tekst hieronder, de rest van de mail (gegevens, configuratie, "Alsnog
+  // betalen"-link) is voor beide gevallen identiek.
+  reason: "expired" | "failed";
   contactName: string;
   contactAddress: string;
   contactPostalCode: string;
@@ -29,13 +36,28 @@ interface PaymentExpiredEmailData {
 /**
  * Bevestigingsmail aan de klant wanneer een beheerder in het beheertool op
  * "Aan de klant melden" klikt bij een bestelling waarvan de betaling bij
- * Mollie op "verlopen" staat (toegevoegd 28-9-2026, op verzoek van
- * Christiaan) — zie app/api/admin/report-expired-order/route.ts. Bewust
- * dezelfde warme toon en opmaak als customer-confirmation.ts, met een
- * rustige (niet alarmerende) melding dat de betaalsessie is verlopen.
+ * Mollie op "verlopen" (toegevoegd 28-9-2026) of "mislukt" (toegevoegd
+ * 30-9-2026, op verzoek van Christiaan) staat — zie
+ * app/api/admin/report-expired-order/route.ts. Bewust dezelfde warme toon en
+ * opmaak als customer-confirmation.ts, met een rustige (niet alarmerende)
+ * melding — zie `reason` hierboven voor het enige verschil tussen de twee.
  */
 export function renderPaymentExpiredEmail(data: PaymentExpiredEmailData): string {
   const isEarsOrder = Boolean(data.earColorName && data.plateColorName);
+  const isExpired = data.reason === "expired";
+  const heading = isExpired ? "Je betaling is helaas verlopen" : "Je betaling is helaas niet gelukt";
+  const introText = isExpired
+    ? `De betaalsessie voor bestelling #${data.orderId} is
+                    verlopen voordat de betaling is afgerond — je bestelling
+                    is daardoor nog niet bevestigd. Hieronder vind je nog
+                    een keer je gegevens en configuratie.`
+    : `De betaling voor bestelling #${data.orderId} is helaas niet
+                    gelukt — je bestelling is daardoor nog niet bevestigd.
+                    Hieronder vind je nog een keer je gegevens en
+                    configuratie.`;
+  const noticeText = isExpired
+    ? "<strong>Betaling verlopen</strong> — er is niets in rekening gebracht."
+    : "<strong>Betaling mislukt</strong> — er is niets in rekening gebracht.";
 
   const row = (label: string, value: string) => `
     <tr>
@@ -54,7 +76,7 @@ export function renderPaymentExpiredEmail(data: PaymentExpiredEmailData): string
             <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:6px;overflow:hidden;border:1px solid #e5e0d5;">
               <tr>
                 <td style="background-color:#1B2A41;padding:24px 32px;">
-                  <span style="color:#f7f5f0;font-size:18px;font-weight:600;">Je betaling is helaas verlopen</span>
+                  <span style="color:#f7f5f0;font-size:18px;font-weight:600;">${heading}</span>
                 </td>
               </tr>
               <tr>
@@ -63,10 +85,7 @@ export function renderPaymentExpiredEmail(data: PaymentExpiredEmailData): string
                     Beste ${data.contactName},
                   </p>
                   <p style="margin:12px 0 0;color:#1a1a1a;font-size:15px;line-height:1.6;">
-                    De betaalsessie voor bestelling #${data.orderId} is
-                    verlopen voordat de betaling is afgerond — je bestelling
-                    is daardoor nog niet bevestigd. Hieronder vind je nog
-                    een keer je gegevens en configuratie.
+                    ${introText}
                   </p>
                 </td>
               </tr>
@@ -75,8 +94,7 @@ export function renderPaymentExpiredEmail(data: PaymentExpiredEmailData): string
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#faf3e6;border:1px solid #e8d9b8;border-radius:6px;">
                     <tr>
                       <td style="padding:14px 18px;color:#5a4a26;font-size:14px;line-height:1.5;">
-                        <strong>Betaling verlopen</strong> — er is niets in
-                        rekening gebracht.
+                        ${noticeText}
                       </td>
                     </tr>
                   </table>

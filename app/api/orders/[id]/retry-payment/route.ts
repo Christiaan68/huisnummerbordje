@@ -42,8 +42,13 @@ export async function GET(
 
   // Al betaald (bv. de klant klikte de link twee keer, of betaalde
   // ondertussen via een andere weg) — nooit een tweede betaling starten,
-  // de bedankt-pagina toont dan gewoon "betaling gelukt".
-  if (order.payment_status !== "expired") {
+  // de bedankt-pagina toont dan gewoon "betaling gelukt". Uitgebreid
+  // 30-9-2026 met "failed" (naast "expired"): sinds die datum kan deze link
+  // ook in een "betaling mislukt"-mail staan (zie report-expired-order/
+  // route.ts), voor een betaling die Mollie zelf als mislukt afwijst (bv.
+  // een geweigerde creditcard) — ook dan mag de klant het gewoon nog eens
+  // proberen.
+  if (order.payment_status !== "expired" && order.payment_status !== "failed") {
     return NextResponse.redirect(bedanktUrl);
   }
 
