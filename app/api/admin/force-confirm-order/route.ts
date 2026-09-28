@@ -13,7 +13,7 @@ import { getPaymentMethodLabel } from "@/lib/mollie/client";
 import { applyMolliePaymentStatusToOrder } from "@/lib/mollie/applyMolliePaymentStatus";
 
 /**
- * "Toch mails versturen" (toegevoegd 19-9-2026, later dezelfde dag als
+ * "Wel orderbevestiging sturen" (toegevoegd 19-9-2026, later dezelfde dag als
  * "Order handmatig bevestigen" en "Check bij Mollie" hiernaast) — de
  * bewuste HANDMATIGE OVERSCHRIJVING: een beheerder bevestigt een order die
  * bij Mollie nog 'open'/'pending' of 'expired' staat, bijvoorbeeld omdat de

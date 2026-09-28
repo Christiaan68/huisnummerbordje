@@ -529,7 +529,7 @@ export async function insertManualConfirmationLog(
 }
 
 /**
- * "Toch mails versturen" (de bewuste HANDMATIGE OVERSCHRIJVING, zie
+ * "Wel orderbevestiging sturen" (de bewuste HANDMATIGE OVERSCHRIJVING, zie
  * app/api/admin/force-confirm-order/route.ts voor de volledige toelichting)
  * — een beheerder bevestigt hiermee een bestelling die bij Mollie nog GEEN
  * eindstatus heeft (dus niet 'paid', 'failed', 'expired' of 'canceled'),
