@@ -1,0 +1,146 @@
+interface PaymentIssueConfirmationEmailData {
+  orderId: number;
+  paymentStatusLabel: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone?: string;
+  contactAddress: string;
+  contactPostalCode: string;
+  contactCity: string;
+  shapeName: string;
+  finish: "vlak" | "gewelfd";
+  // colorName (colorMode "single") vs. earColorName/plateColorName
+  // (colorMode "ears-and-plate") — nooit allebei tegelijk gevuld, zelfde
+  // opzet als payment-issue-notification.ts.
+  colorName?: string;
+  printColorName?: string;
+  earColorName?: string;
+  plateColorName?: string;
+  sizeName: string;
+  customText: string;
+  extraLine1?: string;
+  extraLine2?: string;
+  priceLabel: string;
+  question: string;
+}
+
+/**
+ * Bevestigingsmail aan de klant zelf, als tegenhanger van
+ * renderPaymentIssueNotificationEmail (payment-issue-notification.ts) — die
+ * laatste gaat alleen naar Christiaan. Verstuurd vanaf de bedankt-pagina
+ * (components/order/PaymentIssueContact.tsx, app/api/payment-issue/
+ * route.ts) wanneer een klant een vraag stelt over een bestaande
+ * bestelling/betaling. Toegevoegd 28-9-2026 op verzoek van Christiaan: op
+ * elke plek waar een klant een vraag kan stellen, moet die klant ook zelf
+ * een bevestiging terugkrijgen, inclusief adresgegevens en configuratie.
+ * Bewust dezelfde warme toon als customer-confirmation.ts, geen technisch
+ * overzicht.
+ */
+export function renderPaymentIssueConfirmationEmail(
+  data: PaymentIssueConfirmationEmailData
+): string {
+  const row = (label: string, value: string) => `
+    <tr>
+      <td style="padding:10px 0;border-bottom:1px solid #e5e0d5;color:#6b6558;font-size:14px;">${label}</td>
+      <td style="padding:10px 0;border-bottom:1px solid #e5e0d5;color:#1a1a1a;font-size:14px;text-align:right;font-weight:600;">${value}</td>
+    </tr>
+  `;
+
+  return `
+  <!DOCTYPE html>
+  <html lang="nl">
+    <body style="margin:0;padding:0;background-color:#f4f1ea;font-family:Georgia, 'Times New Roman', serif;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f1ea;padding:32px 0;">
+        <tr>
+          <td align="center">
+            <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:6px;overflow:hidden;border:1px solid #e5e0d5;">
+              <tr>
+                <td style="background-color:#1B2A41;padding:24px 32px;">
+                  <span style="color:#f7f5f0;font-size:18px;font-weight:600;">
+                    We hebben je vraag over bestelling #${data.orderId} ontvangen
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:24px 32px 8px;">
+                  <p style="margin:0;color:#1a1a1a;font-size:15px;line-height:1.6;">
+                    Beste ${data.contactName},
+                  </p>
+                  <p style="margin:12px 0 0;color:#1a1a1a;font-size:15px;line-height:1.6;">
+                    Bedankt voor je bericht over bestelling #${data.orderId}.
+                    We hebben je vraag in goede orde ontvangen en nemen zo
+                    snel mogelijk contact met je op. Hieronder vind je, voor
+                    de zekerheid, een overzicht van je bestelling.
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:16px 32px 0;">
+                  <span style="color:#1B2A41;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">
+                    Jouw vraag
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:12px 32px 0;">
+                  <p style="margin:0;padding:14px 16px;background-color:#f7f5f0;border-radius:4px;color:#1a1a1a;font-size:14px;line-height:1.6;white-space:pre-wrap;">${data.question}</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:24px 32px 0;">
+                  <span style="color:#1B2A41;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">
+                    Jouw gegevens
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:12px 32px 0;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    ${row("Naam", data.contactName)}
+                    ${row("E-mail", data.contactEmail)}
+                    ${data.contactPhone ? row("Telefoon", data.contactPhone) : ""}
+                    ${row("Adres", `${data.contactAddress}, ${data.contactPostalCode} ${data.contactCity}`)}
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:24px 32px 0;">
+                  <span style="color:#1B2A41;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">
+                    Bestelling #${data.orderId}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:12px 32px 28px;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    ${row("Betaalstatus", data.paymentStatusLabel)}
+                    ${row("Vorm", data.shapeName)}
+                    ${row("Afwerking", data.finish === "vlak" ? "Vlak" : "Gewelfd")}
+                    ${data.colorName ? row("Ondergrond kleur", data.colorName) : ""}
+                    ${data.printColorName ? row("Opdruk kleur", data.printColorName) : ""}
+                    ${data.plateColorName ? row("Ondergrond kleur", data.plateColorName) : ""}
+                    ${data.earColorName ? row("Opdruk kleur", data.earColorName) : ""}
+                    ${row("Maat", data.sizeName)}
+                    ${row("Huisnummer", data.customText)}
+                    ${data.extraLine1 ? row("Tekstregel 1", data.extraLine1) : ""}
+                    ${data.extraLine2 ? row("Tekstregel 2", data.extraLine2) : ""}
+                    ${row("Prijs", data.priceLabel)}
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:0 32px 28px;">
+                  <span style="color:#9a9384;font-size:12px;">
+                    Wil je nog iets toevoegen aan je vraag? Reageer gerust
+                    op deze e-mail.
+                  </span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+  </html>
+  `;
+}

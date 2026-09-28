@@ -3,9 +3,9 @@ import { paymentIssueQuestionSchema } from "@/lib/validation/payment-issue.schem
 import { createResendClient } from "@/lib/email/resend";
 import { getNotificationEmail } from "@/lib/email/settings";
 import { renderPaymentIssueNotificationEmail } from "@/lib/email/templates/payment-issue-notification";
+import { renderPaymentIssueConfirmationEmail } from "@/lib/email/templates/payment-issue-confirmation";
 import { formatEuroFromCents } from "@/lib/format/euro";
 import { getOrderById } from "@/lib/mysql/client";
-import { resolveNotificationFromAddress } from "@/lib/email/isValidEmailFormat";
 
 const PAYMENT_STATUS_LABELS: Record<string, string> = {
   pending: "in behandeling",
@@ -72,7 +72,8 @@ export async function POST(request: Request) {
     "christiaan@tenhaaken.nl"
   );
 
-  const html = renderPaymentIssueNotificationEmail({
+  // Gedeeld tussen de interne melding en de klantbevestiging hieronder.
+  const paymentIssueEmailFields = {
     orderId: order.id,
     paymentStatusLabel,
     contactName: order.contact_name,
@@ -93,22 +94,16 @@ export async function POST(request: Request) {
     extraLine2: order.extra_line_2 ?? undefined,
     priceLabel: formatEuroFromCents(order.price_total_cents),
     question,
-  });
+  };
+
+  const html = renderPaymentIssueNotificationEmail(paymentIssueEmailFields);
 
   try {
     const resend = createResendClient();
     const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
-    // Zichtbaar afzenderadres = de instelling "Vraag betaalprobleem naar"
-    // (payment_issue_notification, adminEmail hierboven) — maar alleen als
-    // dat adres op hetzelfde geverifieerde domein staat als fromAddress,
-    // anders zou versturen mislukken. Klantadres staat in Reply-To.
-    const visibleFromAddress = resolveNotificationFromAddress(
-      adminEmail,
-      fromAddress
-    );
 
     const { error } = await resend.emails.send({
-      from: `Vraag over betaling <${visibleFromAddress}>`,
+      from: `Huisnummerbordjes bestelling <${fromAddress}>`,
       to: adminEmail,
       replyTo: order.contact_email,
       subject: `Vraag over bestelling #${order.id} (betaling ${paymentStatusLabel})`,
@@ -120,6 +115,33 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Versturen van je vraag is mislukt." },
         { status: 502 }
+      );
+    }
+
+    // Bevestiging naar de klant zelf (toegevoegd 28-9-2026, zie dezelfde
+    // toelichting in app/api/contact-question/route.ts) — bewust pas ná de
+    // geslaagde interne melding, en een hapering hier verandert niets aan
+    // de "success"-respons aan de bezoeker.
+    try {
+      const confirmationHtml = renderPaymentIssueConfirmationEmail(
+        paymentIssueEmailFields
+      );
+      const { error: confirmationError } = await resend.emails.send({
+        from: `Emaillehuisnummerbordjes <${fromAddress}>`,
+        to: order.contact_email,
+        subject: `Bevestiging van je vraag over bestelling #${order.id} — Huisnummerbordjes`,
+        html: confirmationHtml,
+      });
+      if (confirmationError) {
+        console.error(
+          "Resend-fout (bevestiging vraag over bestelling/betaalprobleem):",
+          confirmationError
+        );
+      }
+    } catch (confirmationErr) {
+      console.error(
+        "Onverwachte fout bij het versturen van de vraagbevestiging (betaalprobleem):",
+        confirmationErr instanceof Error ? confirmationErr.message : confirmationErr
       );
     }
 

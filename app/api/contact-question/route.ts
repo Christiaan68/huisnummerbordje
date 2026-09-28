@@ -3,8 +3,8 @@ import { createConfigurationSchema } from "@/lib/validation/configuration.schema
 import { questionDetailsSchema } from "@/lib/validation/question.schema";
 import { createResendClient } from "@/lib/email/resend";
 import { getNotificationEmail } from "@/lib/email/settings";
-import { resolveNotificationFromAddress } from "@/lib/email/isValidEmailFormat";
 import { renderQuestionNotificationEmail } from "@/lib/email/templates/question-notification";
+import { renderQuestionConfirmationEmail } from "@/lib/email/templates/question-confirmation";
 import { getLivePricingData } from "@/lib/configuration/livePricing";
 import {
   productShapes,
@@ -132,7 +132,9 @@ export async function POST(request: Request) {
     fallbackAdminEmail
   );
 
-  const html = renderQuestionNotificationEmail({
+  // Gedeeld tussen de interne melding en de klantbevestiging hieronder —
+  // beide sjablonen verwachten dezelfde configuratie-/vraagvelden.
+  const questionEmailFields = {
     shapeName: shape.name,
     // "Oren"-vormen kennen geen afwerking-, enkelvoudige kleur- of
     // lettertypekeuze — deze velden blijven voor hen bewust `undefined`
@@ -154,22 +156,16 @@ export async function POST(request: Request) {
     askerName: question.name,
     askerEmail: question.email,
     question: question.question,
-  });
+  };
+
+  const html = renderQuestionNotificationEmail(questionEmailFields);
 
   try {
     const resend = createResendClient();
     const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
-    // Zichtbaar afzenderadres = de instelling "Vraag klant naar"
-    // (question_notification, adminEmail hierboven) — maar alleen als dat
-    // adres op hetzelfde geverifieerde domein staat als fromAddress,
-    // anders zou versturen mislukken. Klantadres staat in Reply-To.
-    const visibleFromAddress = resolveNotificationFromAddress(
-      adminEmail,
-      fromAddress
-    );
 
     const { error } = await resend.emails.send({
-      from: `Vraag van de klant <${visibleFromAddress}>`,
+      from: `Huisnummerbordjes configurator <${fromAddress}>`,
       to: adminEmail,
       replyTo: question.email,
       subject: `Vraag van ${question.name} over een configuratie`,
@@ -181,6 +177,36 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Versturen van je vraag is mislukt." },
         { status: 502 }
+      );
+    }
+
+    // Bevestiging naar de vraagsteller zelf (toegevoegd 28-9-2026, op
+    // verzoek van Christiaan: op elke plek waar een klant een vraag kan
+    // stellen, moet die klant ook zelf een bevestiging terugkrijgen, met
+    // adresgegevens en configuratie erbij als die er zijn). Gebeurt bewust
+    // pas NA de geslaagde interne melding hierboven, en los daarvan: een
+    // hapering hier mag de al gelukte melding aan Christiaan niet
+    // ongedaan maken — de bezoeker krijgt gewoon "success", net als
+    // eerder, ook als deze klantmail onverhoopt mislukt (zichtbaar in de
+    // Vercel-functielogs, zelfde aanpak als sendOrderEmails.ts).
+    try {
+      const confirmationHtml = renderQuestionConfirmationEmail(questionEmailFields);
+      const { error: confirmationError } = await resend.emails.send({
+        from: `Emaillehuisnummerbordjes <${fromAddress}>`,
+        to: question.email,
+        subject: "Bevestiging van je vraag — Huisnummerbordjes",
+        html: confirmationHtml,
+      });
+      if (confirmationError) {
+        console.error(
+          "Resend-fout (bevestiging vraag vanuit configurator):",
+          confirmationError
+        );
+      }
+    } catch (confirmationErr) {
+      console.error(
+        "Onverwachte fout bij het versturen van de vraagbevestiging (configurator):",
+        confirmationErr instanceof Error ? confirmationErr.message : confirmationErr
       );
     }
 
