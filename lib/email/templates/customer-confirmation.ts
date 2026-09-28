@@ -102,7 +102,7 @@ export function renderCustomerConfirmationEmail(
                     Beste ${data.contactName},
                   </p>
                   <p style="margin:12px 0 0;color:#1a1a1a;font-size:15px;line-height:1.6;">
-                    We hebben je configuratie voor een geëmailleerd huisnummerbordje
+                    We hebben je configuratie voor een geëmailleerd Huisnummerbord
                     in goede orde ontvangen. Hieronder vind je een overzicht van
                     jouw keuzes. We nemen zo snel mogelijk contact met je op.
                   </p>
@@ -132,7 +132,7 @@ export function renderCustomerConfirmationEmail(
                 <td style="padding:0 32px 8px;" align="center">
                   <img
                     src="cid:${data.previewImageCid}"
-                    alt="Voorbeeld van je geconfigureerde huisnummerbordje"
+                    alt="Voorbeeld van je geconfigureerde Huisnummerbord"
                     width="320"
                     style="display:block;max-width:320px;width:100%;height:auto;border-radius:6px;"
                   />

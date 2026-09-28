@@ -41,7 +41,7 @@ export default function LeveringsvoorwaardenPage() {
         </p>
         <p className="mt-4 text-sm leading-relaxed text-foreground">
           Deze leveringsvoorwaarden zijn van toepassing op bestellingen via
-          de webshop van Huisnummerbordjes, onderdeel van Langcat Emaille,
+          de webshop van Huisnummerbord, onderdeel van Langcat Emaille,
           gevestigd te Laag Soeren, ingeschreven bij de Kamer van Koophandel
           onder nummer 98200194, hierna te noemen: &ldquo;verkoper&rdquo;.
         </p>
@@ -77,11 +77,11 @@ export default function LeveringsvoorwaardenPage() {
           </h2>
           <ol className="mt-3 list-decimal space-y-3 pl-5 text-sm leading-relaxed text-foreground">
             <li>
-              Verkoper levert ge&euml;mailleerde huisnummerbordjes en
+              Verkoper levert ge&euml;mailleerde Huisnummerborden en
               eventueel daarmee samenhangende producten.
             </li>
             <li>
-              Huisnummerbordjes worden vervaardigd aan de hand van de door
+              Huisnummerborden worden vervaardigd aan de hand van de door
               de klant bij de bestelling opgegeven specificaties. Hieronder
               kunnen onder andere vallen:
               <ul className="mt-2 list-disc space-y-1 pl-5">
@@ -175,7 +175,7 @@ export default function LeveringsvoorwaardenPage() {
               levertijd is de verwachte of overeengekomen levertijd.
             </li>
             <li>
-              Omdat de huisnummerbordjes speciaal voor de klant worden
+              Omdat de Huisnummerborden speciaal voor de klant worden
               vervaardigd, kan sprake zijn van een productietermijn
               voordat de bestelling wordt verzonden.
             </li>
@@ -287,7 +287,7 @@ export default function LeveringsvoorwaardenPage() {
           </h2>
           <ol className="mt-3 list-decimal space-y-3 pl-5 text-sm leading-relaxed text-foreground">
             <li>
-              De huisnummerbordjes van verkoper worden, voor zover de klant
+              De Huisnummerborden van verkoper worden, voor zover de klant
               zelf kenmerken zoals huisnummer, tekst, maatvoering,
               kleurstelling, vorm of andere persoonlijke specificaties
               kiest, volgens specificaties van de klant vervaardigd en/of
@@ -335,7 +335,7 @@ export default function LeveringsvoorwaardenPage() {
           </h2>
           <ol className="mt-3 list-decimal space-y-3 pl-5 text-sm leading-relaxed text-foreground">
             <li>
-              Omdat een huisnummerbordje speciaal voor de klant wordt
+              Omdat een Huisnummerbord speciaal voor de klant wordt
               vervaardigd, kan verkoper na het sluiten van de overeenkomst
               snel beginnen met de voorbereiding of productie.
             </li>
@@ -368,7 +368,7 @@ export default function LeveringsvoorwaardenPage() {
           </h2>
           <ol className="mt-3 list-decimal space-y-3 pl-5 text-sm leading-relaxed text-foreground">
             <li>
-              Ge&euml;mailleerde huisnummerbordjes worden vervaardigd
+              Ge&euml;mailleerde Huisnummerborden worden vervaardigd
               volgens het door verkoper beschreven productieproces.
             </li>
             <li>
@@ -399,7 +399,7 @@ export default function LeveringsvoorwaardenPage() {
           <ol className="mt-3 list-decimal space-y-3 pl-5 text-sm leading-relaxed text-foreground">
             <li>De consument heeft altijd recht op een product dat aan de overeenkomst voldoet.</li>
             <li>
-              Het geleverde huisnummerbordje moet de eigenschappen bezitten
+              Het geleverde Huisnummerbord moet de eigenschappen bezitten
               die de consument op grond van de overeenkomst redelijkerwijs
               mag verwachten.
             </li>

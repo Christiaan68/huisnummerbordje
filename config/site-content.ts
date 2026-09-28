@@ -13,8 +13,8 @@ export const siteContent = {
       "Een huis met karakter verdient een huisnummer met karakter. Geef jouw entree de finishing touch met een emaille huisnummer dat bij je woning past.",
     title: "Duurzaam. Opvallend. Authentiek.",
     intro:
-      "Diepe glans, een karakteristieke uitstraling en bestand tegen weer en wind. Stel jouw huisnummerbordje samen en maak het welkom compleet.",
-    ctaLabel: "Ontwerp jouw huisnummerbordje",
+      "Diepe glans, een karakteristieke uitstraling en bestand tegen weer en wind. Stel jouw Huisnummerbord samen en maak het welkom compleet.",
+    ctaLabel: "Ontwerp jouw Huisnummerbord",
     ctaHref: "/configurator",
   },
 } as const;

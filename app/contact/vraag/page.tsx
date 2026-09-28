@@ -6,7 +6,7 @@ import { siteContent } from "@/config/site-content";
 
 export const metadata: Metadata = {
   title: "Stel een vraag | Emaille Huisnummers",
-  description: "Stel je vraag over onze geëmailleerde huisnummerbordjes.",
+  description: "Stel je vraag over onze geëmailleerde Huisnummerborden.",
 };
 
 export default function ContactVraagPage() {

@@ -397,7 +397,7 @@ export function ContactDetailsForm({
             className="mt-0.5 h-4 w-4 shrink-0 rounded-sm border-border text-primary accent-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           />
           <span className="text-sm text-muted-foreground">
-            Mijn huisnummerbordje wordt met de hand gemaakt en kan iets
+            Mijn Huisnummerbord wordt met de hand gemaakt en kan iets
             afwijken van de preview.
           </span>
         </label>

@@ -7,7 +7,7 @@ export default function MaatPage() {
     <div>
       <StepHeader eyebrow="Configurator — stap 4 van 7" title="Maat" />
      <p className="mt-4 text-muted-foreground">
-        Kies de maat van jouw huisnummerbordje.
+        Kies de maat van jouw Huisnummerbord.
       </p>
       <p className="mt-1 text-sm text-muted-foreground">
         Maten zijn weergegeven als hoogte × breedte. 

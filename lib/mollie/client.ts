@@ -65,7 +65,7 @@ export async function createMolliePaymentForOrder(
       currency: "EUR",
       value: (priceTotalCents / 100).toFixed(2),
     },
-    description: `Huisnummerbordje bestelling #${orderId}`,
+    description: `Huisnummerbord bestelling #${orderId}`,
     redirectUrl: `${siteUrl}/bestelling/bedankt?order=${orderId}`,
     webhookUrl: `${siteUrl}/api/mollie-webhook`,
     metadata: { orderId: String(orderId) },

@@ -163,7 +163,7 @@ export function ContactQuestionForm() {
   return (
     <>
       <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-        Heb je een vraag over onze geëmailleerde huisnummerbordjes? Vul
+        Heb je een vraag over onze geëmailleerde Huisnummerborden? Vul
         onderstaand formulier in, we nemen zo snel mogelijk contact met je
         op.
       </p>

@@ -190,12 +190,12 @@ export async function POST(request: Request) {
     const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
     const { error } = await resend.emails.send({
-      from: `Emaillehuisnummerbordjes <${fromAddress}>`,
+      from: `Emaillehuisnummerbord <${fromAddress}>`,
       to: order.contact_email,
       subject:
         reason === "expired"
-          ? `Je betaling voor bestelling #${order.id} is verlopen — Huisnummerbordjes`
-          : `Je betaling voor bestelling #${order.id} is niet gelukt — Huisnummerbordjes`,
+          ? `Je betaling voor bestelling #${order.id} is verlopen — Huisnummerbord`
+          : `Je betaling voor bestelling #${order.id} is niet gelukt — Huisnummerbord`,
       html,
     });
 

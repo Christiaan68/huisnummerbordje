@@ -235,7 +235,7 @@ export default function ControlePage() {
               vinkje, alleen een tekstregel op de plek waar eerder het
               verplichte vinkje stond. */}
           <p className="mt-8 border-t border-border pt-6 text-sm text-muted-foreground">
-            Het huisnummerbordje wordt speciaal voor u met de hand gemaakt en
+            Het Huisnummerbord wordt speciaal voor u met de hand gemaakt en
             kan iets afwijken van de preview.
           </p>
 

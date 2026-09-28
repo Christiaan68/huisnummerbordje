@@ -7,7 +7,7 @@ export default function VormPage() {
     <div>
       <StepHeader eyebrow="Configurator — stap 1 van 7" title="Vorm" />
       <p className="mt-4 text-muted-foreground">
-        Kies de vorm van jouw huisnummerbordje.
+        Kies de vorm van jouw Huisnummerbord.
       </p>
 
       <div className="mt-8">

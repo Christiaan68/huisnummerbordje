@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
     const { error } = await resend.emails.send({
-      from: `Huisnummerbordjes bestelling <${fromAddress}>`,
+      from: `Huisnummerbord bestelling <${fromAddress}>`,
       to: adminEmail,
       replyTo: order.contact_email,
       subject: `Vraag over bestelling #${order.id} (betaling ${paymentStatusLabel})`,
@@ -127,9 +127,9 @@ export async function POST(request: Request) {
         paymentIssueEmailFields
       );
       const { error: confirmationError } = await resend.emails.send({
-        from: `Emaillehuisnummerbordjes <${fromAddress}>`,
+        from: `Emaillehuisnummerbord <${fromAddress}>`,
         to: order.contact_email,
-        subject: `Bevestiging van je vraag over bestelling #${order.id} — Huisnummerbordjes`,
+        subject: `Bevestiging van je vraag over bestelling #${order.id} — Huisnummerbord`,
         html: confirmationHtml,
       });
       if (confirmationError) {

@@ -102,7 +102,7 @@ export const productShapes: ProductShape[] = [
     name: "Huisnummer met 2 oren",
     slug: "oren-2-horizontaal",
     description:
-      "Huisnummerbordje in jaren-30-stijl met bevestigingsogen links en rechts. Vaste maat 130 × 100 mm. Huisnummer: 1-4 cijfers, optioneel max. 3 letters.",
+      "Huisnummerbord in jaren-30-stijl met bevestigingsogen links en rechts. Vaste maat 130 × 100 mm. Huisnummer: 1-4 cijfers, optioneel max. 3 letters.",
     extraLines: 0,
     availableFinishes: [],
     imageSrc: "/images/shapes/05 Bordje Huisnummer 2 oren.jpg",
@@ -119,7 +119,7 @@ export const productShapes: ProductShape[] = [
     name: "Huisnummer met 2 oren verticaal",
     slug: "oren-2-verticaal",
     description:
-      "Huisnummerbordje in jaren-30-stijl met bevestigingsogen boven en onder. Vaste maat 100 × 130 mm. Huisnummer: 1-4 cijfers, optioneel max. 3 letters.",
+      "Huisnummerbord in jaren-30-stijl met bevestigingsogen boven en onder. Vaste maat 100 × 130 mm. Huisnummer: 1-4 cijfers, optioneel max. 3 letters.",
     extraLines: 0,
     availableFinishes: [],
     imageSrc: "/images/shapes/06 Bordje Huisnummer 2 oren verticaal.jpg",
@@ -136,7 +136,7 @@ export const productShapes: ProductShape[] = [
     name: "Huisnummer met 4 oren",
     slug: "oren-4-hoeken",
     description:
-      "Huisnummerbordje in jaren-30-stijl met bevestiging op de vier hoeken. Vaste maat 160 × 160 mm. Huisnummer: 1-4 cijfers, optioneel max. 3 letters.",
+      "Huisnummerbord in jaren-30-stijl met bevestiging op de vier hoeken. Vaste maat 160 × 160 mm. Huisnummer: 1-4 cijfers, optioneel max. 3 letters.",
     extraLines: 0,
     availableFinishes: [],
     imageSrc: "/images/shapes/07 Bordje Huisnummer 4 oren.jpg",

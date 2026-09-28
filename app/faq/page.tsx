@@ -12,7 +12,7 @@ import { getNotificationEmail } from "@/lib/email/settings";
 export const metadata: Metadata = {
   title: "Veelgestelde vragen | Emaille Huisnummers",
   description:
-    "Antwoorden op veelgestelde vragen over het kiezen, personaliseren en bestellen van een emaille huisnummerbordje.",
+    "Antwoorden op veelgestelde vragen over het kiezen, personaliseren en bestellen van een emaille Huisnummerbord.",
 };
 
 // Geen statische caching van deze pagina: de antwoorden (en vooral de
@@ -63,7 +63,7 @@ export default async function FaqPage() {
         </h1>
         <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground">
           Alles over het kiezen, personaliseren en bestellen van een emaille
-          huisnummerbordje — en meer over ons product, het handwerk erachter
+          Huisnummerbord — en meer over ons product, het handwerk erachter
           en onze service.
         </p>
 

@@ -8,7 +8,7 @@ export default function TekstPage() {
     <div>
       <StepHeader eyebrow="Configurator — stap 5 van 7" title="Tekst" />
       <p className="mt-4 text-muted-foreground">
-        Vul de tekst voor jouw huisnummerbordje in en kies meteen het
+        Vul de tekst voor jouw Huisnummerbord in en kies meteen het
         lettertype per tekstveld.
       </p>
 

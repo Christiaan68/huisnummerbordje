@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
     const { error } = await resend.emails.send({
-      from: `Huisnummerbordjes configurator <${fromAddress}>`,
+      from: `Huisnummerbord configurator <${fromAddress}>`,
       to: adminEmail,
       replyTo: question.email,
       subject: `Vraag van ${question.name} via het contactformulier`,
@@ -99,9 +99,9 @@ export async function POST(request: Request) {
     try {
       const confirmationHtml = renderQuestionConfirmationEmail(questionEmailFields);
       const { error: confirmationError } = await resend.emails.send({
-        from: `Emaillehuisnummerbordjes <${fromAddress}>`,
+        from: `Emaillehuisnummerbord <${fromAddress}>`,
         to: question.email,
-        subject: "Bevestiging van je vraag — Huisnummerbordjes",
+        subject: "Bevestiging van je vraag — Huisnummerbord",
         html: confirmationHtml,
       });
       if (confirmationError) {

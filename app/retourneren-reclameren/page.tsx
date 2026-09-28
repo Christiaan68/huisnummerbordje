@@ -40,26 +40,26 @@ export default function RetournerenReclamerenPage() {
           Retourneren
         </h1>
         <p className="mt-4 text-sm leading-relaxed text-foreground">
-          Wij maken onze ge&euml;mailleerde huisnummerbordjes speciaal voor
+          Wij maken onze ge&euml;mailleerde Huisnummerborden speciaal voor
           jou op basis van de door jou gekozen gegevens en specificaties.
-          Daarom gelden voor onze huisnummerbordjes andere retourregels dan
+          Daarom gelden voor onze Huisnummerborden andere retourregels dan
           voor standaardproducten.
         </p>
 
         <section className="mt-10">
           <h2 className="font-serif text-xl text-foreground sm:text-2xl">
-            Kan ik mijn huisnummerbordje retourneren?
+            Kan ik mijn Huisnummerbord retourneren?
           </h2>
           <div className="mt-3 space-y-3 text-sm leading-relaxed text-foreground">
             <p>
-              Een huisnummerbordje dat speciaal voor jou wordt gemaakt,
+              Een Huisnummerbord dat speciaal voor jou wordt gemaakt,
               bijvoorbeeld met een door jou gekozen huisnummer, tekst,
               kleur, formaat of andere persoonlijke specificaties, is een
               gepersonaliseerd maatwerkproduct.
             </p>
             <p>
               Voor dergelijke producten geldt de wettelijke bedenktijd van
-              14 dagen niet. Je kunt een op maat gemaakt huisnummerbordje
+              14 dagen niet. Je kunt een op maat gemaakt Huisnummerbord
               daarom niet retourneren of ruilen omdat je bijvoorbeeld van
               gedachten bent veranderd.
             </p>
@@ -91,7 +91,7 @@ export default function RetournerenReclamerenPage() {
           <div className="mt-3 space-y-3 text-sm leading-relaxed text-foreground">
             <p>Maatwerk betekent natuurlijk niet dat je geen garantie hebt.</p>
             <p>
-              Je mag verwachten dat het huisnummerbordje dat je ontvangt
+              Je mag verwachten dat het Huisnummerbord dat je ontvangt
               overeenkomt met wat je hebt besteld en de eigenschappen heeft
               die je daarvan redelijkerwijs mag verwachten.
             </p>
@@ -149,7 +149,7 @@ export default function RetournerenReclamerenPage() {
           </h2>
           <div className="mt-3 space-y-3 text-sm leading-relaxed text-foreground">
             <p>
-              Onze huisnummerbordjes worden ge&euml;mailleerd. Houd er
+              Onze Huisnummerborden worden ge&euml;mailleerd. Houd er
               rekening mee dat de kleur die je op een beeldscherm ziet
               enigszins kan afwijken van de kleur van het uiteindelijke
               product. De kleurweergave is onder andere afhankelijk van het
@@ -171,13 +171,14 @@ export default function RetournerenReclamerenPage() {
           </h2>
           <div className="mt-3 space-y-3 text-sm leading-relaxed text-foreground">
             <p>
-              Is het huisnummerbordje beschadigd bij je aangekomen? Neem zo snel mogelijk, maar uiterlijk binnen 3 dagen, contact met ons op.
+              Is het Huisnummerbord beschadigd bij je aangekomen? Neem
+              dan bij voorkeur zo snel mogelijk contact met ons op.
             </p>
             <p>Stuur indien mogelijk mee:</p>
             <ul className="list-disc space-y-1 pl-5">
               <li>je naam en ordernummer;</li>
               <li>een korte omschrijving van de schade;</li>
-              <li>een duidelijke foto van het huisnummerbordje;</li>
+              <li>een duidelijke foto van het Huisnummerbord;</li>
               <li>een foto van de verpakking als deze beschadigd is.</li>
             </ul>
             <p>
@@ -198,7 +199,7 @@ export default function RetournerenReclamerenPage() {
           <div className="mt-3 space-y-3 text-sm leading-relaxed text-foreground">
             <p>Stuur je reclamatie naar:</p>
             <div className="space-y-0.5">
-              <p>Huisnummerbordjes, onderdeel van Langcat Emaille</p>
+              <p>Huisnummerbord, onderdeel van Langcat Emaille</p>
               <p>{companyInfo.street}</p>
               <p>
                 {companyInfo.postalCode} {companyInfo.city}
@@ -232,7 +233,7 @@ export default function RetournerenReclamerenPage() {
           </h2>
           <div className="mt-3 space-y-3 text-sm leading-relaxed text-foreground">
             <p>
-              Verkopen wij naast onze op maat gemaakte huisnummerbordjes
+              Verkopen wij naast onze op maat gemaakte Huisnummerborden
               ook producten die niet volgens jouw specificaties zijn
               gemaakt en niet gepersonaliseerd zijn? Dan kan voor die
               producten wel het wettelijke herroepingsrecht gelden.
@@ -257,7 +258,7 @@ export default function RetournerenReclamerenPage() {
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-foreground">
             Twijfel je of je een product kunt retourneren of wil je een
-            probleem met je huisnummerbordje melden? Neem gerust contact
+            probleem met je Huisnummerbord melden? Neem gerust contact
             met ons op via{" "}
             <a
               href={`mailto:${companyInfo.email}`}

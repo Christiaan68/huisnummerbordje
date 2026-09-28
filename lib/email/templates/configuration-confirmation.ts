@@ -96,7 +96,7 @@ interface ConfigurationEmailData {
 const TRANSLATIONS = {
   nl: {
     htmlLang: "nl",
-    heading: "Nieuwe configuratie huisnummerbordje",
+    heading: "Nieuwe configuratie Huisnummerbord",
     receivedOn: "Ontvangen op",
     contactHeading: "Contactgegevens",
     labelName: "Naam",
@@ -318,7 +318,7 @@ export function renderConfigurationEmail(data: ConfigurationEmailData): string {
                 <td style="padding:20px 32px 0;" align="center">
                   <img
                     src="cid:${data.previewImageCid}"
-                    alt="Voorbeeld van het geconfigureerde huisnummerbordje"
+                    alt="Voorbeeld van het geconfigureerde Huisnummerbord"
                     width="320"
                     style="display:block;max-width:320px;width:100%;height:auto;border-radius:6px;"
                   />
