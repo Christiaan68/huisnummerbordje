@@ -118,7 +118,7 @@ const pinyonScript = Pinyon_Script({
 });
 
 export const metadata: Metadata = {
-  title: "Geëmailleerde Huisnummerbord | Duurzaam. Opvallend. Authentiek.",
+  title: "Geëmailleerde Huisnummerborden | Duurzaam. Opvallend. Authentiek.",
   description:
     "Ontwerp jouw eigen gepersonaliseerde geëmailleerde Huisnummerbord. Duurzaam, opvallend en authentiek — gemaakt om jarenlang mee te gaan.",
 };
