@@ -246,6 +246,19 @@ export async function saveOrderToDatabase(order: NewOrderRow): Promise<number> {
  * verschijnt de handmatige-bevestigingsknop voor die order later terecht
  * niet, zie lib/mollie/manualConfirmEligibility.ts).
  */
+/**
+ * Koppelt een (nieuwe) Mollie-betaling aan een bestelling. Zet daarbij
+ * BEWUST ook payment_status terug op 'pending' (en payment_failure_reason
+ * leeg) — nodig sinds "Alsnog betalen" (retry-payment/route.ts, 28-9-2026):
+ * daar wordt voor een bestelling die al op 'expired' stond een HELE NIEUWE
+ * Mollie-betaling aangemaakt, en zonder deze terugzet bleef de bestelling in
+ * onze database gewoon op 'expired' staan totdat de webhook van de nieuwe
+ * betaling binnenkwam — met als gevolg dat de klant, meteen na het (gelukt)
+ * betalen, via de bedankt-pagina alsnog "Betaling niet gelukt" te zien kreeg
+ * (gefixt 28-9-2026, gemeld door Christiaan na een eigen testbestelling).
+ * Voor de EERSTE betaalpoging van een bestelling (create-payment/route.ts)
+ * verandert dit niets: payment_status staat dan al op 'pending'.
+ */
 export async function setOrderMolliePaymentId(
   orderId: number,
   molliePaymentId: string,
@@ -253,7 +266,7 @@ export async function setOrderMolliePaymentId(
 ): Promise<void> {
   const db = getPool();
   await db.execute(
-    "UPDATE configurations SET mollie_payment_id = ?, mollie_created_at = ? WHERE id = ?",
+    "UPDATE configurations SET mollie_payment_id = ?, mollie_created_at = ?, payment_status = 'pending', payment_failure_reason = NULL WHERE id = ?",
     [molliePaymentId, mollieCreatedAt ?? null, orderId]
   );
 }
