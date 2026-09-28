@@ -53,8 +53,8 @@ export default function PrivacyverklaringPage() {
         </p>
 
         <p className="mt-4 text-sm leading-relaxed text-foreground">
-          Deze privacyverklaring geldt voor deze webshop van Emaille
-          Huisnummerbord, een activiteit van {companyInfo.name}. Hierin lees je
+          Deze privacyverklaring geldt voor deze webshop van
+          Emaillehuisnummerbord.nl, een activiteit van {companyInfo.name}. Hierin lees je
           welke persoonsgegevens we verwerken, waarvoor, en welke rechten je
           hebt.
         </p>
