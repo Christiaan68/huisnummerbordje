@@ -300,3 +300,15 @@ CREATE TABLE IF NOT EXISTS manual_confirmation_log (
 
 ALTER TABLE configurations ADD COLUMN expired_notified_at TIMESTAMP NULL;
 ALTER TABLE configurations ADD COLUMN expired_notified_by VARCHAR(100) NULL;
+
+-- MIGRATIE 28-9-2026 (2): "Toch mails versturen" hersteld — deze knop en de
+-- bijbehorende route (app/api/admin/force-confirm-order/route.ts,
+-- lib/mysql/client.ts -> forceConfirmOrderWithoutMolliePaid) bestonden al,
+-- maar misten deze kolom in de auditlogtabel (manual_confirmation_log, zie
+-- de migratie van 19-9-2026 hierboven) — vandaar dat de deploy hierop
+-- vastliep. Registreert bij een bewuste handmatige overschrijving (de klant
+-- betaalde aantoonbaar buiten Mollie om) wat de status bij Mollie zelf op
+-- dat moment was; blijft leeg bij een gewone bevestiging. Voer onderstaande
+-- regel ÉÉNMALIG uit in hetzelfde SQL-scherm om de tabel bij te werken:
+
+ALTER TABLE manual_confirmation_log ADD COLUMN mollie_status_at_confirmation VARCHAR(32) NULL;

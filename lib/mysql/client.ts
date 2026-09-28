@@ -471,6 +471,14 @@ export interface ManualConfirmationLogEntry {
   internalEmailSent: boolean;
   customerEmailSent: boolean;
   errorMessage: string | null;
+  // mollieStatusAtConfirmation (toegevoegd 28-9-2026, voor "Toch mails
+  // versturen" — zie forceConfirmOrderWithoutMolliePaid hieronder en
+  // app/api/admin/force-confirm-order/route.ts): optioneel, blijft leeg bij
+  // de gewone handmatige bevestiging (resend-order-emails/route.ts, waar de
+  // betaling bij Mollie altijd al 'paid' is). Registreert bij een bewuste
+  // overschrijving wat de status bij Mollie zelf op dat moment was (bv.
+  // 'open'), zodat dat achteraf in de auditlog te zien blijft.
+  mollieStatusAtConfirmation?: string | null;
 }
 
 /**
@@ -490,8 +498,8 @@ export async function insertManualConfirmationLog(
     `INSERT INTO manual_confirmation_log (
       order_id, mollie_payment_id, mollie_created_at, mollie_paid_at,
       delay_seconds, confirmed_by, internal_email_sent, customer_email_sent,
-      error_message
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      error_message, mollie_status_at_confirmation
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       entry.orderId,
       entry.molliePaymentId,
@@ -502,6 +510,29 @@ export async function insertManualConfirmationLog(
       entry.internalEmailSent,
       entry.customerEmailSent,
       entry.errorMessage,
+      entry.mollieStatusAtConfirmation ?? null,
     ]
   );
+}
+
+/**
+ * "Toch mails versturen" (de bewuste HANDMATIGE OVERSCHRIJVING, zie
+ * app/api/admin/force-confirm-order/route.ts voor de volledige toelichting)
+ * — een beheerder bevestigt hiermee een bestelling die bij Mollie nog GEEN
+ * eindstatus heeft (dus niet 'paid', 'failed', 'expired' of 'canceled'),
+ * bijvoorbeeld omdat de klant aantoonbaar buiten Mollie om betaald heeft.
+ *
+ * Gebruikt bewust dezelfde kolommen (en dezelfde voorwaardelijke UPDATE, om
+ * dubbel bevestigen bij een race condition te voorkomen) als
+ * confirmOrderManually hierboven — het is dezelfde "handmatig bevestigd"-
+ * markering, alleen de aanroepende route controleert vooraf een ander soort
+ * voorwaarde (bij confirmOrderManually: Mollie zegt al 'paid'; hier: Mollie
+ * zegt dat nog niet). Een eigen naam op de aanroepplek maakt dat verschil
+ * daar duidelijk leesbaar, ook al is de database-actie zelf identiek.
+ */
+export async function forceConfirmOrderWithoutMolliePaid(
+  orderId: number,
+  confirmedBy: string
+): Promise<boolean> {
+  return confirmOrderManually(orderId, confirmedBy);
 }
