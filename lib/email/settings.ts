@@ -23,6 +23,21 @@ export async function getNotificationEmail(
     | "payment_issue_notification",
   fallback: string
 ): Promise<string> {
+  // LOCAL_TEST_NOTIFICATION_EMAIL (toegevoegd 29-9-2026, op verzoek van
+  // Christiaan, na advies van zijn IT-beheerder): als deze omgevingsvariabele
+  // gezet is, wordt DIE altijd gebruikt voor elke interne meldingsmail —
+  // ongeacht wat hieronder in de database (E-mailinstellingen) staat.
+  // Bedoeld om UITSLUITEND lokaal op je eigen laptop in je eigen, nooit
+  // gecommitte .env-bestand te zetten, zodat testbestellingen tijdens het
+  // ontwikkelen/testen bij je eigen postvak terechtkomen in plaats van bij
+  // Andries (info@langcat.nl). Staat deze variabele niet ingesteld — zoals
+  // bij de echte, live webshop op Vercel — dan verandert er niets aan het
+  // bestaande gedrag hieronder.
+  const localTestOverride = process.env.LOCAL_TEST_NOTIFICATION_EMAIL;
+  if (localTestOverride) {
+    return localTestOverride;
+  }
+
   try {
     const db = getPool();
     const [rows] = (await db.execute(
