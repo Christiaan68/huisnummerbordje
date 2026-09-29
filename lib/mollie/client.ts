@@ -30,12 +30,28 @@ export function createMollie() {
  */
 export function getSiteUrl(): string {
   const siteUrl = process.env.SITE_URL;
-  if (!siteUrl) {
-    throw new Error(
-      "SITE_URL ontbreekt. Zet deze in .env.local (zie .env.example)."
-    );
+  if (siteUrl) {
+    return siteUrl.replace(/\/+$/, "");
   }
-  return siteUrl.replace(/\/+$/, "");
+
+  // Val terug op Vercels eigen VERCEL_URL (toegevoegd 29-9-2026): deze
+  // omgevingsvariabele wordt door Vercel zelf, op elke deployment (ook een
+  // Preview-testversie na het pushen van een aparte branch), automatisch
+  // gezet op het eigen, unieke adres van díe specifieke deployment — zonder
+  // dat daar iets voor ingesteld hoeft te worden. Zo werkt het terugsturen
+  // na een Mollie-betaling ook correct op een Preview-testversie, waar
+  // SITE_URL bewust niet is ingesteld (elke Preview-deployment heeft immers
+  // een ander adres). Op de echte, live webshop verandert er niets: daar
+  // staat SITE_URL gewoon ingevuld en die blijft, zoals voorheen, als eerste
+  // gebruikt.
+  const vercelUrl = process.env.VERCEL_URL;
+  if (vercelUrl) {
+    return `https://${vercelUrl}`;
+  }
+
+  throw new Error(
+    "SITE_URL ontbreekt. Zet deze in .env.local (zie .env.example)."
+  );
 }
 
 /**
