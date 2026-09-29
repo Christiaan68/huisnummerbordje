@@ -76,6 +76,23 @@ export async function createMolliePaymentForOrder(
   const siteUrl = getSiteUrl();
   const mollie = createMollie();
 
+  // Alleen op een Preview-testversie (toegevoegd 29-9-2026): daar staat
+  // SITE_URL bewust niet ingesteld (zie getSiteUrl hierboven) en zit Vercel
+  // "Deployment Protection" aan, waardoor Mollies betaalmelding (webhook) er
+  // niet doorheen komt — Mollie is niet ingelogd bij Vercel en kreeg een
+  // foutmelding 405. Met de geheime "bypass"-sleutel van Vercel achter het
+  // webhook-adres komt de melding wel door. Op de echte, live webshop is
+  // SITE_URL wél ingesteld, dus daar wordt deze sleutel NOOIT meegestuurd
+  // en verandert er niets.
+  const bypassSecret = process.env.SITE_URL
+    ? undefined
+    : process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  const webhookUrl =
+    `${siteUrl}/api/mollie-webhook` +
+    (bypassSecret
+      ? `?x-vercel-protection-bypass=${encodeURIComponent(bypassSecret)}`
+      : "");
+
   const payment = await mollie.payments.create({
     amount: {
       currency: "EUR",
@@ -83,7 +100,7 @@ export async function createMolliePaymentForOrder(
     },
     description: `Huisnummerbord bestelling #${orderId}`,
     redirectUrl: `${siteUrl}/bestelling/bedankt?order=${orderId}`,
-    webhookUrl: `${siteUrl}/api/mollie-webhook`,
+    webhookUrl,
     metadata: { orderId: String(orderId) },
     // Zelfde beperkte lijst en zelfde "as any"-toelichting als voorheen in
     // create-payment/route.ts — zie daar voor de volledige uitleg
