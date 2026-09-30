@@ -190,7 +190,7 @@ export async function POST(request: Request) {
     const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
     const { error } = await resend.emails.send({
-      from: `Emaillehuisnummerbord <${fromAddress}>`,
+      from: `Emaillehuisnummerbord.nl <${fromAddress}>`,
       to: order.contact_email,
       subject:
         reason === "expired"

@@ -192,9 +192,9 @@ export async function POST(request: Request) {
     try {
       const confirmationHtml = renderQuestionConfirmationEmail(questionEmailFields);
       const { error: confirmationError } = await resend.emails.send({
-        from: `Emaillehuisnummerbord <${fromAddress}>`,
+        from: `Emaillehuisnummerbord.nl <${fromAddress}>`,
         to: question.email,
-        subject: "Bevestiging van je vraag — Huisnummerbord",
+        subject: "Bevestiging van je vraag — Emaillehuisnummerbord.nl",
         html: confirmationHtml,
       });
       if (confirmationError) {
