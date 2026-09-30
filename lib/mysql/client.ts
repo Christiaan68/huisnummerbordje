@@ -20,7 +20,15 @@ export function getPool(): mysql.Pool {
   const host = process.env.TIDB_HOST;
   const user = process.env.TIDB_USER;
   const password = process.env.TIDB_PASSWORD;
-  const database = process.env.TIDB_DATABASE;
+  // Toegevoegd 30-9-2026 (aparte testomgeving): in een Vercel "Preview" (een
+  // testversie van een andere branch dan main — Vercel zet VERCEL_ENV dan op
+  // "preview") wordt de aparte testdatabase uit TIDB_TEST_DATABASE gebruikt,
+  // als die is ingesteld. Zo komen testbestellingen nooit in de echte
+  // orderlijst terecht. Op de echte site (VERCEL_ENV = "production") en zonder
+  // TIDB_TEST_DATABASE verandert er niets: dan geldt gewoon TIDB_DATABASE.
+  const database =
+    (process.env.VERCEL_ENV === "preview" && process.env.TIDB_TEST_DATABASE) ||
+    process.env.TIDB_DATABASE;
 
   if (!host || !user || !password || !database) {
     throw new Error(
