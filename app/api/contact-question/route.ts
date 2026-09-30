@@ -165,7 +165,7 @@ export async function POST(request: Request) {
     const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
     const { error } = await resend.emails.send({
-      from: `Huisnummerbord configurator <${fromAddress}>`,
+      from: `Emaillehuisnummerbord.nl <${fromAddress}>`,
       to: adminEmail,
       replyTo: question.email,
       subject: `Vraag van ${question.name} over een configuratie`,

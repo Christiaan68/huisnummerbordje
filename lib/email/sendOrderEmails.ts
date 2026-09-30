@@ -293,7 +293,7 @@ export async function sendOrderEmails(
         : `Nieuwe (betaalde) bestelling van ${input.contact.name}: ${translatedShapeName} — ${input.customText}`;
 
     const { error } = await resend.emails.send({
-      from: `Emaillehuisnummerbord <${internalFromAddress}>`,
+      from: `Emaillehuisnummerbord.nl <${internalFromAddress}>`,
       to: input.adminEmail,
       subject: internalSubject,
       html,
@@ -342,7 +342,7 @@ export async function sendOrderEmails(
     });
 
     const { error: customerError } = await resend.emails.send({
-      from: `Emaillehuisnummerbord <${fromAddress}>`,
+      from: `Emaillehuisnummerbord.nl <${fromAddress}>`,
       to: input.contact.email,
       subject: "Bevestiging van je bestelling — Huisnummerbord",
       html: customerHtml,
