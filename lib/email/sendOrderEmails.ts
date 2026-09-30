@@ -344,7 +344,7 @@ export async function sendOrderEmails(
     const { error: customerError } = await resend.emails.send({
       from: `Emaillehuisnummerbord.nl <${fromAddress}>`,
       to: input.contact.email,
-      subject: "Bevestiging van je bestelling — Huisnummerbord",
+      subject: "Bevestiging van je bestelling — Emaillehuisnummerbord.nl",
       html: customerHtml,
       attachments,
     });

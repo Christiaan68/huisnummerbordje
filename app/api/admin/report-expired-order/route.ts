@@ -194,8 +194,8 @@ export async function POST(request: Request) {
       to: order.contact_email,
       subject:
         reason === "expired"
-          ? `Je betaling voor bestelling #${order.id} is verlopen — Huisnummerbord`
-          : `Je betaling voor bestelling #${order.id} is niet gelukt — Huisnummerbord`,
+          ? `Je betaling voor bestelling #${order.id} is verlopen — Emaillehuisnummerbord.nl`
+          : `Je betaling voor bestelling #${order.id} is niet gelukt — Emaillehuisnummerbord.nl`,
       html,
     });
 
