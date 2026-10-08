@@ -815,8 +815,17 @@ export function ProductPreview() {
           <span className="text-xs uppercase tracking-widest text-muted-foreground">
             Totaalprijs
           </span>
-          <span className="text-lg font-semibold text-foreground">
-            {price ? formatPriceCents(price.totalCents) : "—"}
+          {/* 8-10-2026, op verzoek van Christiaan: zolang er nog geen prijs
+              is (nog niet alles gekozen, of prijs 0/onbekend) staat hier
+              "Prijs op aanvraag" in plaats van een streepje. */}
+          <span
+            className={
+              price
+                ? "text-lg font-semibold text-foreground"
+                : "text-sm font-semibold text-foreground"
+            }
+          >
+            {price ? formatPriceCents(price.totalCents) : "Prijs op aanvraag"}
           </span>
         </div>
 
