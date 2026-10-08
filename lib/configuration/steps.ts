@@ -2,6 +2,11 @@ import type { ConfiguratorSelection } from "@/types/configuration";
 import type { ProductShape } from "@/types/product";
 import { productShapes } from "@/config/product-options";
 import { isEarsShape } from "@/lib/configuration/shape-helpers";
+import {
+  houseNumberSchema,
+  houseNumberEarsSchema,
+  extraLineSchema,
+} from "@/lib/validation/text-input.schema";
 
 export interface ConfiguratorStep {
   id: string;
@@ -76,11 +81,24 @@ export const configuratorSteps: ConfiguratorStep[] = [
     // 9-9-2026, hasFontChoice: false) bestaat er geen lettertypekeuze en ook
     // geen extra tekstregels (extraLines is bij die vormen altijd 0) — daar
     // is deze stap dus al compleet zodra het huisnummerveld niet leeg is.
+    //
+    // Sinds 8-10-2026 (op verzoek van Christiaan) telt ook de INHOUD mee: zolang
+    // een tekstveld een foutmelding laat zien (bv. een letter als huisnummer
+    // bij een "oren"-vorm, of een niet-toegestaan teken), is de stap niet
+    // compleet en kan de klant niet op "Verder" drukken. Dezelfde schema's als
+    // waarmee TextInput.tsx de foutmeldingen toont, zodat beide altijd
+    // overeenkomen. Ook de optionele tweede/eerste regel wordt gecontroleerd
+    // als die iets bevat.
     isComplete: (s) => {
       if (s.customText.trim().length === 0) return false;
 
       const shape = productShapes.find((shape) => shape.id === s.shapeId);
       if (!shape) return false;
+
+      const numberSchema = isEarsShape(shape)
+        ? houseNumberEarsSchema
+        : houseNumberSchema;
+      if (!numberSchema.safeParse(s.customText).success) return false;
 
       if (isEarsShape(shape)) return true;
 
@@ -88,13 +106,17 @@ export const configuratorSteps: ConfiguratorStep[] = [
 
       if (
         shape.extraLines >= 1 &&
-        (s.extraLine1.trim().length === 0 || !s.line1FontId)
+        (s.extraLine1.trim().length === 0 ||
+          !s.line1FontId ||
+          !extraLineSchema.safeParse(s.extraLine1).success)
       ) {
         return false;
       }
       if (
         shape.extraLines >= 2 &&
-        (s.extraLine2.trim().length === 0 || !s.line2FontId)
+        (s.extraLine2.trim().length === 0 ||
+          !s.line2FontId ||
+          !extraLineSchema.safeParse(s.extraLine2).success)
       ) {
         return false;
       }
