@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useConsent } from "@/components/consent/ConsentProvider";
 
 /**
@@ -15,7 +16,20 @@ export function ConsentBanner() {
   const { status, acceptAll, acceptNecessaryOnly, openPreferences } =
     useConsent();
 
+  const pathname = usePathname();
+
   if (status !== "unset") return null;
+
+  // Niet tonen op de bedankpagina na een bestelling (8-10-2026, op verzoek
+  // van Christiaan): na de betaling komt de klant vanaf Mollie of de
+  // bank-app terug, soms in een andere browser of op een ander adres dan
+  // waar hij begon — de eerder gemaakte cookiekeuze is dan niet te vinden
+  // en de banner zou midden in de bevestiging verschijnen. Er wordt hier
+  // niets gemeten zonder toestemming (Google Consent Mode blijft op
+  // "geweigerd"), dus dit is veilig; de banner verschijnt gewoon op de
+  // eerstvolgende andere pagina, en via "Cookie-instellingen" in de footer
+  // is de keuze altijd te maken.
+  if (pathname?.startsWith("/bestelling/bedankt")) return null;
 
   return (
     <div
