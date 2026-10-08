@@ -815,9 +815,14 @@ export function ProductPreview() {
           <span className="text-xs uppercase tracking-widest text-muted-foreground">
             Totaalprijs
           </span>
-          {/* 8-10-2026, op verzoek van Christiaan: zolang er nog geen prijs
-              is (nog niet alles gekozen, of prijs 0/onbekend) staat hier
-              "Prijs op aanvraag" in plaats van een streepje. */}
+          {/* 8-10-2026, op verzoek van Christiaan: "Prijs op aanvraag"
+              (in plaats van een streepje) zodra het gekozen bordje echt
+              geen bekende prijs heeft (prijs 0/onbekend). Zolang er nog
+              niets gekozen is (geen vorm, nog geen maat, of nog geen
+              afwerking bij vormen die dat kennen), blijft het streepje
+              staan — dan is "op aanvraag" nog niet van toepassing. Vormen
+              met een vaste maat (de "oren"-vormen) hebben direct na de
+              vormkeuze al een maat, dus daar verschijnt het meteen. */}
           <span
             className={
               price
@@ -825,7 +830,11 @@ export function ProductPreview() {
                 : "text-sm font-semibold text-foreground"
             }
           >
-            {price ? formatPriceCents(price.totalCents) : "Prijs op aanvraag"}
+            {price
+              ? formatPriceCents(price.totalCents)
+              : shape && size && (!shape.hasFinishChoice || selection.finish)
+                ? "Prijs op aanvraag"
+                : "—"}
           </span>
         </div>
 
