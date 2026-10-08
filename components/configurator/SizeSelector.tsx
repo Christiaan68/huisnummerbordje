@@ -10,7 +10,9 @@ import { configuratorSteps, getVisibleSteps } from "@/lib/configuration/steps";
 import { cn } from "@/lib/utils";
 
 function formatPrice(cents: number | null): string {
-  if (cents === null) return "Prijs volgt";
+  // Een prijs van 0 in de prijslijst betekent "prijs nog niet bekend"
+  // (besloten 8-10-2026) en wordt net als een ontbrekende prijs getoond.
+  if (cents === null || cents <= 0) return "Prijs op aanvraag";
   return new Intl.NumberFormat("nl-NL", {
     style: "currency",
     currency: "EUR",

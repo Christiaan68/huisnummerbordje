@@ -66,7 +66,11 @@ export function calculatePrice(
   // ingevulde van de twee gebruikt (`priceFlatCents ?? priceCurvedCents`) —
   // zodat dit werkt ongeacht welk veld hij straks gebruikt.
   const basePriceCents = earsShape
-    ? size.priceFlatCents ?? size.priceCurvedCents
+    ? // Eerste echt ingevulde (> 0) van de twee; een 0 telt als "niet ingevuld"
+      // (zie de toelichting bij de controle hieronder).
+      size.priceFlatCents && size.priceFlatCents > 0
+      ? size.priceFlatCents
+      : size.priceCurvedCents
     : selection.finish
       ? selection.finish === "vlak"
         ? size.priceFlatCents
@@ -78,7 +82,20 @@ export function calculatePrice(
   // basisprijs van dit product nog niet ingevuld in de prijsbeheeromgeving)
   // → hetzelfde "prijs op aanvraag"-pad dat nu ook al bestaat voor bv.
   // "ovaal" zonder vlakke prijs: gewoon nog geen prijs tonen.
-  if (basePriceCents === null || basePriceCents === undefined) return null;
+  //
+  // Toegevoegd 8-10-2026 (op verzoek van Christiaan): een basisprijs van 0 (of
+  // lager) in de prijslijst betekent "prijs nog niet bekend" en dus ook
+  // "prijs op aanvraag" — nooit een bordje van €0 waarbij alleen de
+  // verzendkosten overblijven. Dit geldt voor ALLE bordjes (ook de
+  // reservekopie-waarden), en alleen voor de BASISprijs: meerprijzen van
+  // opties (extra tekens, kleur, kader) mogen gewoon 0 zijn.
+  if (
+    basePriceCents === null ||
+    basePriceCents === undefined ||
+    basePriceCents <= 0
+  ) {
+    return null;
+  }
 
   let colorSurchargeCents: number;
   if (earsShape) {
