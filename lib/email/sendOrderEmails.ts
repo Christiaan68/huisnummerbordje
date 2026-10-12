@@ -1,4 +1,5 @@
 import { createResendClient } from "@/lib/email/resend";
+import { getSenderFrom, getCustomerReplyTo } from "@/lib/email/senders";
 import { resolveNotificationFromAddress } from "@/lib/email/isValidEmailFormat";
 import {
   renderConfigurationEmail,
@@ -342,8 +343,9 @@ export async function sendOrderEmails(
     });
 
     const { error: customerError } = await resend.emails.send({
-      from: `Emaillehuisnummerbord.nl <${fromAddress}>`,
+      from: getSenderFrom("orders"),
       to: input.contact.email,
+      replyTo: getCustomerReplyTo(),
       subject: "Bevestiging van je bestelling — Emaillehuisnummerbord.nl",
       html: customerHtml,
       attachments,

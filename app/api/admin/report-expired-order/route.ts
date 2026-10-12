@@ -4,6 +4,7 @@ import { getOrderById, claimExpiredNotification } from "@/lib/mysql/client";
 import { createResendClient } from "@/lib/email/resend";
 import { renderPaymentExpiredEmail } from "@/lib/email/templates/payment-expired-notification";
 import { formatEuroFromCents } from "@/lib/format/euro";
+import { getSenderFrom, getCustomerReplyTo } from "@/lib/email/senders";
 
 /**
  * "Aan de klant melden" (verlopen óf mislukte betaling), toegevoegd
@@ -187,11 +188,11 @@ export async function POST(request: Request) {
     });
 
     const resend = createResendClient();
-    const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
     const { error } = await resend.emails.send({
-      from: `Emaillehuisnummerbord.nl <${fromAddress}>`,
+      from: getSenderFrom("orders"),
       to: order.contact_email,
+      replyTo: getCustomerReplyTo(),
       subject:
         reason === "expired"
           ? `Je betaling voor bestelling #${order.id} is verlopen — Emaillehuisnummerbord.nl`

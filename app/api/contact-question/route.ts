@@ -3,6 +3,7 @@ import { createConfigurationSchema } from "@/lib/validation/configuration.schema
 import { questionDetailsSchema } from "@/lib/validation/question.schema";
 import { createResendClient } from "@/lib/email/resend";
 import { getNotificationEmail } from "@/lib/email/settings";
+import { getSenderFrom, getCustomerReplyTo } from "@/lib/email/senders";
 import { renderQuestionNotificationEmail } from "@/lib/email/templates/question-notification";
 import { renderQuestionConfirmationEmail } from "@/lib/email/templates/question-confirmation";
 import { getLivePricingData } from "@/lib/configuration/livePricing";
@@ -162,10 +163,9 @@ export async function POST(request: Request) {
 
   try {
     const resend = createResendClient();
-    const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
     const { error } = await resend.emails.send({
-      from: `Emaillehuisnummerbord.nl <${fromAddress}>`,
+      from: getSenderFrom("info"),
       to: adminEmail,
       replyTo: question.email,
       subject: `Vraag van ${question.name} over een configuratie`,
@@ -192,8 +192,9 @@ export async function POST(request: Request) {
     try {
       const confirmationHtml = renderQuestionConfirmationEmail(questionEmailFields);
       const { error: confirmationError } = await resend.emails.send({
-        from: `Emaillehuisnummerbord.nl <${fromAddress}>`,
+        from: getSenderFrom("info"),
         to: question.email,
+        replyTo: getCustomerReplyTo(),
         subject: "Bevestiging van je vraag — Emaillehuisnummerbord.nl",
         html: confirmationHtml,
       });

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { paymentIssueQuestionSchema } from "@/lib/validation/payment-issue.schema";
 import { createResendClient } from "@/lib/email/resend";
 import { getNotificationEmail } from "@/lib/email/settings";
+import { getSenderFrom, getCustomerReplyTo } from "@/lib/email/senders";
 import { renderPaymentIssueNotificationEmail } from "@/lib/email/templates/payment-issue-notification";
 import { renderPaymentIssueConfirmationEmail } from "@/lib/email/templates/payment-issue-confirmation";
 import { formatEuroFromCents } from "@/lib/format/euro";
@@ -100,10 +101,9 @@ export async function POST(request: Request) {
 
   try {
     const resend = createResendClient();
-    const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
     const { error } = await resend.emails.send({
-      from: `Emaillehuisnummerbord.nl <${fromAddress}>`,
+      from: getSenderFrom("info"),
       to: adminEmail,
       replyTo: order.contact_email,
       subject: `Vraag over bestelling #${order.id} (betaling ${paymentStatusLabel})`,
@@ -127,8 +127,9 @@ export async function POST(request: Request) {
         paymentIssueEmailFields
       );
       const { error: confirmationError } = await resend.emails.send({
-        from: `Emaillehuisnummerbord.nl <${fromAddress}>`,
+        from: getSenderFrom("info"),
         to: order.contact_email,
+        replyTo: getCustomerReplyTo(),
         subject: `Bevestiging van je vraag over bestelling #${order.id} — Emaillehuisnummerbord.nl`,
         html: confirmationHtml,
       });
