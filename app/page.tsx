@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { EnamelPlateSignature } from "@/components/home/EnamelPlateSignature";
 import { siteContent } from "@/config/site-content";
 
 export default function HomePage() {
@@ -55,13 +54,6 @@ export default function HomePage() {
               >
                 {hero.ctaLabel}
               </Link>
-            </div>
-
-            {/* Op mobiel (kleiner dan het "sm"-breakpoint, ca. 640px) tonen
-                we deze foto niet — Christiaan gaf aan dat de
-                homepage-plate.jpg op mobiel niet gebruikt moet worden. */}
-            <div className="hidden sm:block">
-              <EnamelPlateSignature />
             </div>
           </div>
         </section>
