@@ -75,6 +75,15 @@ export function renderCustomerConfirmationEmail(
   // lib/email/templates/configuration-confirmation.ts — zelfde afleiding,
   // zelfde reden (geen afwerking/lettertype/kader voor deze vormen).
   const isEarsOrder = Boolean(data.earColorName && data.plateColorName);
+  // A1: prijs per stuk = (totaal − verzending) / aantal.
+  const quantityNumber = Number(data.quantity);
+  const unitPriceCents =
+    data.priceTotalCents != null &&
+    data.shippingCostCents != null &&
+    Number.isInteger(quantityNumber) &&
+    quantityNumber >= 1
+      ? Math.round((data.priceTotalCents - data.shippingCostCents) / quantityNumber)
+      : null;
 
   const row = (label: string, value: string) => `
     <tr>
@@ -170,30 +179,48 @@ export function renderCustomerConfirmationEmail(
                             data.hasFrame
                               ? `Ja – ${
                                   data.priceFrameSurchargeCents != null
-                                    ? formatPriceCents(data.priceFrameSurchargeCents)
+                                    ? `${formatPriceCents(data.priceFrameSurchargeCents)} per stuk`
                                     : "prijs op aanvraag"
                                 }`
                               : "Nee"
                           )
                     }
-                    ${row("Aantal", data.quantity)}
                     ${
                       data.priceColorSurchargeCents
-                        ? row("Meerprijs kleur", formatPriceCents(data.priceColorSurchargeCents))
+                        ? row("Meerprijs kleur (per stuk)", formatPriceCents(data.priceColorSurchargeCents))
                         : ""
                     }
                     ${
                       data.priceExtraCharsCents
                         ? row(
-                            `Meerprijs extra tekens (${data.priceExtraCharsCount}×)`,
+                            `Meerprijs extra tekens (${data.priceExtraCharsCount}×, per stuk)`,
                             formatPriceCents(data.priceExtraCharsCents)
                           )
                         : ""
                     }
                     ${
+                      /* A1 (testrapport 22-11-2026): duidelijk maken dat het
+                         om het bestelde aantal borden gaat: prijs per stuk ×
+                         aantal, plus één keer de verzendkosten. De
+                         totaalprijs (priceTotalCents) is al voor het hele
+                         aantal, inclusief verzending. */
+                      quantityNumber >= 1 && unitPriceCents !== null
+                        ? row("Prijs per stuk", formatPriceCents(unitPriceCents)) +
+                          row("Aantal", `${quantityNumber} ${quantityNumber === 1 ? "stuk" : "stuks"}`) +
+                          (quantityNumber > 1
+                            ? row(
+                                `Subtotaal (${quantityNumber} × ${formatPriceCents(unitPriceCents)})`,
+                                formatPriceCents(unitPriceCents * quantityNumber)
+                              )
+                            : "")
+                        : row("Aantal", data.quantity)
+                    }
+                    ${
                       data.shippingCostCents != null
                         ? row(
-                            data.shippingCarrierName ? `Verzending (${data.shippingCarrierName})` : "Verzending",
+                            data.shippingCarrierName
+                              ? `Verzending (${data.shippingCarrierName}, één keer)`
+                              : "Verzending (één keer)",
                             formatPriceCents(data.shippingCostCents)
                           )
                         : ""
