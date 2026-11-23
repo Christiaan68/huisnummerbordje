@@ -14,6 +14,7 @@ import {
   buildAndSendOrderEmailsForOrder,
   OrderEmailBuildError,
 } from "@/lib/email/sendPaidOrderEmails";
+import { sendDoublePaymentAlert } from "@/lib/email/sendDoublePaymentAlert";
 
 /**
  * Ontvangt Mollie's betaalbevestigingen ("webhook"), toegevoegd 29-8-2026.
@@ -90,6 +91,29 @@ export async function POST(request: Request) {
   // dezelfde betaling — een bestelling die al als betaald geregistreerd
   // staat, mag nooit een 2e keer de mails laten versturen.
   if (order.payment_status === "paid") {
+    // Dubbele betaling (23-11-2026): de bestelling is al betaald met een
+    // ANDERE Mollie-betaling, en nu is ook deze betaald. Dan alleen een
+    // waarschuwing naar de webshop (nooit naar de klant); terugbetalen doet
+    // de beheerder zelf. Niet opnieuw waarschuwen als er al (deels) is
+    // terugbetaald — Mollie roept de webhook dan nog eens aan.
+    const alreadyRefunded =
+      Number((payment as { amountRefunded?: { value?: string } }).amountRefunded?.value ?? 0) > 0;
+    if (
+      payment.status === "paid" &&
+      order.mollie_payment_id &&
+      order.mollie_payment_id !== paymentId &&
+      !alreadyRefunded
+    ) {
+      console.warn(
+        `Mollie-webhook: DUBBELE betaling voor bestelling #${order.id}: al betaald met ${order.mollie_payment_id}, nu ook ${paymentId}.`
+      );
+      await sendDoublePaymentAlert({
+        order,
+        firstPaymentId: order.mollie_payment_id,
+        secondPaymentId: paymentId,
+        secondAmount: payment.amount.value.replace(".", ","),
+      });
+    }
     return NextResponse.json({ received: true, already: "paid" });
   }
 

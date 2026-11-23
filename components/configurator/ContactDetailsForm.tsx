@@ -447,7 +447,9 @@ export function ContactDetailsForm({
               if (event.target.checked) setUnderstandsError(false);
             }}
             aria-describedby={
-              understandsError ? "understandsHandmade-error" : undefined
+              understandsError
+                ? "understandsHandmade-guarantee understandsHandmade-error"
+                : "understandsHandmade-guarantee"
             }
             aria-invalid={understandsError}
             className="mt-0.5 h-4 w-4 shrink-0 rounded-sm border-border text-primary accent-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
@@ -457,6 +459,20 @@ export function ContactDetailsForm({
             afwijken van de preview.
           </span>
         </label>
+        {/* Wettelijke garantie (23-11-2026, variant B op verzoek van
+            Christiaan): bewust NIET in de vinkregel, want de klant gaat
+            niet "akkoord" met de garantie — het is een recht. Ingesprongen
+            onder de vinkregel (ml-7 = vakje + tussenruimte). */}
+        <p
+          id="understandsHandmade-guarantee"
+          className="-mt-1 ml-7 text-xs leading-relaxed text-muted-foreground/80"
+        >
+          Natuurlijk geldt ook voor je maatwerk-huisnummerbord de wettelijke
+          garantie. Is er door een fout van onze kant iets niet in orde, dan heb
+          je, afhankelijk van de situatie, recht op kosteloos herstel,
+          vervanging, prijsvermindering of ontbinding. Een aparte, langere
+          garantie bieden we daarnaast niet.
+        </p>
         {understandsError && (
           <p
             id="understandsHandmade-error"

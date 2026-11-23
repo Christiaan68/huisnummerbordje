@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { getOrderById } from "@/lib/mysql/client";
 import { createMollie, createMolliePaymentForOrder, getSiteUrl } from "@/lib/mollie/client";
 
+// Nooit cachen: elke klik moet de actuele status bij Mollie opvragen.
+export const dynamic = "force-dynamic";
+
 /**
  * B7 (testrapport 22-11-2026): knop "Betaling afronden" op de bedankpagina,
  * voor een klant die bij Mollie is afgehaakt of het opnieuw wil proberen.
@@ -37,16 +40,14 @@ export async function GET(
       if (payment.status === "paid") {
         return NextResponse.redirect(bedanktUrl);
       }
-      const checkoutUrl = payment._links.checkout?.href;
-      // Alleen terug naar de bestaande betaling als daar nog geen
-      // betaalmethode is geprobeerd. Is er al een methode gekozen (bv. een
-      // mislukte poging, waarna de klant via "Vorige pagina" terugkwam), dan
-      // stuurt Mollie de bestaande betaallink vaak meteen terug naar de
-      // webshop. Dan maken we direct een nieuwe betaling aan (23-11-2026,
-      // gevonden door Christiaan: eerste klik kwam terug op dezelfde pagina).
-      if (payment.status === "open" && checkoutUrl && !payment.method) {
-        return NextResponse.redirect(checkoutUrl);
-      }
+      // Altijd een NIEUWE betaling aanmaken (23-11-2026, na test door
+      // Christiaan). Terugsturen naar de bestaande betaling werkte niet
+      // betrouwbaar: na "Mislukt" + "Vorige pagina" verwerkt Mollie het
+      // afbreken pas na een paar seconden; tot dan staat de betaling nog op
+      // "open", maar stuurt Mollie de oude betaallink meteen terug naar de
+      // webshop. De oude betaling wordt waar mogelijk geannuleerd; een late
+      // melding van die oude betaling wordt door de webhook genegeerd
+      // (order.mollie_payment_id wijst dan naar de nieuwe betaling).
       if (payment.status === "open" && payment.isCancelable) {
         try {
           await createMollie().payments.cancel(payment.id);
@@ -58,9 +59,7 @@ export async function GET(
         }
       }
       console.log(
-        `resume-payment: order #${orderId}, Mollie-status "${payment.status}", betaallink ${
-          checkoutUrl ? "aanwezig" : "ontbreekt"
-        } — nieuwe betaling wordt aangemaakt.`
+        `resume-payment: order #${orderId}, oude Mollie-status "${payment.status}" — nieuwe betaling wordt aangemaakt.`
       );
     } catch (err) {
       console.error(
