@@ -38,8 +38,24 @@ export async function GET(
         return NextResponse.redirect(bedanktUrl);
       }
       const checkoutUrl = payment._links.checkout?.href;
-      if (payment.status === "open" && checkoutUrl) {
+      // Alleen terug naar de bestaande betaling als daar nog geen
+      // betaalmethode is geprobeerd. Is er al een methode gekozen (bv. een
+      // mislukte poging, waarna de klant via "Vorige pagina" terugkwam), dan
+      // stuurt Mollie de bestaande betaallink vaak meteen terug naar de
+      // webshop. Dan maken we direct een nieuwe betaling aan (23-11-2026,
+      // gevonden door Christiaan: eerste klik kwam terug op dezelfde pagina).
+      if (payment.status === "open" && checkoutUrl && !payment.method) {
         return NextResponse.redirect(checkoutUrl);
+      }
+      if (payment.status === "open" && payment.isCancelable) {
+        try {
+          await createMollie().payments.cancel(payment.id);
+        } catch (err) {
+          console.warn(
+            `resume-payment: oude betaling ${payment.id} (order #${orderId}) kon niet geannuleerd worden:`,
+            err instanceof Error ? err.message : err
+          );
+        }
       }
       console.log(
         `resume-payment: order #${orderId}, Mollie-status "${payment.status}", betaallink ${
