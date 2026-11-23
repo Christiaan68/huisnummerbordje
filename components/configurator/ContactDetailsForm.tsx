@@ -421,7 +421,9 @@ export function ContactDetailsForm({
           <p className="mt-1 text-sm text-destructive">{errors.quantity.message}</p>
         )}
         {!errors.quantity && (
-          <p className="mt-1 text-sm text-muted-foreground">
+          // Op tablet/desktop op één regel, ook als die iets breder is dan
+          // het formulier; op een telefoon mag hij gewoon doorlopen.
+          <p className="mt-1 text-sm text-muted-foreground sm:whitespace-nowrap">
             {quantityIsValid && unitPrice
               ? `Totaal voor ${quantityNumber} ${quantityNumber === 1 ? "stuk" : "stuks"}: ${formatPriceCents(
                   totalCentsForQuantity(unitPrice, quantityNumber)

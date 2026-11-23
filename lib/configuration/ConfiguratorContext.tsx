@@ -121,14 +121,34 @@ function reducer(
     }
     case "SET_FINISH":
       return { ...state, finish: action.finish };
+    // Ondergrond en opdruk mogen niet dezelfde kleur hebben (B4). Kiest de
+    // klant toch de kleur die aan de andere kant al gekozen is, dan wordt
+    // die andere kant leeggemaakt, zodat daar opnieuw gekozen kan worden
+    // (op verzoek van Christiaan, 23-11-2026).
     case "SET_COLOR":
-      return { ...state, colorId: action.colorId };
+      return {
+        ...state,
+        colorId: action.colorId,
+        printColorId: state.printColorId === action.colorId ? null : state.printColorId,
+      };
     case "SET_PRINT_COLOR":
-      return { ...state, printColorId: action.colorId };
+      return {
+        ...state,
+        printColorId: action.colorId,
+        colorId: state.colorId === action.colorId ? null : state.colorId,
+      };
     case "SET_EAR_COLOR":
-      return { ...state, earColorId: action.colorId };
+      return {
+        ...state,
+        earColorId: action.colorId,
+        plateColorId: state.plateColorId === action.colorId ? null : state.plateColorId,
+      };
     case "SET_PLATE_COLOR":
-      return { ...state, plateColorId: action.colorId };
+      return {
+        ...state,
+        plateColorId: action.colorId,
+        earColorId: state.earColorId === action.colorId ? null : state.earColorId,
+      };
     case "SET_SIZE":
       return { ...state, sizeId: action.sizeId };
     case "SET_TEXT":

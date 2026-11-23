@@ -57,11 +57,11 @@ function ColorOptionGrid({
             role="radio"
             aria-checked={isSelected}
             aria-label={isBlocked ? `${color.name} (${blockedNote})` : color.name}
-            disabled={isBlocked}
             onClick={() => onSelect(color.id)}
             className={cn(
               "flex flex-col items-center gap-2",
-              isBlocked && "cursor-not-allowed opacity-40"
+              // Blijft aanklikbaar: kiezen maakt de andere kant leeg.
+              isBlocked && "opacity-40 hover:opacity-70"
             )}
           >
             <span
