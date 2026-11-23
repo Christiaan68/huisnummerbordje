@@ -465,13 +465,19 @@ export function ContactDetailsForm({
             onder de vinkregel (ml-7 = vakje + tussenruimte). */}
         <p
           id="understandsHandmade-guarantee"
-          className="-mt-1 ml-7 text-xs leading-relaxed text-muted-foreground/80"
+          className="ml-7 mt-2 text-xs leading-relaxed text-muted-foreground/80"
         >
-          Natuurlijk geldt ook voor je maatwerk-huisnummerbord de wettelijke
-          garantie. Is er door een fout van onze kant iets niet in orde, dan heb
-          je, afhankelijk van de situatie, recht op kosteloos herstel,
-          vervanging, prijsvermindering of ontbinding. Een aparte, langere
-          garantie bieden we daarnaast niet.
+          Ook voor maatwerk geldt de{" "}
+          <a
+            href="/documenten/wettelijke-garantie.pdf"
+            target="_blank"
+            rel="noopener"
+            className="underline underline-offset-2 hover:text-foreground"
+          >
+            wettelijke garantie
+          </a>
+          : is er door onze fout iets mis, dan zorgen we voor een passende
+          oplossing. Een extra garantie daarbovenop bieden we niet.
         </p>
         {understandsError && (
           <p
