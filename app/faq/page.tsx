@@ -8,6 +8,7 @@ import { getFaqItems } from "@/lib/faq/fetchFaq";
 import { resolveFaqTokens } from "@/lib/faq/resolveTokens";
 import { FAQ_CATEGORIES } from "@/lib/faq/categories";
 import { getNotificationEmail } from "@/lib/email/settings";
+import { getDeliveryWeeks } from "@/lib/shop-texts";
 
 export const metadata: Metadata = {
   title: "Veelgestelde vragen | Emaille Huisnummerborden",
@@ -27,10 +28,12 @@ export default async function FaqPage() {
   // in de configurator ziet. contactEmail (toegevoegd 18-9-2026) is voor het
   // "{{contact-email}}"-token in een FAQ-antwoord — zelfde adres en zelfde
   // terugvalgedrag als de vraag-pop-up in de configurator zelf gebruikt.
-  const [pricingData, faqData, contactEmail] = await Promise.all([
+  const [pricingData, faqData, contactEmail, deliveryWeeks] = await Promise.all([
     getLivePricingData(),
     getFaqItems(),
     getNotificationEmail("question_notification", companyInfo.email),
+    // "{{levertijd-weken}}" (23-11-2026): aantal weken uit de beheertool.
+    getDeliveryWeeks(),
   ]);
 
   const itemsByCategory = new Map<string, typeof faqData.items>();
@@ -107,7 +110,7 @@ export default async function FaqPage() {
                           </span>
                         </summary>
                         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                          {resolveFaqTokens(item.answer, pricingData, contactEmail)}
+                          {resolveFaqTokens(item.answer, pricingData, contactEmail, deliveryWeeks)}
                         </p>
                       </details>
                     ))}

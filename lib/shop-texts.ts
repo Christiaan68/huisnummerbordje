@@ -23,7 +23,8 @@ export function expectedDeliverySentence(weeks: string): string {
   return `Vanwege maatwerk houden we een levertermijn van maximaal ${weeks} weken na het plaatsen van je bestelling aan.`;
 }
 
-export async function getExpectedDeliveryText(): Promise<string> {
+/** Alleen het aantal weken, bv. "4 tot 6" (ook voor het FAQ-token {{levertijd-weken}}). */
+export async function getDeliveryWeeks(): Promise<string> {
   let weeks = DEFAULT_DELIVERY_WEEKS;
   try {
     const db = getPool();
@@ -41,5 +42,9 @@ export async function getExpectedDeliveryText(): Promise<string> {
       err instanceof Error ? err.message : err
     );
   }
-  return expectedDeliverySentence(weeks);
+  return weeks;
+}
+
+export async function getExpectedDeliveryText(): Promise<string> {
+  return expectedDeliverySentence(await getDeliveryWeeks());
 }

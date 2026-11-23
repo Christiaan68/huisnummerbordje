@@ -25,7 +25,10 @@ import { productColors } from "@/config/product-options";
 export function resolveFaqTokens(
   text: string,
   pricingData: PricingData,
-  contactEmail: string
+  contactEmail: string,
+  // Toegevoegd 23-11-2026: aantal weken uit de beheertool (menu "Verwachte
+  // levertijd"), voor "{{levertijd-weken}}" — zie lib/shop-texts.ts.
+  deliveryWeeks: string
 ): string {
   return text.replace(/\{\{([a-z0-9-]+)\}\}/g, (match, token: string) => {
     switch (token) {
@@ -41,6 +44,8 @@ export function resolveFaqTokens(
         return verzendVoorbeeld(pricingData);
       case "contact-email":
         return contactEmail;
+      case "levertijd-weken":
+        return deliveryWeeks;
       default:
         // Onbekend/verwijderd token — laat de tekst ongemoeid staan i.p.v.
         // te crashen; een verkeerd getypt token in de beheertool valt zo
