@@ -813,7 +813,7 @@ export function ProductPreview() {
           )}
         </dl>
 
-        <div className="mt-4 flex items-center justify-between rounded-sm border border-border/60 bg-card px-4 py-3">
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-sm border border-border/60 bg-card px-3 py-3 lg:px-4">
           <span className="text-xs uppercase tracking-widest text-muted-foreground">
             Totaalprijs
           </span>
