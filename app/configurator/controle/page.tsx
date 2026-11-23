@@ -12,6 +12,8 @@ import { useTopBarAction } from "@/lib/configuration/TopBarActionContext";
 import { getVisibleSteps } from "@/lib/configuration/steps";
 import { productShapes } from "@/config/product-options";
 import { isEarsShape } from "@/lib/configuration/shape-helpers";
+import { usePricingData } from "@/lib/configuration/PricingDataContext";
+import { calculatePrice } from "@/lib/configuration/pricing";
 import type { CreateConfigurationInput } from "@/types/configuration";
 import type { ContactDetails } from "@/lib/validation/contact.schema";
 
@@ -20,6 +22,7 @@ type Stage = "summary" | "contact";
 export default function ControlePage() {
   const router = useRouter();
   const { selection } = useConfigurator();
+  const pricingData = usePricingData();
 
   // De stap vóór "Controle" — voor de 4 oorspronkelijke vormen is dat
   // "Opties", maar sinds 9-9-2026 (7 vormen) slaan de "oren"-vormen die stap
@@ -96,6 +99,17 @@ export default function ControlePage() {
     if (!isConfiguratieCompleet()) {
       setStatus("error");
       setMessage("Niet alle keuzes zijn compleet. Ga terug en vul ze aan.");
+      return;
+    }
+    // Besluit A3 (testrapport 22-11-2026): zonder bekende prijs ("Prijs op
+    // aanvraag") kan er niet afgerekend worden — dan niet door naar de
+    // gegevens/betaalstap, maar meteen het vraagformulier openen.
+    if (calculatePrice(selection, pricingData) === null) {
+      setStatus("notice");
+      setMessage(
+        "Voor dit bordje is de prijs op aanvraag. Stel je vraag, dan nemen we contact met je op."
+      );
+      setIsQuestionModalOpen(true);
       return;
     }
     setStatus("idle");

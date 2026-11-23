@@ -45,7 +45,9 @@ export const contactDetailsSchema = z.object({
     .trim()
     .min(1, "Vul het aantal in.")
     .max(2, "Maximaal 2 cijfers.")
-    .regex(/^[0-9]+$/, "Alleen cijfers toegestaan."),
+    .regex(/^[0-9]+$/, "Alleen cijfers toegestaan.")
+    // Besluit A1 (testrapport 22-11-2026): 1 tot en met 10 stuks.
+    .refine((v) => Number(v) >= 1 && Number(v) <= 10, "Kies een aantal van 1 tot en met 10."),
 });
 
 export type ContactDetails = z.infer<typeof contactDetailsSchema>;

@@ -7,6 +7,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { contactDetailsSchema, type ContactDetails } from "@/lib/validation/contact.schema";
 import { PaymentMethodIcons } from "@/components/layout/PaymentMethodIcons";
 import { cn } from "@/lib/utils";
+import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
+import { usePricingData } from "@/lib/configuration/PricingDataContext";
+import {
+  calculatePrice,
+  formatPriceCents,
+  totalCentsForQuantity,
+  MAX_QUANTITY,
+} from "@/lib/configuration/pricing";
 
 // Nederlandse postcode: 4 cijfers (niet beginnend met 0) + 2 letters, met of
 // zonder spatie/hoofdletters — zelfde formaat als contactDetailsSchema
@@ -84,6 +92,19 @@ export function ContactDetailsForm({
   // terwijl de losse vakjes (rode rand + foutmelding) exact hetzelfde
   // gedrag houden als voorheen.
   const watchedValues = watch();
+
+  // Totaal voor het gekozen aantal (besluit A1, testrapport 22-11-2026):
+  // bordprijs × aantal, verzendkosten één keer. Zelfde berekening als de
+  // server (app/api/create-payment/route.ts), zodat het bedrag hier gelijk
+  // is aan het bedrag bij Mollie.
+  const { selection } = useConfigurator();
+  const pricingData = usePricingData();
+  const unitPrice = calculatePrice(selection, pricingData);
+  const quantityNumber = Number(watchedValues.quantity);
+  const quantityIsValid =
+    /^[0-9]+$/.test(watchedValues.quantity ?? "") &&
+    quantityNumber >= 1 &&
+    quantityNumber <= MAX_QUANTITY;
   const isFormComplete = contactDetailsSchema.safeParse(watchedValues).success;
   const canSubmit = isFormComplete && agreed && understandsHandmade;
 
@@ -374,6 +395,15 @@ export function ContactDetailsForm({
         />
         {errors.quantity && (
           <p className="mt-1 text-sm text-destructive">{errors.quantity.message}</p>
+        )}
+        {!errors.quantity && (
+          <p className="mt-1 text-sm text-muted-foreground">
+            {quantityIsValid && unitPrice
+              ? `Totaal voor ${quantityNumber} ${quantityNumber === 1 ? "stuk" : "stuks"}: ${formatPriceCents(
+                  totalCentsForQuantity(unitPrice, quantityNumber)
+                )} (verzendkosten ${formatPriceCents(unitPrice.shippingCostCents)} één keer).`
+              : `1 tot en met ${MAX_QUANTITY} stuks.`}
+          </p>
         )}
       </div>
 

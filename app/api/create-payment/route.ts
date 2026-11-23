@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createConfigurationSchema } from "@/lib/validation/configuration.schema";
 import { contactDetailsSchema } from "@/lib/validation/contact.schema";
-import { calculatePrice } from "@/lib/configuration/pricing";
+import { calculatePrice, totalCentsForQuantity } from "@/lib/configuration/pricing";
 import { getLivePricingData } from "@/lib/configuration/livePricing";
 import { saveOrderToDatabase } from "@/lib/mysql/client";
 import { buildOrderLabel } from "@/lib/configuration/orderLabel";
@@ -147,10 +147,11 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    priceTotalCentsForPayment = price.totalCents;
+    priceTotalCentsForPayment = totalCentsForQuantity(price, Number(contact.quantity));
 
     const priceFields = {
-      priceTotalCents: price.totalCents,
+      // Totaal voor het gekozen aantal (besluit A1, testrapport 22-11-2026).
+      priceTotalCents: priceTotalCentsForPayment,
       priceColorSurchargeCents: price.colorSurchargeCents,
       priceExtraCharsCents: price.extraCharsCents,
       priceExtraCharsCount: price.extraCharsCount,
@@ -266,10 +267,11 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    priceTotalCentsForPayment = price.totalCents;
+    priceTotalCentsForPayment = totalCentsForQuantity(price, Number(contact.quantity));
 
     const priceFields = {
-      priceTotalCents: price.totalCents,
+      // Totaal voor het gekozen aantal (besluit A1, testrapport 22-11-2026).
+      priceTotalCents: priceTotalCentsForPayment,
       priceColorSurchargeCents: price.colorSurchargeCents,
       priceExtraCharsCents: price.extraCharsCents,
       priceExtraCharsCount: price.extraCharsCount,

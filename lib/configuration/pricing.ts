@@ -195,3 +195,32 @@ export function formatPriceCents(cents: number): string {
     currency: "EUR",
   }).format(cents / 100);
 }
+
+/**
+ * Aantal bordjes per bestelling (testrapport 22-11-2026, besluit A1, optie b):
+ * de klant mag 1 tot en met MAX_QUANTITY stuks bestellen. De bordprijs
+ * (basisprijs + meerprijzen) telt per stuk; de verzendkosten tellen één keer
+ * per bestelling.
+ */
+export const MAX_QUANTITY = 10;
+
+export function totalCentsForQuantity(price: PriceBreakdown, quantity: number): number {
+  const q = Math.min(Math.max(Math.floor(quantity) || 1, 1), MAX_QUANTITY);
+  return (price.totalCents - price.shippingCostCents) * q + price.shippingCostCents;
+}
+
+/**
+ * Besluit A3 (testrapport 22-11-2026): heeft een vorm geen enkele maat met
+ * een bekende prijs, dan toont de configurator al bij de vormkeuze
+ * "Prijs op aanvraag". Zelfde regels als calculatePrice(): basisprijs > 0
+ * (vlak of gewelfd) én gekoppelde verzendkosten.
+ */
+export function shapeHasPrice(shapeId: string, pricingData: PricingData): boolean {
+  return pricingData.productSizes.some(
+    (s) =>
+      s.shapeId === shapeId &&
+      ((s.priceFlatCents ?? 0) > 0 || (s.priceCurvedCents ?? 0) > 0) &&
+      s.shippingCostCents !== null &&
+      s.shippingCostCents !== undefined
+  );
+}

@@ -5,9 +5,12 @@ import { HelpCircle } from "lucide-react";
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { productShapes } from "@/config/product-options";
 import { cn } from "@/lib/utils";
+import { usePricingData } from "@/lib/configuration/PricingDataContext";
+import { shapeHasPrice } from "@/lib/configuration/pricing";
 
 export function ShapeSelector() {
   const { selection, dispatch } = useConfigurator();
+  const pricingData = usePricingData();
 
   return (
     <div
@@ -59,6 +62,13 @@ export function ShapeSelector() {
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {shape.description}
               </p>
+              {/* Besluit A3 (testrapport 22-11-2026): geen bekende prijs
+                  voor deze vorm → al bij de vormkeuze melden. */}
+              {!shapeHasPrice(shape.id, pricingData) && (
+                <p className="mt-1 text-xs font-medium text-primary">
+                  Prijs op aanvraag
+                </p>
+              )}
             </div>
           </button>
         );
