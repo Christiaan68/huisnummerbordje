@@ -482,7 +482,7 @@ export function ProductPreview() {
         Live preview
       </p>
 
-      <div className="mx-auto w-full max-w-[260px]">
+      <div className="mx-auto w-full max-w-[180px] lg:max-w-[260px]">
         {/* Lichte "mat" rond ALLEEN het bordje zelf, bij de 3 "oren"-vormen
             (12-9-2026, feedback Christiaan: tegen het donkere thema van de
             site was nauwelijks te zien waar de preview begon, vooral bij
@@ -732,7 +732,9 @@ export function ProductPreview() {
         </div>
         </div>
 
-        <dl className="mt-5 space-y-1.5 text-xs">
+        {/* B2: op mobiel alleen bordje + totaalprijs (compact), de lijst
+            met keuzes staat daar al in de stappen zelf. */}
+        <dl className="mt-5 hidden space-y-1.5 text-xs lg:block">
           <div className="flex justify-between border-b border-border/60 pb-1.5">
             <dt className="text-muted-foreground">Vorm</dt>
             <dd className="text-foreground">{shape?.name ?? "—"}</dd>
@@ -837,6 +839,14 @@ export function ProductPreview() {
                 : "—"}
           </span>
         </div>
+        {/* B3 (testrapport 22-11-2026): laten zien dat de verzendkosten al
+            in de totaalprijs zitten. */}
+        {price && (
+          <p className="mt-1 text-center text-xs text-muted-foreground">
+            incl. {formatPriceCents(price.shippingCostCents)} verzending
+            {price.shippingCarrierName ? ` (${price.shippingCarrierName})` : ""}
+          </p>
+        )}
 
         {/* Subtiele disclaimer, op verzoek van Christiaan (9-9-2026, later
             diezelfde dag verplaatst naar hier — helemaal onder de prijs — in
@@ -846,7 +856,7 @@ export function ProductPreview() {
             gehouden, geen waarschuwing die de aandacht trekt. Zelfde tekst
             als in de klantbevestigingsmail, zie
             lib/email/templates/customer-confirmation.ts. */}
-        <p className="mt-3 text-center text-[10px] italic leading-snug text-muted-foreground/70">
+        <p className="mt-3 hidden text-center text-[10px] italic leading-snug text-muted-foreground/70 lg:block">
           Elk exemplaar wordt met de hand vervaardigd. Tijdens dit proces
           verfijnen onze makers uw ontwerp op basis van hun vakkennis en de
           mogelijkheden van het materiaal en gereedschap. Daarbij zorgen zij
@@ -860,7 +870,7 @@ export function ProductPreview() {
             (zie de toelichting daarboven). Zelfde punt staat uitgebreider in
             de FAQ (vraag "Wordt mijn bordje precies hetzelfde als de
             preview?"). */}
-        <p className="mt-1 text-center text-[10px] italic leading-snug text-muted-foreground/70">
+        <p className="mt-1 hidden text-center text-[10px] italic leading-snug text-muted-foreground/70 lg:block">
           Kleuren kunnen op een beeldscherm iets afwijken van het
           uiteindelijke product.
         </p>

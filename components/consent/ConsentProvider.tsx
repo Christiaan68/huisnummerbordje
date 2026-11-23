@@ -151,10 +151,11 @@ export function ConsentProvider({
   return (
     <ConsentContext.Provider value={value}>
       {children}
-      {/* Zie de toelichting hierboven: dit component staat altijd
-          gerenderd, Google Consent Mode regelt of er daadwerkelijk iets
-          gemeten/opgeslagen wordt. */}
-      <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />
+      {/* B9 (testrapport 22-11-2026): de Google Analytics-tag pas laden
+          NA toestemming voor analytische cookies — daarvoor gaat er niets
+          naar Google, ook geen cookieloze metingen. (Dit vervangt de
+          eerdere aanpak "altijd laden, Consent Mode regelt het".) */}
+      {status === "set" && analytics && <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />}
     </ConsentContext.Provider>
   );
 }

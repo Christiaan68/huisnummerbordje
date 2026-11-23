@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useReducer, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useReducer, useRef, type ReactNode } from "react";
 import {
   emptyConfiguratorSelection,
   type ConfiguratorSelection,
@@ -33,7 +33,8 @@ type Action =
   | { type: "SET_LINE2_FONT"; fontId: string }
   | { type: "SET_NUMBER_POSITION"; position: NumberPosition }
   | { type: "SET_HAS_FRAME"; hasFrame: boolean }
-  | { type: "RESET" };
+  | { type: "RESET" }
+  | { type: "RESTORE"; selection: ConfiguratorSelection };
 
 function reducer(
   state: ConfiguratorSelection,
@@ -131,7 +132,9 @@ function reducer(
     case "SET_SIZE":
       return { ...state, sizeId: action.sizeId };
     case "SET_TEXT":
-      return { ...state, customText: action.customText };
+      // B5 (testrapport 22-11-2026): spaties zijn in het huisnummer niet
+      // toegestaan en telden wel mee als (betaald) teken — dus weghalen.
+      return { ...state, customText: action.customText.replace(/\s+/g, "") };
     case "SET_EXTRA_LINE_1":
       return { ...state, extraLine1: action.value };
     case "SET_EXTRA_LINE_2":
@@ -148,10 +151,14 @@ function reducer(
       return { ...state, hasFrame: action.hasFrame };
     case "RESET":
       return emptyConfiguratorSelection;
+    case "RESTORE":
+      return action.selection;
     default:
       return state;
   }
 }
+
+export const CONFIGURATOR_STORAGE_KEY = "configurator-keuzes-v1";
 
 interface ConfiguratorContextValue {
   selection: ConfiguratorSelection;
@@ -164,6 +171,33 @@ const ConfiguratorContext = createContext<ConfiguratorContextValue | null>(
 
 export function ConfiguratorProvider({ children }: { children: ReactNode }) {
   const [selection, dispatch] = useReducer(reducer, emptyConfiguratorSelection);
+
+  // B1 (testrapport 22-11-2026): keuzes bewaren in de browser (sessionStorage,
+  // alleen dit tabblad), zodat verversen of wisselen van app op mobiel de
+  // configuratie niet meer wist. Eerst herstellen, pas daarna opslaan.
+  const restored = useRef(false);
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(CONFIGURATOR_STORAGE_KEY);
+      if (raw) {
+        const saved = { ...emptyConfiguratorSelection, ...JSON.parse(raw) };
+        if (!saved.shapeId || productShapes.some((s) => s.id === saved.shapeId)) {
+          dispatch({ type: "RESTORE", selection: saved });
+        }
+      }
+    } catch {
+      // Opslag niet beschikbaar of onleesbaar: gewoon leeg beginnen.
+    }
+    restored.current = true;
+  }, []);
+  useEffect(() => {
+    if (!restored.current) return;
+    try {
+      sessionStorage.setItem(CONFIGURATOR_STORAGE_KEY, JSON.stringify(selection));
+    } catch {
+      // Opslag niet beschikbaar: niet erg, alleen geen herstel na verversen.
+    }
+  }, [selection]);
 
   return (
     <ConfiguratorContext.Provider value={{ selection, dispatch }}>

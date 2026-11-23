@@ -73,7 +73,11 @@ export default async function ConfiguratorLayout({
               <ProgressIndicator />
               <div className="mt-10 grid grid-cols-1 gap-12 lg:grid-cols-[1fr_260px]">
                 <div>{children}</div>
-                <ProductPreview />
+                {/* B2 (testrapport 22-11-2026): op mobiel staat de preview
+                    boven de keuzes (order-first), op desktop rechts. */}
+                <div className="order-first lg:order-none">
+                  <ProductPreview />
+                </div>
               </div>
             </div>
           </div>

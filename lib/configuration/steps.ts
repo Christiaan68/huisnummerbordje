@@ -55,9 +55,17 @@ export const configuratorSteps: ConfiguratorStep[] = [
     isComplete: (s) => {
       const shape = productShapes.find((shape) => shape.id === s.shapeId);
       if (isEarsShape(shape)) {
-        return Boolean(s.earColorId) && Boolean(s.plateColorId);
+        return (
+          Boolean(s.earColorId) &&
+          Boolean(s.plateColorId) &&
+          s.earColorId !== s.plateColorId // B4: niet dezelfde kleur
+        );
       }
-      return Boolean(s.colorId) && Boolean(s.printColorId);
+      return (
+        Boolean(s.colorId) &&
+        Boolean(s.printColorId) &&
+        s.colorId !== s.printColorId // B4: niet dezelfde kleur
+      );
     },
     // Deze stap blijft voor ALLE vormen zichtbaar (ook "oren"-vormen) — enkel
     // het gedrag erbinnen verandert, niet de zichtbaarheid.

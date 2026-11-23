@@ -44,6 +44,7 @@ export function ContactDetailsForm({
     handleSubmit,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<ContactDetails>({
     resolver: zodResolver(contactDetailsSchema),
@@ -145,6 +146,13 @@ export function ContactDetailsForm({
   // de effect hieronder).
   const lastLookedUpKey = useRef<string | null>(null);
 
+  // B6 (testrapport 22-11-2026): de opzoekactie mag nooit straat/plaats
+  // overschrijven die de klant zelf heeft ingetypt. Daarom onthouden we wat
+  // de opzoekactie de vorige keer zelf heeft ingevuld: alleen DIE waarden
+  // (of lege velden) worden gewist of vervangen.
+  const streetRef = useRef("");
+  const autoFilled = useRef<{ street: string; city: string }>({ street: "", city: "" });
+
   const postalCodeValue = watch("postalCode");
 
   useEffect(() => {
@@ -169,8 +177,10 @@ export function ContactDetailsForm({
       // postcode een verouderd straat/plaats-resultaat van de eerdere
       // (foute) postcode zichtbaar staan, wat de indruk gaf dat het
       // corrigeren niet werkte (gemeld door een tester, 13-9-2026).
-      setStreet("");
-      setValue("city", "", { shouldValidate: false });
+      if (streetRef.current === autoFilled.current.street) setStreet("");
+      if (getValues("city") === autoFilled.current.city) {
+        setValue("city", "", { shouldValidate: false });
+      }
       try {
         const res = await fetch(
           `/api/postcode-lookup?postcode=${encodeURIComponent(normalizedPostcode)}`
@@ -183,8 +193,15 @@ export function ContactDetailsForm({
         // kunnen overschrijven.
         if (lastLookedUpKey.current !== key) return;
         if (data.found && data.street && data.city) {
-          setStreet(data.street);
-          setValue("city", data.city, { shouldValidate: false });
+          if (streetRef.current === "" || streetRef.current === autoFilled.current.street) {
+            setStreet(data.street);
+            autoFilled.current.street = data.street;
+          }
+          const currentCity = getValues("city");
+          if (currentCity === "" || currentCity === autoFilled.current.city) {
+            setValue("city", data.city, { shouldValidate: false });
+            autoFilled.current.city = data.city;
+          }
           setLookupStatus("found");
         } else {
           // Niet gevonden (onbekende postcode, opzoekdienst niet
@@ -207,6 +224,7 @@ export function ContactDetailsForm({
   // elke wijziging van één van beide (zowel handmatig getypt als
   // automatisch ingevuld via de opzoekactie hierboven).
   useEffect(() => {
+    streetRef.current = street;
     setValue("address", `${street} ${houseNumber}`.trim(), {
       shouldValidate: false,
     });

@@ -25,9 +25,15 @@ function ColorOptionGrid({
   colorSurchargeCents,
   ariaLabel,
   onSelect,
+  blockedId,
+  blockedNote,
 }: {
   colors: ProductColor[];
   selectedId: string | null;
+  // B4 (testrapport 22-11-2026): de kleur die al voor het andere deel
+  // gekozen is, kan hier niet gekozen worden (bv. zwart op zwart).
+  blockedId?: string | null;
+  blockedNote?: string;
   standardColorIds: string[];
   colorSurchargeCents: number;
   ariaLabel: string;
@@ -42,6 +48,7 @@ function ColorOptionGrid({
       {colors.map((color) => {
         const isSelected = selectedId === color.id;
         const isStandardColor = standardColorIds.includes(color.id);
+        const isBlocked = Boolean(blockedId) && blockedId === color.id;
 
         return (
           <button
@@ -49,8 +56,12 @@ function ColorOptionGrid({
             type="button"
             role="radio"
             aria-checked={isSelected}
+            disabled={isBlocked}
             onClick={() => onSelect(color.id)}
-            className="flex flex-col items-center gap-2"
+            className={cn(
+              "flex flex-col items-center gap-2",
+              isBlocked && "cursor-not-allowed opacity-40"
+            )}
           >
             <span
               className={cn(
@@ -79,9 +90,11 @@ function ColorOptionGrid({
                 </span>
               )}
               <span className="text-[11px] text-muted-foreground">
-                {isStandardColor
-                  ? "Standaardprijs"
-                  : `Meerprijs +${formatPriceCents(colorSurchargeCents)}`}
+                {isBlocked
+                  ? blockedNote
+                  : isStandardColor
+                    ? "Standaardprijs"
+                    : `Meerprijs +${formatPriceCents(colorSurchargeCents)}`}
               </span>
             </span>
           </button>
@@ -152,6 +165,8 @@ export function ColorSelector() {
           <ColorOptionGrid
             colors={earsColors}
             selectedId={selection.plateColorId}
+            blockedId={selection.earColorId}
+            blockedNote="Zelfde als opdruk"
             standardColorIds={globalPricingOptions.orenStandardColorIds}
             colorSurchargeCents={globalPricingOptions.colorSurchargeCents}
             ariaLabel="Kies een ondergrondkleur"
@@ -165,6 +180,8 @@ export function ColorSelector() {
           <ColorOptionGrid
             colors={earsColors}
             selectedId={selection.earColorId}
+            blockedId={selection.plateColorId}
+            blockedNote="Zelfde als ondergrond"
             standardColorIds={globalPricingOptions.orenStandardColorIds}
             colorSurchargeCents={globalPricingOptions.colorSurchargeCents}
             ariaLabel="Kies een opdrukkleur"
@@ -193,6 +210,8 @@ export function ColorSelector() {
         <ColorOptionGrid
           colors={productColors}
           selectedId={selection.colorId}
+          blockedId={selection.printColorId}
+          blockedNote="Zelfde als opdruk"
           standardColorIds={globalPricingOptions.standardColorIds}
           colorSurchargeCents={globalPricingOptions.colorSurchargeCents}
           ariaLabel="Kies een ondergrondkleur"
@@ -206,6 +225,8 @@ export function ColorSelector() {
         <ColorOptionGrid
           colors={productColors}
           selectedId={selection.printColorId}
+          blockedId={selection.colorId}
+          blockedNote="Zelfde als ondergrond"
           standardColorIds={globalPricingOptions.standardColorIds}
           colorSurchargeCents={globalPricingOptions.colorSurchargeCents}
           ariaLabel="Kies een opdrukkleur"

@@ -49,6 +49,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.9,
     },
+    // B11 (testrapport 22-11-2026): FAQ ontbrak in de sitemap.
+    {
+      url: `${SITE_URL}/faq`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
     {
       url: `${SITE_URL}/contact`,
       lastModified: now,

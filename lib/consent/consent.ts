@@ -91,10 +91,16 @@ export function writeConsentCookieClient(prefs: ConsentPreferences): void {
 export function clearGoogleAnalyticsCookies(): void {
   if (typeof document === "undefined" || typeof window === "undefined") return;
 
-  const hostname = window.location.hostname;
-  const hostParts = hostname.split(".");
-  const rootDomain =
-    hostParts.length > 1 ? `.${hostParts.slice(-2).join(".")}` : null;
+  // B10 (testrapport 22-11-2026): Google zet zijn cookies op het hoogste
+  // domein dat de browser toestaat — op een vercel.app-adres is dat de
+  // volledige hostnaam, op het eigen domein bv. ".emaillehuisnummerbord.nl".
+  // Daarom op elk mogelijk niveau verwijderen (van volledige hostnaam tot
+  // de laatste twee delen), anders bleven ze soms gewoon staan.
+  const hostParts = window.location.hostname.split(".");
+  const domains: string[] = [];
+  for (let i = 0; i <= hostParts.length - 2; i++) {
+    domains.push(hostParts.slice(i).join("."));
+  }
 
   document.cookie.split("; ").forEach((entry) => {
     const name = entry.split("=")[0]?.trim();
@@ -102,9 +108,9 @@ export function clearGoogleAnalyticsCookies(): void {
 
     // Zonder domain-attribuut (dekt cookies gezet op het exacte host).
     document.cookie = `${name}=; path=/; max-age=0`;
-    // Met domain-attribuut (dekt cookies gezet op het "kale" domein).
-    if (rootDomain) {
-      document.cookie = `${name}=; path=/; domain=${rootDomain}; max-age=0`;
+    // Met domain-attribuut, op elk niveau van de hostnaam.
+    for (const domain of domains) {
+      document.cookie = `${name}=; path=/; domain=.${domain}; max-age=0`;
     }
   });
 }
