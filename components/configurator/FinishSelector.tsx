@@ -28,7 +28,7 @@ const FINISH_OPTIONS: {
   {
     id: "vlak",
     label: "Facet",
-    description: "Een strak, plat emaille huisnummerbord.",
+    description: "Een strak, plat emaille huisnummerbord met facetranden.",
     imageSrc: "/images/afwerking-vlak.jpg",
   },
   {
