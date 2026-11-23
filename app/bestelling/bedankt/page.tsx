@@ -8,6 +8,8 @@ import { getOrderById } from "@/lib/mysql/client";
 import { formatEuroFromCents } from "@/lib/format/euro";
 import { ClearSavedConfiguration } from "@/components/order/ClearSavedConfiguration";
 import { getExpectedDeliveryText } from "@/lib/shop-texts";
+import { createMollie } from "@/lib/mollie/client";
+import { applyMolliePaymentStatusToOrder } from "@/lib/mollie/applyMolliePaymentStatus";
 
 export const metadata: Metadata = {
   title: "Bedankt voor je bestelling | Emaille Huisnummerborden",
@@ -32,7 +34,41 @@ export default async function BestellingBedanktPage({
   searchParams: { order?: string };
 }) {
   const orderId = searchParams.order ? Number(searchParams.order) : NaN;
-  const order = Number.isNaN(orderId) ? null : await getOrderById(orderId);
+  let order = Number.isNaN(orderId) ? null : await getOrderById(orderId);
+
+  // Status zelf bij Mollie navragen zolang de bestelling nog op "in
+  // behandeling" staat (23-11-2026, op verzoek van Christiaan): de melding
+  // van Mollie (webhook) kan later of soms niet binnenkomen, waardoor een
+  // mislukte, verlopen of geannuleerde betaling hier anders als "wordt
+  // verwerkt" bleef staan. Alleen die drie uitkomsten worden hier verwerkt;
+  // "betaald" blijft via de webhook lopen (die verstuurt ook de mails), zodat
+  // er nooit dubbele bevestigingsmails ontstaan.
+  if (
+    order &&
+    order.mollie_payment_id &&
+    order.payment_status !== "paid" &&
+    order.payment_status !== "failed" &&
+    order.payment_status !== "expired" &&
+    order.payment_status !== "canceled"
+  ) {
+    const pendingOrder = order;
+    try {
+      const payment = await createMollie().payments.get(order.mollie_payment_id);
+      if (
+        payment.status === "failed" ||
+        payment.status === "expired" ||
+        payment.status === "canceled"
+      ) {
+        await applyMolliePaymentStatusToOrder(pendingOrder, payment);
+        order = (await getOrderById(pendingOrder.id)) ?? pendingOrder;
+      }
+    } catch (err) {
+      console.error(
+        `Bedankpagina: status van order #${pendingOrder.id} kon niet bij Mollie worden opgevraagd:`,
+        err instanceof Error ? err.message : err
+      );
+    }
+  }
 
   let title: string;
   let message: string;
@@ -64,9 +100,14 @@ export default async function BestellingBedanktPage({
     order.payment_status === "expired" ||
     order.payment_status === "canceled"
   ) {
-    title = "Betaling niet gelukt";
+    title =
+      order.payment_status === "canceled"
+        ? "Betaling geannuleerd"
+        : order.payment_status === "expired"
+          ? "Betaling verlopen"
+          : "Betaling mislukt";
     message =
-      "De betaling is niet gelukt, verlopen of geannuleerd. Er is niets van je rekening afgeschreven. Je kunt het gerust opnieuw proberen door de configurator nog eens te doorlopen.";
+      "Je bestelling is nog niet betaald en er is niets van je rekening afgeschreven. Met \"Opnieuw betalen\" betaal je deze bestelling alsnog, zonder alles opnieuw in te vullen. Wil je iets aan je huisnummerbord veranderen, start dan een nieuwe bestelling.";
     // Hier klopt "opnieuw proberen" feitelijk ook niet helemaal (er wordt
     // een nieuwe configuratie/bestelling gestart, niet dezelfde betaling
     // opnieuw geprobeerd) — daarom ook hier de duidelijkere tekst.
@@ -173,7 +214,7 @@ export default async function BestellingBedanktPage({
             uitgelijnde knoppenrij (pas zodra het langer duurt), dus blijft
             deze rij dan bewust helemaal weg. */}
         {!showAutoRefresh && (
-          <div className="mt-10 flex flex-wrap gap-4">
+          <div className="mt-10 flex flex-wrap items-center gap-3">
             {/* B7: bij een mislukte/geannuleerde/verlopen betaling meteen
                 opnieuw kunnen betalen, zonder alles opnieuw in te vullen. */}
             {order && order.payment_status !== "paid" && (

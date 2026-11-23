@@ -135,22 +135,16 @@ export function PendingPaymentAutoRefresh(props: PendingPaymentAutoRefreshProps)
 
       {/* B7 (testrapport 22-11-2026): knop om een afgebroken betaling
           alsnog af te ronden, zie app/api/orders/[id]/resume-payment. */}
-      <div className="mt-6">
+      {/* Drie knoppen netjes naast elkaar (23-11-2026, op verzoek van
+          Christiaan): eerst de hoofdactie, dan de vraag, dan naar home. Op
+          een smal scherm lopen ze door naar een volgende regel. */}
+      <div className="mt-6 flex flex-wrap items-center gap-3">
         <a
           href={`/api/orders/${props.orderId}/resume-payment`}
           className="inline-flex items-center justify-center rounded-sm bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           Betaling afronden
         </a>
-      </div>
-
-      <div className="mt-6 flex max-w-md flex-wrap items-center justify-between gap-4">
-        <Link
-          href="/"
-          className="inline-flex items-center justify-center rounded-sm border border-border bg-secondary px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary/70"
-        >
-          Naar home
-        </Link>
         <PaymentIssueContact
           orderId={props.orderId}
           paymentStatusLabel="in behandeling"
@@ -172,6 +166,12 @@ export function PendingPaymentAutoRefresh(props: PendingPaymentAutoRefreshProps)
           extraLine2={props.extraLine2}
           priceLabel={props.priceLabel}
         />
+        <Link
+          href="/"
+          className="inline-flex items-center justify-center rounded-sm border border-border bg-secondary px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary/70"
+        >
+          Naar home
+        </Link>
       </div>
     </>
   );
