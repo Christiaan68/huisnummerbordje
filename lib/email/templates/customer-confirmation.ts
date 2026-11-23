@@ -1,4 +1,5 @@
 import { formatPriceCents } from "@/lib/configuration/pricing";
+import { getSiteUrl } from "@/lib/mollie/client";
 
 interface CustomerConfirmationData {
   // Het eigen bestelnummer van de webshop (bv. "#630002"), toegevoegd
@@ -95,6 +96,16 @@ export function renderCustomerConfirmationEmail(
     quantityNumber >= 1
       ? Math.round((data.priceTotalCents - data.shippingCostCents) / quantityNumber)
       : null;
+
+  // Links naar leveringsvoorwaarden en retourbeleid onderaan (23-11-2026).
+  // Lukt het bepalen van het site-adres niet, dan liever geen links dan een
+  // mail die niet verstuurd wordt.
+  let siteUrl = "";
+  try {
+    siteUrl = getSiteUrl();
+  } catch {
+    siteUrl = "";
+  }
 
   const row = (label: string, value: string) => `
     <tr>
@@ -283,6 +294,21 @@ export function renderCustomerConfirmationEmail(
                   </span>
                 </td>
               </tr>
+              ${
+                siteUrl
+                  ? `
+              <tr>
+                <td style="padding:0 32px 28px;border-top:1px solid #e5e0d5;">
+                  <span style="display:block;padding-top:16px;color:#9a9384;font-size:12px;line-height:1.6;">
+                    <a href="${siteUrl}/leveringsvoorwaarden" style="color:#6b6558;text-decoration:underline;">Leveringsvoorwaarden</a>
+                    &nbsp;·&nbsp;
+                    <a href="${siteUrl}/retourneren-reclameren" style="color:#6b6558;text-decoration:underline;">Retourbeleid</a>
+                  </span>
+                </td>
+              </tr>
+              `
+                  : ""
+              }
             </table>
           </td>
         </tr>

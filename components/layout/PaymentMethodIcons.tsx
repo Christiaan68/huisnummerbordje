@@ -42,7 +42,7 @@ import { cn } from "@/lib/utils";
  *
  * Gebruikt op 2 plekken: in de footer (components/layout/Footer.tsx, op
  * elke pagina zichtbaar als algemene geruststelling) en vlak boven de
- * "Doorgaan naar betalen"-knop (components/configurator/
+ * "Bestel en betaal"-knop (components/configurator/
  * ContactDetailsForm.tsx, op het moment dat het er echt toe doet). De rij
  * icoontjes "wrapt" vanzelf naar een 2e regel op een smal scherm
  * (`flex-wrap`), dus geen aparte aanpak nodig voor telefoon/tablet t.o.v.

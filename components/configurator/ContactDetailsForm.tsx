@@ -54,7 +54,7 @@ export function ContactDetailsForm({
     // gedrag bestond niet eerder en moet ook niet ontstaan (Christiaan,
     // 29-8-2026: "dat moet niet en dat moet zo blijven als het was"). De
     // losse vakjes valideren dus nog steeds zoals altijd: pas na een eerste
-    // klik op "Doorgaan naar betalen", en daarna live. Zie canSubmit
+    // klik op "Bestel en betaal", en daarna live. Zie canSubmit
     // hieronder voor hoe de knop wél live meekleurt, zonder dat gedrag aan
     // te raken.
     defaultValues: {
@@ -85,7 +85,7 @@ export function ContactDetailsForm({
   const [understandsHandmade, setUnderstandsHandmade] = useState(false);
   const [understandsError, setUnderstandsError] = useState(false);
 
-  // Voor de kleur van de "Doorgaan naar betalen"-knop (zie canSubmit
+  // Voor de kleur van de "Bestel en betaal"-knop (zie canSubmit
   // hieronder) wordt HIER, los van react-hook-form's eigen foutmeldingen-
   // systeem, apart en stil gecontroleerd of het formulier al compleet is —
   // met dezelfde `contactDetailsSchema` als de echte validatie, maar zonder
@@ -541,7 +541,7 @@ export function ContactDetailsForm({
             canSubmit ? "bg-primary hover:bg-primary/90" : "bg-primary/40 hover:bg-primary/50"
           )}
         >
-          {isSubmitting ? "Bezig..." : "Doorgaan naar betalen"}
+          {isSubmitting ? "Bezig..." : "Bestel en betaal"}
         </button>
       </div>
     </form>

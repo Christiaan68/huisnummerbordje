@@ -37,7 +37,7 @@ export default function LeveringsvoorwaardenPage() {
           Leveringsvoorwaarden
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Versie: augustus 2026
+          Versie: november 2026
         </p>
         <p className="mt-4 text-sm leading-relaxed text-foreground">
           Deze leveringsvoorwaarden zijn van toepassing op bestellingen via
@@ -127,8 +127,9 @@ export default function LeveringsvoorwaardenPage() {
           <ol className="mt-3 list-decimal space-y-3 pl-5 text-sm leading-relaxed text-foreground">
             <li>
               De overeenkomst komt tot stand nadat de klant de bestelling
-              heeft geplaatst en verkoper de bestelling elektronisch heeft
-              bevestigd, tenzij uitdrukkelijk anders wordt aangegeven.
+              heeft geplaatst en betaald en de verkoper de bestelling
+              elektronisch heeft bevestigd, tenzij uitdrukkelijk anders wordt
+              aangegeven.
             </li>
             <li>
               Verkoper verstrekt na het plaatsen van de bestelling een

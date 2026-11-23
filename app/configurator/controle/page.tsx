@@ -53,7 +53,7 @@ export default function ControlePage() {
   // belandt, maar dit is een extra, browser-onafhankelijk vangnet: mocht
   // deze pagina toch ooit uit een cache worden getoond (event.persisted),
   // dan forceren we een volledig verse herlaadbeurt — zodat een klant die
-  // na het betalen teruggaat nooit een oude "Doorgaan naar betalen"-knop in
+  // na het betalen teruggaat nooit een oude "Bestel en betaal"-knop in
   // een halfklaar-lijkende toestand te zien krijgt.
   useEffect(() => {
     function handlePageShow(event: PageTransitionEvent) {
@@ -121,7 +121,7 @@ export default function ControlePage() {
   // (zie lib/configuration/TopBarActionContext.tsx), zodat die ook bovenaan
   // getoond wordt — alleen zolang deze pagina op de "summary"-stage staat;
   // bij "Jouw gegevens" (stage "contact") heeft het eigen formulier al zijn
-  // eigen "Doorgaan naar betalen"-knop onderaan, daar tonen we bovenaan geen
+  // eigen "Bestel en betaal"-knop onderaan, daar tonen we bovenaan geen
   // dubbele knop.
   useEffect(() => {
     if (stage !== "summary") {
