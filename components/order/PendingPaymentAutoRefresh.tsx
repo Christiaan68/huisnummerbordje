@@ -27,9 +27,6 @@ interface PendingPaymentAutoRefreshProps {
   extraLine1: string | null;
   extraLine2: string | null;
   priceLabel: string;
-  // B7: bij een nog openstaande betaling (knop "Betaling afronden") geen
-  // "je hoeft niets te doen"-tekst tonen.
-  showWaitingText?: boolean;
 }
 
 /**
@@ -129,14 +126,23 @@ export function PendingPaymentAutoRefresh(props: PendingPaymentAutoRefreshProps)
 
   return (
     <>
-      {props.showWaitingText !== false && (
       <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-        Duurt dit langer dan verwacht? Dat kan gebeuren als een betaalpoging
-        niet is gelukt, verlopen of geannuleerd is — dat wordt door de bank of
-        betaalmethode soms pas na een paar minuten definitief bevestigd. Je
-        hoeft niets te doen, we blijven het voor je checken.
+        Duurt dit langer dan verwacht? Misschien is je betaling nog niet
+        afgerond. Met de knop hieronder rond je hem alsnog af — er is nog
+        niets van je rekening afgeschreven. Heb je wel betaald, dan
+        verschijnt de bevestiging hier vanzelf.
       </p>
-      )}
+
+      {/* B7 (testrapport 22-11-2026): knop om een afgebroken betaling
+          alsnog af te ronden, zie app/api/orders/[id]/resume-payment. */}
+      <div className="mt-6">
+        <a
+          href={`/api/orders/${props.orderId}/resume-payment`}
+          className="inline-flex items-center justify-center rounded-sm bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          Betaling afronden
+        </a>
+      </div>
 
       <div className="mt-6 flex max-w-md flex-wrap items-center justify-between gap-4">
         <Link

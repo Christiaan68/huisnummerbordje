@@ -7,7 +7,6 @@ import { siteContent } from "@/config/site-content";
 import { getOrderById } from "@/lib/mysql/client";
 import { formatEuroFromCents } from "@/lib/format/euro";
 import { ClearSavedConfiguration } from "@/components/order/ClearSavedConfiguration";
-import { createMollie } from "@/lib/mollie/client";
 
 export const metadata: Metadata = {
   title: "Bedankt voor je bestelling | Emaille Huisnummerborden",
@@ -48,7 +47,6 @@ export default async function BestellingBedanktPage({
   // ten onrechte dat dit dé vervolgstap was.
   let showRestartButton = false;
   let restartLabel = "";
-  let checkoutUrl: string | null = null;
 
   if (!order) {
     title = "Bestelling niet gevonden";
@@ -73,15 +71,6 @@ export default async function BestellingBedanktPage({
     // opnieuw geprobeerd) — daarom ook hier de duidelijkere tekst.
     showRestartButton = true;
     restartLabel = "Nieuwe bestelling starten";
-  } else if (order.mollie_payment_id && (checkoutUrl = await getOpenCheckoutUrl(order.mollie_payment_id))) {
-    // B7 (testrapport 22-11-2026): de klant is van Mollie teruggekomen
-    // zonder de betaling af te ronden (Mollie meldt de betaling nog als
-    // "open"). Dan niet "wordt verwerkt" tonen, maar eerlijk zeggen dat er
-    // nog niet betaald is, met een knop om de betaling alsnog af te ronden.
-    title = "Betaling nog niet afgerond";
-    message =
-      "Je hebt de betaling nog niet afgerond. Er is niets van je rekening afgeschreven. Met de knop hieronder kun je de betaling alsnog afronden.";
-    showAutoRefresh = true;
   } else {
     title = "Betaling wordt verwerkt";
     // Oorspronkelijke, simpele tekst — de meeste betalingen zijn namelijk
@@ -122,16 +111,6 @@ export default async function BestellingBedanktPage({
 
         {order?.payment_status === "paid" && <ClearSavedConfiguration />}
 
-        {checkoutUrl && (
-          <div className="mt-6">
-            <a
-              href={checkoutUrl}
-              className="inline-flex items-center justify-center rounded-sm bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              Betaling afronden
-            </a>
-          </div>
-        )}
 
         {/* Ververst deze pagina om de 4 seconden vanzelf, zolang de
             betaling nog niet definitief bevestigd is — via React/
@@ -171,7 +150,6 @@ export default async function BestellingBedanktPage({
             extraLine1={order.extra_line_1}
             extraLine2={order.extra_line_2}
             priceLabel={formatEuroFromCents(order.price_total_cents)}
-            showWaitingText={!checkoutUrl}
           />
         )}
 
@@ -183,6 +161,16 @@ export default async function BestellingBedanktPage({
             deze rij dan bewust helemaal weg. */}
         {!showAutoRefresh && (
           <div className="mt-10 flex flex-wrap gap-4">
+            {/* B7: bij een mislukte/geannuleerde/verlopen betaling meteen
+                opnieuw kunnen betalen, zonder alles opnieuw in te vullen. */}
+            {order && order.payment_status !== "paid" && (
+              <a
+                href={`/api/orders/${order.id}/resume-payment`}
+                className="inline-flex items-center justify-center rounded-sm bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                Opnieuw betalen
+              </a>
+            )}
             {showRestartButton && (
               <Link
                 href="/configurator/vorm"
@@ -206,16 +194,3 @@ export default async function BestellingBedanktPage({
   );
 }
 
-/**
- * B7: de betaallink van een nog openstaande Mollie-betaling, of null (al
- * betaald/mislukt/verlopen, of Mollie niet bereikbaar).
- */
-async function getOpenCheckoutUrl(molliePaymentId: string): Promise<string | null> {
-  try {
-    const payment = await createMollie().payments.get(molliePaymentId);
-    if (payment.status !== "open") return null;
-    return payment._links.checkout?.href ?? null;
-  } catch {
-    return null;
-  }
-}

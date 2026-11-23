@@ -163,6 +163,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true });
   }
 
+  // B7 (testrapport 22-11-2026): via "Betaling afronden" kan een bestelling
+  // een nieuwe Mollie-betaling krijgen. Verloopt/mislukt daarna de OUDE
+  // betaling, dan mag die de bestelling niet meer op "verlopen" zetten.
+  if (order.mollie_payment_id && order.mollie_payment_id !== paymentId) {
+    return NextResponse.json({ received: true, ignored: "oude betaling" });
+  }
+
   if (
     payment.status === "failed" ||
     payment.status === "expired" ||
