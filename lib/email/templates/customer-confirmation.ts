@@ -61,6 +61,17 @@ interface CustomerConfirmationData {
   // zie lib/mollie/client.ts (getPaymentMethodLabel) en lib/formatDate.ts.
   paymentMethodName?: string;
   paidAt?: string;
+  // Toegevoegd 23-11-2026: tekst uit de beheertool (menu "Verwachte
+  // levertijd"), zie lib/shop-texts.ts.
+  expectedDeliveryText?: string;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 /**
@@ -126,6 +137,24 @@ export function renderCustomerConfirmationEmail(
                     <tr>
                       <td style="padding:14px 18px;color:#33512e;font-size:14px;line-height:1.5;">
                         <strong>Betaling ontvangen</strong> — via ${data.paymentMethodName}, op ${data.paidAt}.
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              `
+                  : ""
+              }
+              ${
+                data.expectedDeliveryText
+                  ? `
+              <tr>
+                <td style="padding:0 32px 8px;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f1ea;border:1px solid #e5e0d5;border-radius:6px;">
+                    <tr>
+                      <td style="padding:14px 18px;color:#1a1a1a;font-size:14px;line-height:1.5;">
+                        <strong>Verwachte levertijd</strong><br />
+                        ${escapeHtml(data.expectedDeliveryText).replace(/\n/g, "<br />")}
                       </td>
                     </tr>
                   </table>

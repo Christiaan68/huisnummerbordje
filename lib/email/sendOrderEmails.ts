@@ -6,6 +6,7 @@ import {
   translateShapeName,
 } from "@/lib/email/templates/configuration-confirmation";
 import { renderCustomerConfirmationEmail } from "@/lib/email/templates/customer-confirmation";
+import { getExpectedDeliveryText } from "@/lib/shop-texts";
 import { renderPlatePreviewPng } from "@/lib/email/plate-preview-image";
 import { computeAutoFit } from "@/lib/configuration/text-fit";
 import type { EarsStyle } from "@/lib/configuration/plate-visual";
@@ -340,6 +341,7 @@ export async function sendOrderEmails(
       ...priceFields,
       ...shippingNameFields,
       shippingCostCents: input.shippingCostCents ?? undefined,
+      expectedDeliveryText: await getExpectedDeliveryText(),
     });
 
     const { error: customerError } = await resend.emails.send({

@@ -7,6 +7,7 @@ import { siteContent } from "@/config/site-content";
 import { getOrderById } from "@/lib/mysql/client";
 import { formatEuroFromCents } from "@/lib/format/euro";
 import { ClearSavedConfiguration } from "@/components/order/ClearSavedConfiguration";
+import { getExpectedDeliveryText } from "@/lib/shop-texts";
 
 export const metadata: Metadata = {
   title: "Bedankt voor je bestelling | Emaille Huisnummerborden",
@@ -108,6 +109,18 @@ export default async function BestellingBedanktPage({
         <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
           {message}
         </p>
+
+        {/* Verwachte levertijd (toegevoegd 23-11-2026): tekst uit de
+            beheertool (menu "Verwachte levertijd"), alleen bij een
+            betaalde bestelling. */}
+        {order?.payment_status === "paid" && (
+          <div className="mt-6 max-w-md rounded-sm border border-border bg-secondary/60 px-4 py-3">
+            <p className="text-sm font-medium text-foreground">Verwachte levertijd</p>
+            <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+              {await getExpectedDeliveryText()}
+            </p>
+          </div>
+        )}
 
         {order?.payment_status === "paid" && <ClearSavedConfiguration />}
 
