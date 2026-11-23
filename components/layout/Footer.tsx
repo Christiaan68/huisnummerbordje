@@ -13,7 +13,7 @@ export function Footer() {
               overgang vóórdat het nieuwe tabblad opent — zie de
               toelichting in dat bestand voor hoe dit simpel terug te
               draaien is. */}
-          <LangcatTransitionLink className="underline underline-offset-4 hover:text-foreground">
+          <LangcatTransitionLink className="inline-block py-1 underline underline-offset-4 hover:text-foreground">
             Langcat Emaille
           </LangcatTransitionLink>
           .
@@ -30,19 +30,19 @@ export function Footer() {
               stijl als de overige links hieronder. */}
           <Link
             href="/faq"
-            className="underline underline-offset-4 hover:text-foreground"
+            className="inline-block py-1 underline underline-offset-4 hover:text-foreground"
           >
             Veelgestelde vragen
           </Link>
           <Link
             href="/leveringsvoorwaarden"
-            className="underline underline-offset-4 hover:text-foreground"
+            className="inline-block py-1 underline underline-offset-4 hover:text-foreground"
           >
             Leveringsvoorwaarden
           </Link>
           <Link
             href="/retourneren-reclameren"
-            className="underline underline-offset-4 hover:text-foreground"
+            className="inline-block py-1 underline underline-offset-4 hover:text-foreground"
           >
             Retourbeleid
           </Link>
@@ -52,17 +52,17 @@ export function Footer() {
               claude/project-tijdlijn.md). */}
           <Link
             href="/privacyverklaring"
-            className="underline underline-offset-4 hover:text-foreground"
+            className="inline-block py-1 underline underline-offset-4 hover:text-foreground"
           >
             Privacyverklaring
           </Link>
           <Link
             href="/cookiebeleid"
-            className="underline underline-offset-4 hover:text-foreground"
+            className="inline-block py-1 underline underline-offset-4 hover:text-foreground"
           >
             Cookiebeleid
           </Link>
-          <CookieSettingsButton className="underline underline-offset-4 hover:text-foreground" />
+          <CookieSettingsButton className="inline-block py-1 underline underline-offset-4 hover:text-foreground" />
         </div>
       </div>
 

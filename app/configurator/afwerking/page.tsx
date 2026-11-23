@@ -7,7 +7,7 @@ export default function AfwerkingPage() {
     <div>
       <StepHeader eyebrow="Configurator — stap 2 van 7" title="Afwerking" />
       <p className="mt-4 text-muted-foreground">
-        Kies of je een vlak of gewelfd emaille bordje wilt.
+        Kies of je een vlak of gewelfd emaille huisnummerbord wilt.
       </p>
 
       <div className="mt-8">

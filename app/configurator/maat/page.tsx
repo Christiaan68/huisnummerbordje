@@ -9,9 +9,6 @@ export default function MaatPage() {
      <p className="mt-4 text-muted-foreground">
         Kies de maat van jouw Huisnummerbord.
       </p>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Maten zijn weergegeven als hoogte × breedte. 
-      </p>
 
       <div className="mt-8">
         <SizeSelector />

@@ -1,7 +1,10 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useTopBarAction } from "@/lib/configuration/TopBarActionContext";
+import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
+import { getVisibleSteps } from "@/lib/configuration/steps";
 import { cn } from "@/lib/utils";
 
 interface StepHeaderProps {
@@ -31,12 +34,23 @@ interface StepHeaderProps {
  */
 export function StepHeader({ eyebrow, title }: StepHeaderProps) {
   const { action } = useTopBarAction();
+  const { selection } = useConfigurator();
+  const pathname = usePathname();
+
+  // C6 (testrapport 22-11-2026): het stapnummer klopt nu ook voor vormen
+  // met minder stappen (de "oren"-vormen hebben er 4 in plaats van 7).
+  const visibleSteps = getVisibleSteps(selection);
+  const stepIndex = visibleSteps.findIndex((step) => step.path === pathname);
+  const eyebrowText =
+    stepIndex >= 0 && eyebrow.startsWith("Configurator — stap")
+      ? `Configurator — stap ${stepIndex + 1} van ${visibleSteps.length}`
+      : eyebrow;
 
   return (
     <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
       <div>
         <p className="text-sm uppercase tracking-widest text-muted-foreground">
-          {eyebrow}
+          {eyebrowText}
         </p>
         <h1 className="mt-1 font-serif text-2xl text-primary">{title}</h1>
       </div>

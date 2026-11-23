@@ -41,7 +41,7 @@ export function NumberPositionToggle() {
   return (
     <div className="mt-6">
       <p className="mb-2 text-sm font-medium text-foreground">
-        Volgorde op het bordje
+        Volgorde op het huisnummerbord
       </p>
       <div className="flex flex-wrap items-center gap-4">
         <ol className="space-y-1 text-sm text-muted-foreground">

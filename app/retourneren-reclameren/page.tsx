@@ -102,7 +102,7 @@ export default function RetournerenReclamerenPage() {
                 dan je hebt besteld;
               </li>
               <li>je een andere uitvoering hebt ontvangen dan overeengekomen;</li>
-              <li>het bordje beschadigd bij je aankomt;</li>
+              <li>het huisnummerbord beschadigd bij je aankomt;</li>
               <li>er sprake is van een fabricagefout;</li>
               <li>het product om een andere reden niet aan de overeenkomst voldoet.</li>
             </ul>
@@ -125,19 +125,19 @@ export default function RetournerenReclamerenPage() {
           </h2>
           <div className="mt-3 space-y-3 text-sm leading-relaxed text-foreground">
             <p>
-              We maken het bordje aan de hand van de gegevens die je bij je
+              We maken het huisnummerbord aan de hand van de gegevens die je bij je
               bestelling aan ons doorgeeft.
             </p>
             <p>
               Heb je bijvoorbeeld per ongeluk huisnummer 18 ingevuld terwijl
-              dit 18A had moeten zijn, en hebben wij het bordje correct
+              dit 18A had moeten zijn, en hebben wij het huisnummerbord correct
               volgens jouw bestelling gemaakt? Dan is er geen sprake van een
               fout in het geleverde product.
             </p>
             <p>
               Neem in dat geval toch even contact met ons op. We kijken
               graag wat we voor je kunnen betekenen. Als er een nieuw
-              bordje moet worden gemaakt, kunnen daarvoor kosten in
+              huisnummerbord moet worden gemaakt, kunnen daarvoor kosten in
               rekening worden gebracht.
             </p>
           </div>

@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { computeAutoFit } from "@/lib/configuration/text-fit";
+import { computeAutoFit, visualCharCount } from "@/lib/configuration/text-fit";
 import { loadGoogleFont } from "@/lib/email/google-fonts";
 import {
   DEFAULT_LINE_GAP_RATIO,
@@ -251,9 +251,9 @@ export async function renderPlatePreviewPng(
   const fit = computeAutoFit({
     widthMm: fitWidthMm,
     heightMm: fitHeightMm,
-    numberChars: numberText.length,
-    line1Chars: hasLine1 ? (line1Text as string).length : null,
-    line2Chars: hasLine2 ? (line2Text as string).length : null,
+    numberChars: visualCharCount(numberText),
+    line1Chars: hasLine1 ? visualCharCount(line1Text as string) : null,
+    line2Chars: hasLine2 ? visualCharCount(line2Text as string) : null,
     minMarginXMm,
     minMarginYMm,
     // Kleinere basismarge voor de 3 "oren"-vormen, zie EARS_TEXT_MARGIN_RATIO

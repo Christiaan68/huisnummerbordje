@@ -42,7 +42,7 @@ export default function LeveringsvoorwaardenPage() {
         <p className="mt-4 text-sm leading-relaxed text-foreground">
           Deze leveringsvoorwaarden zijn van toepassing op bestellingen via
           de webshop van Huisnummerbord, onderdeel van Langcat Emaille,
-          gevestigd te Laag Soeren, ingeschreven bij de Kamer van Koophandel
+          gevestigd te Laag-Soeren, ingeschreven bij de Kamer van Koophandel
           onder nummer 98200194, hierna te noemen: &ldquo;verkoper&rdquo;.
         </p>
 

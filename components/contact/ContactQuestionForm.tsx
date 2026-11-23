@@ -249,7 +249,7 @@ export function ContactQuestionForm() {
               htmlFor="question-houseNumber"
               className="mb-1.5 block text-sm font-medium text-foreground"
             >
-              Huisnummer
+              Huisnummer <span className="text-muted-foreground">(optioneel)</span>
             </label>
             <input
               id="question-houseNumber"
@@ -268,7 +268,7 @@ export function ContactQuestionForm() {
               htmlFor="question-street"
               className="mb-1.5 block text-sm font-medium text-foreground"
             >
-              Straat
+              Straat <span className="text-muted-foreground">(optioneel)</span>
               {lookupStatus === "loading" && (
                 <span className="ml-2 text-xs font-normal text-muted-foreground">
                   bezig met opzoeken…
@@ -294,7 +294,7 @@ export function ContactQuestionForm() {
               htmlFor="question-city"
               className="mb-1.5 block text-sm font-medium text-foreground"
             >
-              Woonplaats
+              Woonplaats <span className="text-muted-foreground">(optioneel)</span>
             </label>
             <input
               id="question-city"

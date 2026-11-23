@@ -6,7 +6,7 @@ import { BackToTopButton } from "@/components/layout/BackToTopButton";
 import { companyInfo, siteContent } from "@/config/site-content";
 
 export const metadata: Metadata = {
-  title: "Privacyverklaring | Emaille Huisnummerbord",
+  title: "Privacyverklaring | Emaille Huisnummerborden",
   description: "Hoe Emaille Huisnummerbord omgaat met persoonsgegevens.",
 };
 
@@ -95,7 +95,7 @@ export default function PrivacyverklaringPage() {
             via de configurator een bestelling plaatst, verwerken we je
             naam, adres, postcode, woonplaats, e-mailadres, telefoonnummer
             (indien opgegeven), en de door jou gekozen configuratie van het
-            bordje (vorm, maat, kleur, lettertype, tekst en aantal).
+            huisnummerbord (vorm, maat, kleur, lettertype, tekst en aantal).
           </p>
           <p className="mt-3 text-sm leading-relaxed text-foreground">
             <span className="font-medium">Betaalgegevens.</span> Het
@@ -139,7 +139,7 @@ export default function PrivacyverklaringPage() {
             3. Waarvoor gebruiken wij deze gegevens?
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-foreground">
-            Om bestellingen te verwerken en te bevestigen, het bordje volgens
+            Om bestellingen te verwerken en te bevestigen, het huisnummerbord volgens
             jouw specificaties te (laten) vervaardigen en te verzenden,
             vragen te beantwoorden, en om de webshop technisch te laten
             werken en te beveiligen. Met jouw toestemming ook om de webshop

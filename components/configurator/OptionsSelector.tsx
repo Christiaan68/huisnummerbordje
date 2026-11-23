@@ -91,7 +91,7 @@ export function OptionsSelector() {
               Kaderrand
             </p>
             <p className="mt-0.5 min-h-[2rem] text-xs text-muted-foreground">
-              Een sierlijke rand langs de rand van het bordje.
+              Een sierlijke rand langs de rand van het huisnummerbord.
             </p>
             <p className="mt-1 text-xs font-medium text-foreground">
               + {formatPriceCents(frameSurchargeCents)}

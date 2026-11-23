@@ -56,6 +56,7 @@ function ColorOptionGrid({
             type="button"
             role="radio"
             aria-checked={isSelected}
+            aria-label={isBlocked ? `${color.name} (${blockedNote})` : color.name}
             disabled={isBlocked}
             onClick={() => onSelect(color.id)}
             className={cn(

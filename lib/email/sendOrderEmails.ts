@@ -230,7 +230,7 @@ export async function sendOrderEmails(
     ? [
         {
           content: previewImageBuffer,
-          filename: "voorbeeld-bordje.png",
+          filename: "voorbeeld-huisnummerbord.png",
           inlineContentId: PREVIEW_IMAGE_CID,
         },
       ]

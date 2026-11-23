@@ -37,6 +37,16 @@ export function ConsentPreferencesModal() {
     }
   }, [isPreferencesOpen, analytics]);
 
+  // C9 (testrapport 22-11-2026): Escape sluit het venster.
+  useEffect(() => {
+    if (!isPreferencesOpen) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") closePreferences();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isPreferencesOpen, closePreferences]);
+
   if (!isPreferencesOpen) return null;
 
   return (

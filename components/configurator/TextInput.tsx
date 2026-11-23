@@ -208,7 +208,12 @@ export function TextInput() {
             />
           )}
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">{numberHint}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {numberHint}
+          {/* C4 (testrapport 22-11-2026): laten zien dat het maximum bereikt
+              is, in plaats van stil af te kappen. */}
+          {selection.customText.length >= numberMaxLength && " Maximum bereikt."}
+        </p>
         {numberCheck && !numberCheck.success && (
           <p className="mt-1 text-sm text-destructive">
             {numberCheck.error.issues[0]?.message}
@@ -242,7 +247,10 @@ export function TextInput() {
               onSelect={(fontId) => dispatch({ type: "SET_LINE1_FONT", fontId })}
             />
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">Maximaal 20 tekens.</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {selection.extraLine1.length}/20 tekens
+            {selection.extraLine1.length >= 20 && " — maximum bereikt."}
+          </p>
           {line1Check && !line1Check.success && (
             <p className="mt-1 text-sm text-destructive">
               {line1Check.error.issues[0]?.message}
@@ -277,7 +285,10 @@ export function TextInput() {
               onSelect={(fontId) => dispatch({ type: "SET_LINE2_FONT", fontId })}
             />
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">Maximaal 20 tekens.</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {selection.extraLine2.length}/20 tekens
+            {selection.extraLine2.length >= 20 && " — maximum bereikt."}
+          </p>
           {line2Check && !line2Check.success && (
             <p className="mt-1 text-sm text-destructive">
               {line2Check.error.issues[0]?.message}

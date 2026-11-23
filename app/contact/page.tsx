@@ -56,8 +56,20 @@ export default function ContactPage() {
             {companyInfo.postalCode} {companyInfo.city}
           </p>
           <p>{companyInfo.country}</p>
-          <p className="mt-3">{companyInfo.phone}</p>
-          <p>{companyInfo.email}</p>
+          {/* C8 (testrapport 22-11-2026): telefoon en e-mail aanklikbaar. */}
+          <p className="mt-3">
+            <a
+              href={`tel:${companyInfo.phone.replace(/\(0\)/, "").replace(/[^+0-9]/g, "")}`}
+              className="underline-offset-4 hover:underline"
+            >
+              {companyInfo.phone}
+            </a>
+          </p>
+          <p>
+            <a href={`mailto:${companyInfo.email}`} className="underline-offset-4 hover:underline">
+              {companyInfo.email}
+            </a>
+          </p>
           <p className="mt-3 text-muted-foreground">
             KVK {companyInfo.kvkNumber}
           </p>

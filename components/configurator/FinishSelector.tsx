@@ -28,13 +28,13 @@ const FINISH_OPTIONS: {
   {
     id: "vlak",
     label: "Vlak",
-    description: "Een strak, plat emaille bordje.",
+    description: "Een strak, plat emaille huisnummerbord.",
     imageSrc: "/images/afwerking-vlak.jpg",
   },
   {
     id: "gewelfd",
     label: "Gewelfd",
-    description: "Een licht gebogen emaille bordje, met een klassieke uitstraling.",
+    description: "Een licht gebogen emaille huisnummerbord, met een klassieke uitstraling.",
     imageSrc: "/images/afwerking-gewelfd.jpg",
   },
 ];
@@ -125,6 +125,7 @@ export function FinishSelector() {
             type="button"
             role="radio"
             aria-checked={isSelected}
+            aria-label={option.label}
             onClick={() => dispatch({ type: "SET_FINISH", finish: option.id })}
             className={cn(
               // ring-inset (i.p.v. de gewone, naar buiten uitstekende ring):

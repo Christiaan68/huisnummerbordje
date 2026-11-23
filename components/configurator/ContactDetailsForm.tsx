@@ -93,6 +93,7 @@ export function ContactDetailsForm({
   // terwijl de losse vakjes (rode rand + foutmelding) exact hetzelfde
   // gedrag houden als voorheen.
   const watchedValues = watch();
+  const quantityField = register("quantity");
 
   // Totaal voor het gekozen aantal (besluit A1, testrapport 22-11-2026):
   // bordprijs × aantal, verzendkosten één keer. Zelfde berekening als de
@@ -408,7 +409,12 @@ export function ContactDetailsForm({
           type="text"
           inputMode="numeric"
           maxLength={2}
-          {...register("quantity")}
+          {...quantityField}
+          // C4 (testrapport 22-11-2026): alleen cijfers laten intypen.
+          onChange={(event) => {
+            event.target.value = event.target.value.replace(/\D/g, "");
+            quantityField.onChange(event);
+          }}
           className={cn(fieldClass(!!errors.quantity), "w-24")}
         />
         {errors.quantity && (

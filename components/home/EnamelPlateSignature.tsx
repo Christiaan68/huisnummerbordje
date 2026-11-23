@@ -12,7 +12,7 @@ export function EnamelPlateSignature() {
             "radial-gradient(circle, black 40%, rgba(0,0,0,0.5) 60%, transparent 78%)",
         }}
         role="img"
-        aria-label="Echt geëmailleerd huisnummerbordje, nummer 4, aan een gevel"
+        aria-label="Echt geëmailleerd huisnummerbord, nummer 4, aan een gevel"
       />
       <p className="mt-4 text-center text-xs uppercase tracking-widest text-muted-foreground">
         Echt emaille — gemaakt om jarenlang mee te gaan

@@ -230,3 +230,20 @@ export function computeAutoFit(input: AutoFitInput): AutoFitResult {
       : null,
   };
 }
+/**
+ * C5 (testrapport 22-11-2026): extra brede tekens (zoals W en M) nemen meer
+ * ruimte in dan het gemiddelde teken waar computeAutoFit mee rekent. Bij
+ * een regel vol brede letters stak de tekst daardoor buiten het bord. Deze
+ * telling weegt die tekens zwaarder; alle andere tekens tellen gewoon als 1,
+ * zodat gewone teksten precies even groot blijven als voorheen.
+ */
+const WIDE_CHAR_WEIGHT = 1.4;
+const WIDE_CHARS = new Set(["W", "M", "w", "m", "@", "%", "Æ", "Œ"]);
+
+export function visualCharCount(text: string): number {
+  let count = 0;
+  for (const char of text) {
+    count += WIDE_CHARS.has(char) ? WIDE_CHAR_WEIGHT : 1;
+  }
+  return count;
+}

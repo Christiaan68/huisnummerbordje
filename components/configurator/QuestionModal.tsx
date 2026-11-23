@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,6 +36,15 @@ function fieldClass(hasError: boolean) {
  * bestelling en heeft geen invloed op het bestelproces zelf.
  */
 export function QuestionModal({ onClose }: QuestionModalProps) {
+  // C9 (testrapport 22-11-2026): Escape sluit het venster.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   const router = useRouter();
   const { selection } = useConfigurator();
   const [status, setStatus] = useState<
@@ -136,10 +145,15 @@ export function QuestionModal({ onClose }: QuestionModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 px-4 py-8">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 px-4 py-8"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="question-modal-title"
+    >
       <div className="w-full max-w-lg rounded-sm border border-border bg-card p-6 shadow-lg sm:p-8">
         <div className="flex items-start justify-between gap-4">
-          <h2 className="font-serif text-xl text-primary">Vraag stellen</h2>
+          <h2 id="question-modal-title" className="font-serif text-xl text-primary">Vraag stellen</h2>
           <button
             type="button"
             onClick={onClose}

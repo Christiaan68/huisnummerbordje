@@ -27,6 +27,7 @@ export function ShapeSelector() {
             type="button"
             role="radio"
             aria-checked={isSelected}
+            aria-label={shape.name}
             onClick={() => dispatch({ type: "SET_SHAPE", shapeId: shape.id })}
             className={cn(
               "flex flex-col items-center gap-3 rounded-sm border bg-card px-3 py-4 text-left transition-colors",

@@ -107,7 +107,7 @@ export default function ControlePage() {
     if (calculatePrice(selection, pricingData) === null) {
       setStatus("notice");
       setMessage(
-        "Voor dit bordje is de prijs op aanvraag. Stel je vraag, dan nemen we contact met je op."
+        "Voor dit huisnummerbord is de prijs op aanvraag. Stel je vraag, dan nemen we contact met je op."
       );
       setIsQuestionModalOpen(true);
       return;

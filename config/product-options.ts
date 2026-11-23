@@ -102,7 +102,7 @@ export const productShapes: ProductShape[] = [
     name: "Huisnummer met 2 oren",
     slug: "oren-2-horizontaal",
     description:
-      "Huisnummerbord in jaren-30-stijl met bevestigingsogen links en rechts. Vaste maat 130 × 100 mm. Huisnummer: 1-4 cijfers, optioneel max. 3 letters.",
+      "Huisnummerbord in jaren-30-stijl met bevestigingsogen links en rechts. Vaste maat 100 × 130 mm (hoogte × breedte). Huisnummer: 1-4 cijfers, optioneel max. 3 letters.",
     extraLines: 0,
     availableFinishes: [],
     imageSrc: "/images/shapes/05 Bordje Huisnummer 2 oren.jpg",
@@ -119,7 +119,7 @@ export const productShapes: ProductShape[] = [
     name: "Huisnummer met 2 oren verticaal",
     slug: "oren-2-verticaal",
     description:
-      "Huisnummerbord in jaren-30-stijl met bevestigingsogen boven en onder. Vaste maat 100 × 130 mm. Huisnummer: 1-4 cijfers, optioneel max. 3 letters.",
+      "Huisnummerbord in jaren-30-stijl met bevestigingsogen boven en onder. Vaste maat 130 × 100 mm (hoogte × breedte). Huisnummer: 1-4 cijfers, optioneel max. 3 letters.",
     extraLines: 0,
     availableFinishes: [],
     imageSrc: "/images/shapes/06 Bordje Huisnummer 2 oren verticaal.jpg",
@@ -248,8 +248,8 @@ export const productSizes: ProductSize[] = [
   // lib/configuration/pricing.ts). Het veld staat hier toch consistent
   // ingevuld voor het type, en zodat een eventuele toekomstige verruiming
   // van de validatie niet per ongeluk een `undefined` tegenkomt.
-  { id: "oren-2-horizontaal-130x100", shapeId: "oren-2-horizontaal", name: "130 × 100 mm", width: 130, height: 100, unit: "mm", priceFlatCents: null, priceCurvedCents: null, defaultMaxChars: 7, active: true, createdAt: "" },
-  { id: "oren-2-verticaal-100x130", shapeId: "oren-2-verticaal", name: "100 × 130 mm", width: 100, height: 130, unit: "mm", priceFlatCents: null, priceCurvedCents: null, defaultMaxChars: 7, active: true, createdAt: "" },
+  { id: "oren-2-horizontaal-130x100", shapeId: "oren-2-horizontaal", name: "100 × 130 mm", width: 130, height: 100, unit: "mm", priceFlatCents: null, priceCurvedCents: null, defaultMaxChars: 7, active: true, createdAt: "" },
+  { id: "oren-2-verticaal-100x130", shapeId: "oren-2-verticaal", name: "130 × 100 mm", width: 100, height: 130, unit: "mm", priceFlatCents: null, priceCurvedCents: null, defaultMaxChars: 7, active: true, createdAt: "" },
   { id: "oren-4-hoeken-160x160", shapeId: "oren-4-hoeken", name: "160 × 160 mm", width: 160, height: 160, unit: "mm", priceFlatCents: null, priceCurvedCents: null, defaultMaxChars: 7, active: true, createdAt: "" },
 ];
 

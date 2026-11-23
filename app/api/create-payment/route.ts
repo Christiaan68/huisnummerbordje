@@ -110,7 +110,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Kies een geldige kleur voor zowel de oren als het vlak van dit bordje.",
+            "Kies een geldige kleur voor zowel de oren als het vlak van dit huisnummerbord.",
         },
         { status: 400 }
       );

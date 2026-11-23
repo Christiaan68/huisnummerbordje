@@ -141,9 +141,11 @@ export function calculatePrice(
       (printIsSurcharge ? globalPricingOptions.colorSurchargeCents : 0);
   }
 
+  // C4 (testrapport 22-11-2026): alleen letters en cijfers tellen mee, zodat
+  // de prijs niet verandert door tekens die toch niet toegestaan zijn.
   const extraCharsCount = Math.max(
     0,
-    selection.customText.length - size.defaultMaxChars
+    selection.customText.replace(/[^0-9A-Za-z]/g, "").length - size.defaultMaxChars
   );
   const extraCharsCents = extraCharsCount * globalPricingOptions.extraCharPriceCents;
 

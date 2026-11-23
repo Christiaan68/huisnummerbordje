@@ -11,7 +11,7 @@ import {
   productSizes as staticProductSizes,
 } from "@/config/product-options";
 import { isEarsShape, getEarsColorOptions } from "@/lib/configuration/shape-helpers";
-import { computeAutoFit } from "@/lib/configuration/text-fit";
+import { computeAutoFit, visualCharCount } from "@/lib/configuration/text-fit";
 import { calculatePrice, formatPriceCents } from "@/lib/configuration/pricing";
 import {
   DEFAULT_OVAL_RATIO,
@@ -283,9 +283,9 @@ export function ProductPreview() {
     const fit = computeAutoFit({
       widthMm: fitWidthMm,
       heightMm: fitHeightMm,
-      numberChars: numberText.length,
-      line1Chars: hasLine1 ? line1Text.length : null,
-      line2Chars: hasLine2 ? line2Text.length : null,
+      numberChars: visualCharCount(numberText),
+      line1Chars: hasLine1 ? visualCharCount(line1Text) : null,
+      line2Chars: hasLine2 ? visualCharCount(line2Text) : null,
       minMarginXMm,
       minMarginYMm,
       // Kleinere basismarge voor de 3 "oren"-vormen, zie

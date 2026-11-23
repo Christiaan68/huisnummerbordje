@@ -8,7 +8,7 @@ export default function OptiesPage() {
       <StepHeader eyebrow="Configurator — stap 6 van 7" title="Opties" />
       <p className="mt-4 text-muted-foreground">
         Voeg eventueel een sierlijke kaderrand toe langs de rand van je
-        bordje. Deze stap is optioneel — je kunt hem ook gewoon overslaan.
+        huisnummerbord. Deze stap is optioneel — je kunt hem ook gewoon overslaan.
       </p>
 
       <div className="mt-8">

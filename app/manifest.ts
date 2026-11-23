@@ -21,8 +21,8 @@ import type { MetadataRoute } from "next";
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Geëmailleerde Huisnummerbordjes",
-    short_name: "Huisnummerbordjes",
+    name: "Geëmailleerde Huisnummerborden",
+    short_name: "Huisnummerborden",
     start_url: "/",
     display: "browser",
     icons: [
