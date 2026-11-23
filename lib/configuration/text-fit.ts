@@ -33,6 +33,12 @@ export interface AutoFitInput {
   numberFontId?: string | null;
   line1FontId?: string | null;
   line2FontId?: string | null;
+  // 23-11-2026: gemeten tekstbreedtes in "em" (zie measureTextWidthEm in
+  // plate-visual.ts). Indien meegegeven, vervangen ze de schatting
+  // tekens × CHAR_WIDTH_RATIO — nauwkeuriger, ook bij brede letters (W).
+  numberWidthEm?: number;
+  line1WidthEm?: number | null;
+  line2WidthEm?: number | null;
 }
 
 export interface AutoFitResult {
@@ -190,19 +196,18 @@ export function computeAutoFit(input: AutoFitInput): AutoFitResult {
   const availableWidth = Math.max(widthMm - 2 * marginXMm, 10);
   const availableHeight = Math.max(heightMm - 2 * marginYMm, 10);
 
-  let numberSizeFromWidth =
-    availableWidth / (Math.max(numberChars, 1) * numberCharWidthRatio);
+  const numberEm =
+    input.numberWidthEm ?? Math.max(numberChars, 1) * numberCharWidthRatio;
+  let numberSizeFromWidth = availableWidth / Math.max(numberEm, 0.3);
 
   if (hasLine1 && line1Chars) {
-    const limit =
-      availableWidth /
-      (line1Chars * line1CharWidthRatio * LINE1_TO_NUMBER_RATIO);
+    const line1Em = input.line1WidthEm ?? line1Chars * line1CharWidthRatio;
+    const limit = availableWidth / (line1Em * LINE1_TO_NUMBER_RATIO);
     numberSizeFromWidth = Math.min(numberSizeFromWidth, limit);
   }
   if (hasLine2 && line2Chars) {
-    const limit =
-      availableWidth /
-      (line2Chars * line2CharWidthRatio * LINE2_TO_NUMBER_RATIO);
+    const line2Em = input.line2WidthEm ?? line2Chars * line2CharWidthRatio;
+    const limit = availableWidth / (line2Em * LINE2_TO_NUMBER_RATIO);
     numberSizeFromWidth = Math.min(numberSizeFromWidth, limit);
   }
 

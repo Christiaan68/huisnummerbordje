@@ -31,6 +31,7 @@ import {
   getOvalFrameBorderPath,
   getScrewClearanceMarginsMm,
   computeOvalNumberSizeMm,
+  measureTextWidthEm,
   getScrewPositions,
   getScrewRadiusMm,
   splitHouseNumberSegments,
@@ -297,6 +298,14 @@ export function ProductPreview() {
       numberFontId: autoFitNumberFontId,
       line1FontId: line1Font?.id,
       line2FontId: line2Font?.id,
+      // Gemeten tekstbreedtes (23-11-2026), niet voor de "oren"-vormen.
+      ...(earsShape
+        ? {}
+        : {
+            numberWidthEm: measureTextWidthEm(numberText, numberFont?.id, true),
+            line1WidthEm: hasLine1 ? measureTextWidthEm(line1Text, line1Font?.id) : null,
+            line2WidthEm: hasLine2 ? measureTextWidthEm(line2Text, line2Font?.id) : null,
+          }),
     });
     // pxPerMm zet mm-coördinaten (dezelfde schaal als het middenvlak/de
     // oren, plateWidth) om naar px — op basis van de WERKELIJK gerenderde

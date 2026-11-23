@@ -13,6 +13,7 @@ import {
   getOvalFrameBorderPath,
   getScrewClearanceMarginsMm,
   computeOvalNumberSizeMm,
+  measureTextWidthEm,
   getScrewPositions,
   getScrewRadiusMm,
   splitHouseNumberSegments,
@@ -263,6 +264,14 @@ export async function renderPlatePreviewPng(
     numberFontId: autoFitNumberFontId,
     line1FontId,
     line2FontId,
+    // Gemeten tekstbreedtes (23-11-2026), niet voor de "oren"-vormen.
+    ...(isEars
+      ? {}
+      : {
+          numberWidthEm: measureTextWidthEm(numberText, numberFontId, true),
+          line1WidthEm: hasLine1 ? measureTextWidthEm(line1Text as string, line1FontId) : null,
+          line2WidthEm: hasLine2 ? measureTextWidthEm(line2Text as string, line2FontId) : null,
+        }),
   });
 
   // Ovaal bord zonder extra regels: eigen berekening die het hele

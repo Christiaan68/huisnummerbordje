@@ -1040,15 +1040,73 @@ const FONT_BOX_BY_ID: Record<string, FontBox> = {
   colonel: { digit: 0.68, W: 1.0, M: 0.89, letter: 0.75, halfH: 0.38, overhang: 0.02 },
   times: { digit: 0.5, W: 1.0, M: 0.95, letter: 0.75, halfH: 0.35, overhang: 0.02 },
   "schwitserland-schmal": { digit: 0.51, W: 0.75, M: 0.77, letter: 0.6, halfH: 0.38, overhang: 0.02 },
-  "commercial-script": { digit: 0.58, W: 0.98, M: 1.0, letter: 0.85, halfH: 0.51, overhang: 0.12 },
+  "commercial-script": { digit: 0.58, W: 0.98, M: 1.0, letter: 0.85, halfH: 0.51, overhang: 0.2 },
 };
 const DEFAULT_FONT_BOX: FontBox = { digit: 0.62, W: 1.12, M: 1.0, letter: 0.85, halfH: 0.45, overhang: 0.05 };
 
-function charWidth(box: FontBox, char: string): number {
+// Breedte per teken (in 1/1000 van de lettergrootte), 23-11-2026 in de
+// browser gemeten met de echte webfonts, voor de tekens in MEASURED_CHARS.
+const MEASURED_CHARS =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,-'&/()";
+const CHAR_WIDTHS_BY_FONT: Record<string, string> = {
+  "bodoni": "801,710,725,770,644,619,769,806,431,545,780,631,915,783,775,686,775,755,605,699,740,801,1120,808,749,626,580,638,527,638,533,412,640,628,327,335,647,364,893,628,567,638,638,495,452,369,629,570,827,585,601,486,659,494,599,570,639,535,609,539,599,609,250,259,277,359,259,861,528,374,376",
+  "fette-fraktur": "686,708,527,632,593,499,719,601,519,548,706,569,921,671,794,633,789,703,720,616,687,602,877,677,657,593,450,428,383,411,388,271,474,436,229,234,347,271,659,454,422,460,430,396,438,283,478,458,630,408,477,379,505,359,535,501,480,481,466,481,467,459,244,247,245,415,169,520,684,274,298",
+  "colonel": "687,670,568,680,616,576,660,716,330,425,683,541,885,716,698,645,698,674,612,581,690,663,996,678,633,618,558,578,465,578,557,437,578,588,299,299,576,299,857,588,572,578,578,425,498,427,586,551,846,566,588,534,660,402,614,610,654,628,662,576,676,662,260,330,330,379,300,739,429,374,374",
+  "times": "722,667,722,722,667,611,778,778,389,500,778,667,944,722,778,611,778,722,556,667,722,722,1000,722,722,667,500,556,444,556,444,333,500,556,278,333,556,278,833,556,500,556,556,444,389,333,556,500,722,500,500,444,500,500,500,500,500,500,500,500,500,500,250,250,250,333,278,833,278,333,333",
+  "schwitserland-schmal": "597,561,570,565,491,476,585,614,270,490,553,479,758,612,604,568,604,553,540,542,571,578,750,560,542,530,471,495,460,496,479,328,503,492,252,245,478,252,742,492,498,495,497,331,454,307,492,449,633,452,445,452,505,505,505,505,505,505,505,505,505,505,230,291,245,361,162,579,332,323,324",
+  "commercial-script": "795,797,628,792,485,612,527,853,651,596,843,750,935,724,548,629,702,857,514,550,504,502,841,851,630,779,418,384,334,441,323,333,449,443,222,188,420,223,701,509,367,421,455,333,291,209,432,396,563,442,444,339,563,389,621,593,730,584,607,512,540,590,246,197,181,337,185,772,285,336,412",
+};
+const parsedWidths: Record<string, Map<string, number>> = {};
+function widthMapFor(fontId: string | null | undefined): Map<string, number> | null {
+  if (!fontId || !(fontId in CHAR_WIDTHS_BY_FONT)) return null;
+  if (!parsedWidths[fontId]) {
+    const values = CHAR_WIDTHS_BY_FONT[fontId].split(",").map(Number);
+    const map = new Map<string, number>();
+    Array.from(MEASURED_CHARS).forEach((ch, i) => map.set(ch, values[i] / 1000));
+    parsedWidths[fontId] = map;
+  }
+  return parsedWidths[fontId];
+}
+
+function charWidth(box: FontBox, char: string, map: Map<string, number> | null): number {
+  if (map) {
+    const direct = map.get(char);
+    if (direct !== undefined) return direct;
+    // é → e, Ü → U, enz.
+    const base = char.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const viaBase = map.get(base);
+    if (viaBase !== undefined) return viaBase;
+    // onbekend teken: ruim rekenen (zo breed als een W)
+    return map.get("W") ?? box.W;
+  }
   if (/[0-9]/.test(char)) return box.digit;
   if (char === "W" || char === "w") return box.W;
   if (char === "M" || char === "m") return box.M;
   return box.letter;
+}
+
+/**
+ * Breedte van een tekst in "em" (× lettergrootte = breedte), op basis van de
+ * gemeten tekenbreedtes per lettertype (23-11-2026). Bij het huisnummer
+ * (superscriptLetters) tellen letters als superscript mee
+ * (HOUSE_NUMBER_SUPERSCRIPT_RATIO), zoals ze ook getoond worden.
+ */
+export function measureTextWidthEm(
+  text: string,
+  fontId: string | null | undefined,
+  superscriptLetters = false
+): number {
+  const box = (fontId && FONT_BOX_BY_ID[fontId]) || DEFAULT_FONT_BOX;
+  const map = widthMapFor(fontId);
+  let width = box.overhang;
+  const segments = superscriptLetters
+    ? splitHouseNumberSegments(text)
+    : [{ text, isLetters: false }];
+  for (const seg of segments) {
+    const scale = superscriptLetters && seg.isLetters ? HOUSE_NUMBER_SUPERSCRIPT_RATIO : 1;
+    for (const ch of seg.text) width += charWidth(box, ch, map) * scale;
+  }
+  return width;
 }
 
 /**
@@ -1066,13 +1124,9 @@ export function computeOvalNumberSizeMm(
   fontId: string | null | undefined
 ): number {
   const box = (fontId && FONT_BOX_BY_ID[fontId]) || DEFAULT_FONT_BOX;
-  const segments = splitHouseNumberSegments(text || "12");
-  const hasDigits = segments.some((seg) => !seg.isLetters);
-  let widthFactor = box.overhang;
-  for (const seg of segments) {
-    const scale = seg.isLetters ? HOUSE_NUMBER_SUPERSCRIPT_RATIO : 1;
-    for (const ch of seg.text) widthFactor += charWidth(box, ch) * scale;
-  }
+  const shown = text || "12";
+  const hasDigits = /[0-9]/.test(shown);
+  const widthFactor = measureTextWidthEm(shown, fontId, true);
   const halfHFactor = box.halfH * (hasDigits ? 1 : HOUSE_NUMBER_SUPERSCRIPT_RATIO);
 
   const portrait = heightMm > widthMm;
