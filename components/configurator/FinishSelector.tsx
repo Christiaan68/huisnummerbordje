@@ -87,6 +87,10 @@ export function FinishSelector() {
   // — dan is er niets te kiezen, alleen te tonen.
   if (options.length === 1) {
     const only = options[0];
+    // C7 (testrapport 22-11-2026): bij de ovale vorm een foto van een ovaal
+    // bord, in plaats van de algemene foto van de afwerking.
+    const onlyImageSrc =
+      shape.id === "ovaal" ? "/images/afwerking-ovaal.jpg" : only.imageSrc;
     return (
       <div className="max-w-xs">
         <p className="mb-3 text-sm text-muted-foreground">
@@ -96,7 +100,7 @@ export function FinishSelector() {
         <div className="overflow-hidden rounded-sm border border-border bg-card">
           <div
             className="aspect-square w-full bg-secondary bg-contain bg-center bg-no-repeat"
-            style={{ backgroundImage: `url("${encodeURI(only.imageSrc)}")` }}
+            style={{ backgroundImage: `url("${encodeURI(onlyImageSrc)}")` }}
             aria-hidden="true"
           />
           <div className="px-4 py-3">
