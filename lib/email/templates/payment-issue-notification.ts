@@ -107,7 +107,7 @@ export function renderPaymentIssueNotificationEmail(data: PaymentIssueEmailData)
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                     ${row("Betaalstatus", data.paymentStatusLabel)}
                     ${row("Vorm", data.shapeName)}
-                    ${row("Afwerking", data.finish === "vlak" ? "Vlak" : "Gewelfd")}
+                    ${row("Afwerking", data.finish === "vlak" ? "Facet" : "Gewelfd")}
                     ${data.colorName ? row("Ondergrond kleur", data.colorName) : ""}
                     ${data.printColorName ? row("Opdruk kleur", data.printColorName) : ""}
                     ${data.plateColorName ? row("Ondergrond kleur", data.plateColorName) : ""}

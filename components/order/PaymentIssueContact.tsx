@@ -106,7 +106,7 @@ export function PaymentIssueContact(props: PaymentIssueContactProps) {
     ...(props.contactPhone ? ([["Telefoon", props.contactPhone]] as [string, string][]) : []),
     ["Adres", `${props.contactAddress}, ${props.contactPostalCode} ${props.contactCity}`],
     ["Vorm", props.shapeName],
-    ["Afwerking", props.finish === "vlak" ? "Vlak" : "Gewelfd"],
+    ["Afwerking", props.finish === "vlak" ? "Facet" : "Gewelfd"],
     ...(props.colorName ? ([["Ondergrond kleur", props.colorName]] as [string, string][]) : []),
     ...(props.printColorName
       ? ([["Opdruk kleur", props.printColorName]] as [string, string][])

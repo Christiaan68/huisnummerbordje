@@ -93,7 +93,7 @@ export function ConfigurationSummary() {
         label="Afwerking"
         value={
           selection.finish === "vlak"
-            ? "Vlak"
+            ? "Facet"
             : selection.finish === "gewelfd"
               ? "Gewelfd"
               : "—"

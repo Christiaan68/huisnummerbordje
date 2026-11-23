@@ -155,7 +155,7 @@ export function renderCustomerConfirmationEmail(
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                     ${data.orderNumber ? row("Bestelnummer", data.orderNumber) : ""}
                     ${row("Vorm", data.shapeName)}
-                    ${isEarsOrder ? "" : row("Afwerking", data.finish === "vlak" ? "Vlak" : "Gewelfd")}
+                    ${isEarsOrder ? "" : row("Afwerking", data.finish === "vlak" ? "Facet" : "Gewelfd")}
                     ${
                       isEarsOrder
                         ? row("Ondergrond kleur", data.plateColorName!) +

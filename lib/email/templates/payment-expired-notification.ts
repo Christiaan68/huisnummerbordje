@@ -126,7 +126,7 @@ export function renderPaymentExpiredEmail(data: PaymentExpiredEmailData): string
                 <td style="padding:12px 32px 24px;">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                     ${row("Vorm", data.shapeName)}
-                    ${isEarsOrder ? "" : row("Afwerking", data.finish === "vlak" ? "Vlak" : "Gewelfd")}
+                    ${isEarsOrder ? "" : row("Afwerking", data.finish === "vlak" ? "Facet" : "Gewelfd")}
                     ${
                       isEarsOrder
                         ? row("Ondergrond kleur", data.plateColorName!) +

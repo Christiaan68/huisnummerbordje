@@ -27,7 +27,7 @@ const FINISH_OPTIONS: {
 }[] = [
   {
     id: "vlak",
-    label: "Vlak",
+    label: "Facet",
     description: "Een strak, plat emaille huisnummerbord.",
     imageSrc: "/images/afwerking-vlak.jpg",
   },

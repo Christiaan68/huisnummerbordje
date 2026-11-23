@@ -110,7 +110,7 @@ const TRANSLATIONS = {
     labelOrderNumber: "Bestelnummer",
     labelShape: "Vorm",
     labelFinish: "Afwerking",
-    finishFlat: "Vlak",
+    finishFlat: "Facet",
     finishCurved: "Gewelfd",
     labelColor: "Kleur",
     // labelBaseColor/labelPrintColor (16-9-2026, op verzoek van Christiaan):
@@ -179,7 +179,7 @@ const TRANSLATIONS = {
     labelOrderNumber: "Bestellnummer",
     labelShape: "Form",
     labelFinish: "Ausführung",
-    finishFlat: "Flach",
+    finishFlat: "Facette",
     finishCurved: "Gewölbt",
     labelColor: "Farbe",
     // labelBaseColor/labelPrintColor: toegevoegd 16-9-2026, samen met de

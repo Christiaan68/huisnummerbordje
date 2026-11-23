@@ -742,7 +742,9 @@ export function ProductPreview() {
           {shape?.hasFinishChoice && (
             <div className="flex justify-between border-b border-border/60 pb-1.5">
               <dt className="text-muted-foreground">Afwerking</dt>
-              <dd className="capitalize text-foreground">{selection.finish ?? "—"}</dd>
+              <dd className="text-foreground">
+                {selection.finish === "vlak" ? "Facet" : selection.finish === "gewelfd" ? "Gewelfd" : "—"}
+              </dd>
             </div>
           )}
           {/* Alle vormen hebben sinds 16-9-2026 twee kleurkeuzes: eerst
