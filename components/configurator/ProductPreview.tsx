@@ -30,6 +30,7 @@ import {
   getFrameBorderPath,
   getOvalFrameBorderPath,
   getScrewClearanceMarginsMm,
+  computeOvalNumberSizeMm,
   getScrewPositions,
   getScrewRadiusMm,
   splitHouseNumberSegments,
@@ -303,7 +304,13 @@ export function ProductPreview() {
     // vaste aanname. Zo blijft de tekst altijd precies binnen het vlak
     // passen, ongeacht de daadwerkelijke schermbreedte.
     const pxPerMm = measuredPlateWidthPx / plateWidth;
-    numberFontSize = fit.numberSizeMm * pxPerMm;
+    // Ovaal bord zonder extra regels: eigen berekening die het hele
+    // letterbeeld binnen de kaderellips houdt, vrij van de inkepingen rond
+    // de schroefjes (23-11-2026) — zie computeOvalNumberSizeMm.
+    numberFontSize =
+      isOval && !earsShape && !hasLine1 && !hasLine2
+        ? computeOvalNumberSizeMm(plateWidth, plateHeight, numberText, numberFont?.id) * pxPerMm
+        : fit.numberSizeMm * pxPerMm;
     line1FontSize = fit.line1SizeMm ? fit.line1SizeMm * pxPerMm : line1FontSize;
     line2FontSize = fit.line2SizeMm ? fit.line2SizeMm * pxPerMm : line2FontSize;
   }

@@ -12,6 +12,7 @@ import {
   getFrameBorderPath,
   getOvalFrameBorderPath,
   getScrewClearanceMarginsMm,
+  computeOvalNumberSizeMm,
   getScrewPositions,
   getScrewRadiusMm,
   splitHouseNumberSegments,
@@ -264,7 +265,13 @@ export async function renderPlatePreviewPng(
     line2FontId,
   });
 
-  const numberSizePx = fit.numberSizeMm * pxPerMm;
+  // Ovaal bord zonder extra regels: eigen berekening die het hele
+  // letterbeeld binnen de kaderellips houdt (23-11-2026), zie
+  // computeOvalNumberSizeMm in plate-visual.ts — zelfde als de live preview.
+  const numberSizePx =
+    shapeKind === "oval" && !hasLine1 && !hasLine2
+      ? computeOvalNumberSizeMm(widthMm, heightMm, numberText, numberFontId) * pxPerMm
+      : fit.numberSizeMm * pxPerMm;
   const line1SizePx = fit.line1SizeMm ? fit.line1SizeMm * pxPerMm : 0;
   const line2SizePx = fit.line2SizeMm ? fit.line2SizeMm * pxPerMm : 0;
 

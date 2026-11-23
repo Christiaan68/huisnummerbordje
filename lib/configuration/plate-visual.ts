@@ -25,11 +25,8 @@
 // gaatje komt dichter bij de hoek, het kader blijft op zijn plek).
 export const SCREW_INSET_RATIO = 0.065;
 
-// Ovale vorm: schroefpositie als fractie vanaf het midden op de lange as
-// (zie getScrewPositions) — los van de rechthoekige logica hierboven, want
-// de ovale kaderlijn (getOvalFrameBorderPath) is een vaste ellips zonder
-// inkeping die niet automatisch meebeweegt met de schroefpositie.
-export const OVAL_SCREW_AXIS_RATIO = 0.44;
+// Ovale vorm: de schroefpositie staat sinds 23-11-2026 onderaan dit bestand
+// (getOvalScrewOffsetMm), samen met het ovale kader en de tekstgrootte.
 
 // Placeholder-verhouding (breedte/hoogte) voor een ovaal bordje zolang er
 // nog geen maat gekozen is — zie ProductPreview.tsx voor de toelichting.
@@ -81,14 +78,17 @@ export function getScrewPositions(
   heightMm: number
 ): [number, number][] {
   if (isOval) {
+    // 23-11-2026: schroefjes dicht bij de rand, vlak naast de kaderlijn —
+    // zoals op Christiaans foto van een echt ovaal bord ("Familie GRUL").
+    const off = getOvalScrewOffsetMm(widthMm, heightMm);
     return widthMm >= heightMm
       ? [
-          [0.5 - OVAL_SCREW_AXIS_RATIO, 0.5],
-          [0.5 + OVAL_SCREW_AXIS_RATIO, 0.5],
+          [off / widthMm, 0.5],
+          [1 - off / widthMm, 0.5],
         ]
       : [
-          [0.5, 0.5 - OVAL_SCREW_AXIS_RATIO],
-          [0.5, 0.5 + OVAL_SCREW_AXIS_RATIO],
+          [0.5, off / heightMm],
+          [0.5, 1 - off / heightMm],
         ];
   }
   return [
@@ -120,7 +120,7 @@ export function getScrewClearanceMarginsMm(
   if (isOval) {
     const longAxisIsWidth = widthMm >= heightMm;
     const axisMarginMm =
-      (longAxisIsWidth ? widthMm : heightMm) * (0.5 - OVAL_SCREW_AXIS_RATIO) +
+      getOvalScrewOffsetMm(widthMm, heightMm) +
       screwRadiusMm +
       SCREW_CLEARANCE_BUFFER_MM +
       frameExtraMm;
@@ -243,46 +243,46 @@ export function getFrameBorderPath(widthMm: number, heightMm: number): string {
 }
 
 /**
- * Bouwt het SVG-pad voor de kaderlijn van een OVAAL bordje (toegevoegd
- * 28-8-2026, n.a.v. een voorbeeldfoto van Christiaan van een ovaal bordje
- * "No 4" met een dunne ovale sierrand rond de gaatjes).
- *
- * In tegenstelling tot de rechthoekige kaderlijn hierboven is hier GEEN
- * inkeping bij de schroefjes nodig. Bij een ovaal bordje zitten de
- * schroefjes op OVAL_SCREW_AXIS_RATIO (28-8-2026: 44%, was 40%) van het
- * midden op de lange as (zie getScrewPositions) — dus op 88% van de
- * afstand tot de ware rand. Een kaderlijn die (met dezelfde
- * FRAME_EDGE_INSET_RATIO als bij de rechthoekige vorm) maar 3% van de
- * kortste zijde naar binnen ligt, blijft daar nog steeds buiten. Dit is
- * bij 44% opnieuw gecontroleerd voor alle 5 bestaande ovale maten
- * (105×150 t/m 220×300 mm): de marge tussen kaderlijn en schroefje is in
- * alle gevallen minimaal ~3,5 mm (bij de grootste maat ruim 6 mm) — dus
- * niet ertegenaan of eroverheen, maar wel merkbaar krapper dan bij de
- * oorspronkelijke 40%. Een gewone, gelijkmatig naar binnen geplaatste
- * ellips volstaat dus nog steeds — precies zoals op Christiaans foto, die
- * geen inkeping bij de gaatjes laat zien.
- *
- * De ellips wordt hier als SVG-pad (met twee boogsegmenten) opgebouwd in
- * plaats van als los <ellipse>-element, omdat het pad-formaat (met "A"-boog-
- * commando's) al bewezen goed werkt bij zowel de live preview
- * (ProductPreview.tsx, gewone SVG in de browser) als de e-mailafbeelding
- * (plate-preview-image.tsx, gerenderd via next/og / Satori) — zie
- * getFrameBorderPath hierboven, die op dezelfde manier werkt.
+ * Bouwt het SVG-pad voor de kaderlijn van een OVAAL bord. Sinds 23-11-2026
+ * (foto "Familie GRUL" van Christiaan) met een inkeping (halve cirkel naar
+ * binnen) rond elk schroefje, net als bij het rechthoekige kader. Zie
+ * getOvalFrameGeometry onderaan dit bestand.
  */
 export function getOvalFrameBorderPath(
   widthMm: number,
   heightMm: number
 ): string {
-  const fi = Math.min(widthMm, heightMm) * FRAME_EDGE_INSET_RATIO;
-  const cx = widthMm / 2;
-  const cy = heightMm / 2;
-  const rx = widthMm / 2 - fi;
-  const ry = heightMm / 2 - fi;
+  // 23-11-2026 (op verzoek van Christiaan, foto "Familie GRUL"): de ovale
+  // kaderlijn loopt vlak langs de rand en buigt bij elk schroefje met een
+  // halve cirkel naar binnen om het schroefje heen — net als de hoeken van
+  // het rechthoekige kader. Opgebouwd voor een liggend ovaal; bij een
+  // staand ovaal worden x en y verwisseld (spiegeling, dus de
+  // draairichting van de bogen keert om).
+  const portrait = heightMm > widthMm;
+  const W = portrait ? heightMm : widthMm;
+  const H = portrait ? widthMm : heightMm;
+  const g = getOvalFrameGeometry(W, H);
+  const { cx, cy, rx, ry, notchR, screwDx, t0 } = g;
+  const xs = rx * Math.cos(t0);
+  const ys = ry * Math.sin(t0);
+  const pLT: [number, number] = [cx - xs, cy - ys];
+  const pRT: [number, number] = [cx + xs, cy - ys];
+  const pRB: [number, number] = [cx + xs, cy + ys];
+  const pLB: [number, number] = [cx - xs, cy + ys];
+  // Gaat de inkeping verder dan een halve cirkel? (snijpunten liggen aan de
+  // buitenkant van het schroefje)
+  const notchLarge = xs > screwDx ? 1 : 0;
+
+  const pt = ([x, y]: [number, number]) => (portrait ? `${y} ${x}` : `${x} ${y}`);
+  const sw = (flag: number) => (portrait ? 1 - flag : flag);
+  const er = portrait ? `${ry} ${rx}` : `${rx} ${ry}`;
 
   return [
-    `M ${cx - rx} ${cy}`,
-    `A ${rx} ${ry} 0 1 0 ${cx + rx} ${cy}`,
-    `A ${rx} ${ry} 0 1 0 ${cx - rx} ${cy}`,
+    `M ${pt(pLT)}`,
+    `A ${er} 0 0 ${sw(1)} ${pt(pRT)}`,
+    `A ${notchR} ${notchR} 0 ${notchLarge} ${sw(0)} ${pt(pRB)}`,
+    `A ${er} 0 0 ${sw(1)} ${pt(pLB)}`,
+    `A ${notchR} ${notchR} 0 ${notchLarge} ${sw(0)} ${pt(pLT)}`,
     `Z`,
   ].join(" ");
 }
@@ -967,3 +967,133 @@ export const HOUSE_NUMBER_SUPERSCRIPT_RATIO = 0.62;
 // plate-preview-image.tsx) toont de letter(s) als superscript. Er stond
 // hier eerder ook een `formatHouseNumberHtml()`-helper (native <sup> in de
 // e-mail-HTML) — die is om diezelfde reden weer verwijderd.
+
+
+// ---------------------------------------------------------------------------
+// Ovaal bord: kader, schroefjes en tekstgrootte (23-11-2026, op verzoek van
+// Christiaan: kader zoals op de foto, tekst zo groot mogelijk met genoeg
+// ruimte tot het kader, en ook een rij brede letters (WWWWW) moet passen).
+// ---------------------------------------------------------------------------
+
+// Afstand van het schroefje (midden) tot de rand op de lange as, t.o.v.
+// min(breedte, hoogte). Iets meer dan de kaderlijn (FRAME_EDGE_INSET_RATIO
+// 0,03), zodat het schroefje net binnen de kaderlijn valt en de inkeping
+// er netjes omheen loopt.
+const OVAL_SCREW_OFFSET_RATIO = 0.036;
+// Straal van de inkeping rond het schroefje, als veelvoud van de schroefstraal.
+const OVAL_NOTCH_RADIUS_FACTOR = 2.1;
+// Vrije ruimte tussen tekst en kaderlijn (ook zonder kader aangehouden,
+// zodat de tekst met en zonder kader even groot is), t.o.v. min(b, h).
+const OVAL_TEXT_GAP_RATIO = 0.05;
+
+export function getOvalScrewOffsetMm(widthMm: number, heightMm: number): number {
+  return Math.min(widthMm, heightMm) * OVAL_SCREW_OFFSET_RATIO;
+}
+
+/** Geometrie van het ovale kader voor een LIGGEND ovaal (W ≥ H). */
+function getOvalFrameGeometry(W: number, H: number) {
+  const minDim = Math.min(W, H);
+  const fi = minDim * FRAME_EDGE_INSET_RATIO;
+  const cx = W / 2;
+  const cy = H / 2;
+  const rx = W / 2 - fi;
+  const ry = H / 2 - fi;
+  const screwR = getScrewRadiusMm(W, H);
+  const notchR = screwR * OVAL_NOTCH_RADIUS_FACTOR;
+  // afstand van het midden tot het schroefje, langs de lange as
+  const screwDx = W / 2 - getOvalScrewOffsetMm(W, H);
+  // Snijpunt kaderellips ↔ inkepingscirkel (rechter schroefje), via
+  // bisectie op de ellipshoek t (0 = rechter top van de ellips).
+  const dist = (t: number) => Math.hypot(rx * Math.cos(t) - screwDx, ry * Math.sin(t));
+  let lo = 0;
+  let hi = Math.PI / 2;
+  if (dist(lo) >= notchR) {
+    // inkeping raakt de kaderlijn niet (kan niet bij de huidige verhoudingen)
+    hi = 1e-6;
+  } else {
+    for (let i = 0; i < 60; i++) {
+      const mid = (lo + hi) / 2;
+      if (dist(mid) < notchR) lo = mid;
+      else hi = mid;
+    }
+  }
+  return { minDim, fi, cx, cy, rx, ry, notchR, screwDx, t0: hi };
+}
+
+// Gemeten letterbeelden (23-11-2026, in de browser gemeten met de echte
+// webfonts), als fractie van de lettergrootte:
+// - digit/W/M/letter: breedte per teken (letter = overige letters, ruim);
+// - halfH: halve hoogte van het letterbeeld t.o.v. het midden van de regel
+//   (incl. kleine verschuiving tussen regelmidden en letterbeeld);
+// - overhang: extra breedte die buiten de tekenbreedte uitsteekt (script).
+interface FontBox {
+  digit: number;
+  W: number;
+  M: number;
+  letter: number;
+  halfH: number;
+  overhang: number;
+}
+const FONT_BOX_BY_ID: Record<string, FontBox> = {
+  bodoni: { digit: 0.6, W: 1.12, M: 0.92, letter: 0.8, halfH: 0.44, overhang: 0.02 },
+  "fette-fraktur": { digit: 0.48, W: 0.88, M: 0.93, letter: 0.75, halfH: 0.41, overhang: 0.02 },
+  colonel: { digit: 0.68, W: 1.0, M: 0.89, letter: 0.75, halfH: 0.38, overhang: 0.02 },
+  times: { digit: 0.5, W: 1.0, M: 0.95, letter: 0.75, halfH: 0.35, overhang: 0.02 },
+  "schwitserland-schmal": { digit: 0.51, W: 0.75, M: 0.77, letter: 0.6, halfH: 0.38, overhang: 0.02 },
+  "commercial-script": { digit: 0.58, W: 0.98, M: 1.0, letter: 0.85, halfH: 0.51, overhang: 0.12 },
+};
+const DEFAULT_FONT_BOX: FontBox = { digit: 0.62, W: 1.12, M: 1.0, letter: 0.85, halfH: 0.45, overhang: 0.05 };
+
+function charWidth(box: FontBox, char: string): number {
+  if (/[0-9]/.test(char)) return box.digit;
+  if (char === "W" || char === "w") return box.W;
+  if (char === "M" || char === "m") return box.M;
+  return box.letter;
+}
+
+/**
+ * Lettergrootte (mm) van het huisnummer op een OVAAL bord, zo groot
+ * mogelijk zodat het hele letterbeeld (rechthoek om de tekst) binnen de
+ * kaderellips valt, met OVAL_TEXT_GAP_RATIO ruimte tot de kaderlijn en vrij
+ * van de inkepingen rond de schroefjes. Letters na/zonder cijfers worden
+ * als superscript (HOUSE_NUMBER_SUPERSCRIPT_RATIO) getoond en zo ook
+ * meegerekend. Wordt gebruikt door de live preview én de e-mailafbeelding.
+ */
+export function computeOvalNumberSizeMm(
+  widthMm: number,
+  heightMm: number,
+  text: string,
+  fontId: string | null | undefined
+): number {
+  const box = (fontId && FONT_BOX_BY_ID[fontId]) || DEFAULT_FONT_BOX;
+  const segments = splitHouseNumberSegments(text || "12");
+  const hasDigits = segments.some((seg) => !seg.isLetters);
+  let widthFactor = box.overhang;
+  for (const seg of segments) {
+    const scale = seg.isLetters ? HOUSE_NUMBER_SUPERSCRIPT_RATIO : 1;
+    for (const ch of seg.text) widthFactor += charWidth(box, ch) * scale;
+  }
+  const halfHFactor = box.halfH * (hasDigits ? 1 : HOUSE_NUMBER_SUPERSCRIPT_RATIO);
+
+  const portrait = heightMm > widthMm;
+  const W = portrait ? heightMm : widthMm;
+  const H = portrait ? widthMm : heightMm;
+  const geo = getOvalFrameGeometry(W, H);
+  const stroke = geo.minDim * FRAME_STROKE_WIDTH_RATIO;
+  const gap = geo.minDim * OVAL_TEXT_GAP_RATIO;
+  // vrije ellips binnen de kaderlijn
+  const a = geo.rx - stroke / 2 - gap; // lange as
+  const b = geo.ry - stroke / 2 - gap; // korte as
+  // vrij van de inkepingen: tot hier mag de tekst langs de lange as reiken
+  const notchLimit = geo.screwDx - geo.notchR - stroke / 2 - gap;
+
+  // Tekstrechthoek: halve breedte s·wf/2, halve hoogte s·hf. Bij een staand
+  // ovaal ligt de lange as verticaal.
+  const halfAlongLong = portrait ? halfHFactor : widthFactor / 2;
+  const halfAlongShort = portrait ? widthFactor / 2 : halfHFactor;
+  const sEllipse =
+    1 / Math.sqrt((halfAlongLong / a) ** 2 + (halfAlongShort / b) ** 2);
+  const sNotch = notchLimit / halfAlongLong;
+  const size = Math.min(sEllipse, sNotch);
+  return Math.max(5, Math.floor(size * 10) / 10);
+}
