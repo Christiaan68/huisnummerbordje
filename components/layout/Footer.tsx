@@ -46,6 +46,17 @@ export function Footer() {
           >
             Retourbeleid
           </Link>
+          {/* Europese melding "Wettelijke garantie" (pdf), toegevoegd
+              23-11-2026 op verzoek van Christiaan. Gewone <a>: het is een
+              bestand, geen pagina. */}
+          <a
+            href="/documenten/wettelijke-garantie.pdf"
+            target="_blank"
+            rel="noopener"
+            className="inline-block py-1 underline underline-offset-4 hover:text-foreground"
+          >
+            Wettelijke garantie
+          </a>
           {/* Privacyverklaring, Cookiebeleid en het heropenen van het
               cookie-voorkeurenscherm, toegevoegd 27-8-2026 in het kader
               van de AVG/cookie-aanpassing (zie

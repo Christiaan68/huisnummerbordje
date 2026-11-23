@@ -303,6 +303,8 @@ export function renderCustomerConfirmationEmail(
                     <a href="${siteUrl}/leveringsvoorwaarden" style="color:#6b6558;text-decoration:underline;">Leveringsvoorwaarden</a>
                     &nbsp;·&nbsp;
                     <a href="${siteUrl}/retourneren-reclameren" style="color:#6b6558;text-decoration:underline;">Retourbeleid</a>
+                    &nbsp;·&nbsp;
+                    <a href="${siteUrl}/documenten/wettelijke-garantie.pdf" style="color:#6b6558;text-decoration:underline;">Wettelijke garantie</a>
                   </span>
                 </td>
               </tr>
