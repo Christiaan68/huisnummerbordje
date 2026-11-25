@@ -89,8 +89,24 @@ export interface ProductSize {
   shippingCarrierName?: string | null;
   shippingTierName?: string | null;
   shippingCostCents?: number | null;
+  // Nieuwe prijsberekening (toegevoegd 25-11-2026, verbouwing
+  // prijsstructuur): per uitvoering de afgeronde bordprijs en de
+  // kleurmeerprijs per kleur-id, in centen incl. btw — kant-en-klaar
+  // berekend door de beheertool (lib/pricing.js daar). `null` voor een
+  // uitvoering = geen geldige prijs ("Prijs op aanvraag"). Ontbreekt dit veld
+  // helemaal, dan geldt de oude berekening (priceFlatCents/priceCurvedCents).
+  // Bevat nooit inkoopprijs, marge, kleurgroep of percentage.
+  sale?: {
+    vlak: SaleFinishPrices | null;
+    gewelfd: SaleFinishPrices | null;
+  } | null;
   active: boolean;
   createdAt: string;
+}
+
+export interface SaleFinishPrices {
+  boardCents: number;
+  colorSurchargeCentsByColorId: Record<string, number>;
 }
 
 export interface ProductFont {

@@ -36,6 +36,16 @@ export const configuratorSteps: ConfiguratorStep[] = [
     isComplete: (s) => Boolean(s.shapeId),
     visibleFor: () => true,
   },
+  // Volgorde sinds 25-11-2026 (verbouwing prijsstructuur): eerst vorm, dan
+  // maat, dan afwerking — daarna is het product-ID en de bordprijs bekend,
+  // en kan bij de kleurkeuze de juiste kleurmeerprijs getoond worden.
+  {
+    id: "maat",
+    path: "/configurator/maat",
+    label: "Maat",
+    isComplete: (s) => Boolean(s.sizeId),
+    visibleFor: (shape) => shape?.hasSizeChoice ?? true,
+  },
   {
     id: "afwerking",
     path: "/configurator/afwerking",
@@ -70,13 +80,6 @@ export const configuratorSteps: ConfiguratorStep[] = [
     // Deze stap blijft voor ALLE vormen zichtbaar (ook "oren"-vormen) — enkel
     // het gedrag erbinnen verandert, niet de zichtbaarheid.
     visibleFor: () => true,
-  },
-  {
-    id: "maat",
-    path: "/configurator/maat",
-    label: "Maat",
-    isComplete: (s) => Boolean(s.sizeId),
-    visibleFor: (shape) => shape?.hasSizeChoice ?? true,
   },
   {
     id: "tekst",

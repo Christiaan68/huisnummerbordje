@@ -1,5 +1,6 @@
 import type { ConfiguratorSelection } from "@/types/configuration";
-import type { PricingData } from "@/lib/configuration/livePricing";
+import type { PricingData, PricingModel } from "@/lib/configuration/livePricing";
+import type { ProductSize, PlateFinish, SaleFinishPrices } from "@/types/product";
 import { productShapes } from "@/config/product-options";
 import { isEarsShape } from "@/lib/configuration/shape-helpers";
 
@@ -22,9 +23,28 @@ import { isEarsShape } from "@/lib/configuration/shape-helpers";
  *   zelf, niet voor de optionele extra tekstregels (zo besloten door
  *   Christiaan op 2026-08-15).
  */
+// Eén kleurregel in de prijsopbouw (25-11-2026): elke gekozen kleur heeft
+// een eigen meerprijs (besluit B2). "ondergrond" = Ondergrond kleur (bij de
+// oren-vormen: plateColorId), "opdruk" = Opdruk kleur (bij de oren-vormen:
+// earColorId) — zelfde benaming als in de kleurkeuze.
+export interface ColorPriceLine {
+  role: "ondergrond" | "opdruk";
+  colorId: string;
+  cents: number;
+}
+
 export interface PriceBreakdown {
+  pricingModel: PricingModel;
+  // Bordprijs incl. btw (bij "inkoop": afgerond op € 0,50 door de beheertool).
   basePriceCents: number;
+  // Afwerking waarop de bordprijs gebaseerd is ("vlak" ook voor de
+  // oren-vormen, die alleen de facetkolom gebruiken — besluit B4).
+  finishForPrice: PlateFinish;
+  // Per gekozen kleur de meerprijs; colorSurchargeCents is het totaal.
+  colorLines: ColorPriceLine[];
   colorSurchargeCents: number;
+  // Meerprijs per extra karakter (incl. btw), voor "n × € x" in de opbouw.
+  extraCharUnitCents: number;
   extraCharsCount: number;
   extraCharsCents: number;
   frameSurchargeCents: number;
@@ -65,81 +85,76 @@ export function calculatePrice(
   // (enige) basisprijs van zo'n product invult, wordt hier bewust het eerst
   // ingevulde van de twee gebruikt (`priceFlatCents ?? priceCurvedCents`) —
   // zodat dit werkt ongeacht welk veld hij straks gebruikt.
-  const basePriceCents = earsShape
-    ? // Eerste echt ingevulde (> 0) van de twee; een 0 telt als "niet ingevuld"
-      // (zie de toelichting bij de controle hieronder).
-      size.priceFlatCents && size.priceFlatCents > 0
-      ? size.priceFlatCents
-      : size.priceCurvedCents
-    : selection.finish
-      ? selection.finish === "vlak"
+  // Afwerking waarop de prijs gebaseerd is: de oren-vormen hebben geen
+  // facet/gewelfd-keuze en gebruiken de facetkolom (besluit B4, 25-11-2026).
+  const finishForPrice: PlateFinish | null = earsShape ? "vlak" : selection.finish;
+
+  // De gekozen kleuren, elk met een eigen meerprijs (besluit B2).
+  const chosenColors: { role: ColorPriceLine["role"]; colorId: string }[] = [];
+  if (earsShape) {
+    if (selection.plateColorId) chosenColors.push({ role: "ondergrond", colorId: selection.plateColorId });
+    if (selection.earColorId) chosenColors.push({ role: "opdruk", colorId: selection.earColorId });
+  } else {
+    if (selection.colorId) chosenColors.push({ role: "ondergrond", colorId: selection.colorId });
+    if (selection.printColorId) chosenColors.push({ role: "opdruk", colorId: selection.printColorId });
+  }
+
+  let basePriceCents: number | null | undefined;
+  let colorLines: ColorPriceLine[];
+  const pricingModel = globalPricingOptions.pricingModel ?? "vast";
+
+  if (pricingModel === "inkoop") {
+    // NIEUWE BEREKENING (25-11-2026): bordprijs en kleurmeerprijs komen
+    // kant-en-klaar (afgerond, incl. btw) uit de beheertool — hier wordt
+    // alleen opgeteld, nooit opnieuw afgerond. Ontbreekt een bedrag, dan is
+    // er geen prijs ("Prijs op aanvraag"), nooit stilzwijgend € 0.
+    const sale = finishForPrice ? size.sale?.[finishForPrice] ?? null : null;
+    if (!sale) return null;
+    basePriceCents = sale.boardCents;
+    colorLines = [];
+    for (const c of chosenColors) {
+      const cents = sale.colorSurchargeCentsByColorId[c.colorId];
+      if (cents === undefined || cents === null) return null;
+      colorLines.push({ ...c, cents });
+    }
+  } else {
+    // OUDE BEREKENING (ongewijzigd): vaste bordprijs per afwerking.
+    // De 4 oorspronkelijke vormen hebben een aparte prijs per afwerking
+    // (vlak/gewelfd) — zonder gekozen afwerking nog geen prijs. De 3
+    // "oren"-vormen kennen geen vlak/gewelfd-onderscheid: het eerst
+    // ingevulde (> 0) van de twee prijsvelden wordt gebruikt.
+    basePriceCents = earsShape
+      ? size.priceFlatCents && size.priceFlatCents > 0
         ? size.priceFlatCents
         : size.priceCurvedCents
-      : null;
+      : selection.finish
+        ? selection.finish === "vlak"
+          ? size.priceFlatCents
+          : size.priceCurvedCents
+        : null;
+    // Vaste meerprijs per gekozen kleur die geen standaardkleur is.
+    const standardIds = earsShape
+      ? globalPricingOptions.orenStandardColorIds
+      : globalPricingOptions.standardColorIds;
+    colorLines = chosenColors.map((c) => ({
+      ...c,
+      cents: standardIds.includes(c.colorId) ? 0 : globalPricingOptions.colorSurchargeCents,
+    }));
+  }
 
-  // Nog geen basisprijs bekend (afwerking nog niet gekozen bij de
-  // bestaande vormen, óf — bij de "oren"-vormen — Christiaan heeft de
-  // basisprijs van dit product nog niet ingevuld in de prijsbeheeromgeving)
-  // → hetzelfde "prijs op aanvraag"-pad dat nu ook al bestaat voor bv.
-  // "ovaal" zonder vlakke prijs: gewoon nog geen prijs tonen.
-  //
-  // Toegevoegd 8-10-2026 (op verzoek van Christiaan): een basisprijs van 0 (of
-  // lager) in de prijslijst betekent "prijs nog niet bekend" en dus ook
-  // "prijs op aanvraag" — nooit een bordje van €0 waarbij alleen de
-  // verzendkosten overblijven. Dit geldt voor ALLE bordjes (ook de
-  // reservekopie-waarden), en alleen voor de BASISprijs: meerprijzen van
-  // opties (extra tekens, kleur, kader) mogen gewoon 0 zijn.
+  // Een basisprijs van 0 (of lager) of een onbekende basisprijs betekent
+  // "Prijs op aanvraag" (besluit 8-10-2026) — nooit een bordje van € 0.
+  // Meerprijzen van opties (extra tekens, kleur, kader) mogen wel 0 zijn.
   if (
     basePriceCents === null ||
     basePriceCents === undefined ||
-    basePriceCents <= 0
+    basePriceCents <= 0 ||
+    !finishForPrice
   ) {
     return null;
   }
 
-  let colorSurchargeCents: number;
-  if (earsShape) {
-    // "Oren"-vormen: 2 losse, verplichte kleuren (oren + vlak), uit de
-    // aparte lijst productColorsOren (config/product-options.ts) — de
-    // meerprijs geldt PER kleur die geen standaardkleur is (dus 0x, 1x of 2x
-    // colorSurchargeCents), tegen `orenStandardColorIds` in plaats van
-    // `standardColorIds`. Nog geen keuze gemaakt voor een kleurveld? Dan telt
-    // dat veld (nog) niet mee als meerprijskleur (zelfde aanpak als bij de
-    // bestaande, enkelvoudige kleurkeuze hieronder: geen kleur getoond, dus
-    // ook geen meerprijs getoond, die verschijnt vanzelf zodra er gekozen
-    // is).
-    const earIsSurcharge = Boolean(
-      selection.earColorId &&
-        !globalPricingOptions.orenStandardColorIds.includes(selection.earColorId)
-    );
-    const plateIsSurcharge = Boolean(
-      selection.plateColorId &&
-        !globalPricingOptions.orenStandardColorIds.includes(selection.plateColorId)
-    );
-    colorSurchargeCents =
-      (earIsSurcharge ? globalPricingOptions.colorSurchargeCents : 0) +
-      (plateIsSurcharge ? globalPricingOptions.colorSurchargeCents : 0);
-  } else {
-    // Vormen met colorMode "single" — sinds 16-9-2026 (op verzoek van
-    // Christiaan) TWEE losse kleurkeuzes ("Ondergrond kleur" = colorId,
-    // "Opdruk kleur" = printColorId) i.p.v. één — exact dezelfde opzet als
-    // de "oren"-vormen hierboven: de meerprijs geldt PER kleur die geen
-    // standaardkleur is (dus 0x, 1x of 2x colorSurchargeCents), tegen
-    // dezelfde `standardColorIds` voor beide (colorId en printColorId komen
-    // immers uit dezelfde lijst, productColors). Nog geen keuze gemaakt voor
-    // een kleurveld? Dan telt dat veld (nog) niet mee als meerprijskleur
-    // (die verschijnt vanzelf zodra de klant een kleur kiest).
-    const baseIsSurcharge = Boolean(
-      selection.colorId && !globalPricingOptions.standardColorIds.includes(selection.colorId)
-    );
-    const printIsSurcharge = Boolean(
-      selection.printColorId &&
-        !globalPricingOptions.standardColorIds.includes(selection.printColorId)
-    );
-    colorSurchargeCents =
-      (baseIsSurcharge ? globalPricingOptions.colorSurchargeCents : 0) +
-      (printIsSurcharge ? globalPricingOptions.colorSurchargeCents : 0);
-  }
+  const colorSurchargeCents = colorLines.reduce((sum, l) => sum + l.cents, 0);
 
   // C4 (testrapport 22-11-2026): alleen letters en cijfers tellen mee, zodat
   // de prijs niet verandert door tekens die toch niet toegestaan zijn.
@@ -179,8 +194,12 @@ export function calculatePrice(
     shippingCostCents;
 
   return {
+    pricingModel,
     basePriceCents,
+    finishForPrice,
+    colorLines,
     colorSurchargeCents,
+    extraCharUnitCents: globalPricingOptions.extraCharPriceCents,
     extraCharsCount,
     extraCharsCents,
     frameSurchargeCents,
@@ -218,11 +237,58 @@ export function totalCentsForQuantity(price: PriceBreakdown, quantity: number): 
  * (vlak of gewelfd) én gekoppelde verzendkosten.
  */
 export function shapeHasPrice(shapeId: string, pricingData: PricingData): boolean {
+  const inkoop = pricingData.globalPricingOptions.pricingModel === "inkoop";
   return pricingData.productSizes.some(
     (s) =>
       s.shapeId === shapeId &&
-      ((s.priceFlatCents ?? 0) > 0 || (s.priceCurvedCents ?? 0) > 0) &&
+      (inkoop
+        ? Boolean(s.sale?.vlak || s.sale?.gewelfd)
+        : (s.priceFlatCents ?? 0) > 0 || (s.priceCurvedCents ?? 0) > 0) &&
       s.shippingCostCents !== null &&
       s.shippingCostCents !== undefined
   );
+}
+
+/**
+ * Bordprijs (incl. btw) van één maat voor één afwerking, voor de weergave bij
+ * de maatkeuze (25-11-2026). null = geen prijs bekend.
+ */
+export function boardPriceCentsFor(
+  size: ProductSize,
+  finish: PlateFinish,
+  pricingData: PricingData
+): number | null {
+  if (pricingData.globalPricingOptions.pricingModel === "inkoop") {
+    return size.sale?.[finish]?.boardCents ?? null;
+  }
+  const cents = finish === "vlak" ? size.priceFlatCents : size.priceCurvedCents;
+  return cents && cents > 0 ? cents : null;
+}
+
+/**
+ * Meerprijs (incl. btw) van één kleur voor de huidige keuze van vorm, maat
+ * en afwerking — voor de weergave bij de kleurkeuze, vóór het kiezen
+ * (25-11-2026). Exact hetzelfde bedrag als calculatePrice() daarna toepast.
+ * null = (nog) niet te bepalen (maat of afwerking nog niet gekozen, of geen
+ * prijs bekend).
+ */
+export function colorSurchargeCentsFor(
+  selection: ConfiguratorSelection,
+  colorId: string,
+  pricingData: PricingData
+): number | null {
+  const { globalPricingOptions } = pricingData;
+  const shape = productShapes.find((s) => s.id === selection.shapeId);
+  const earsShape = isEarsShape(shape);
+  if (globalPricingOptions.pricingModel === "inkoop") {
+    const size = pricingData.productSizes.find((s) => s.id === selection.sizeId);
+    const finish: PlateFinish | null = earsShape ? "vlak" : selection.finish;
+    const sale: SaleFinishPrices | null | undefined = size && finish ? size.sale?.[finish] : null;
+    const cents = sale?.colorSurchargeCentsByColorId[colorId];
+    return cents === undefined || cents === null ? null : cents;
+  }
+  const standardIds = earsShape
+    ? globalPricingOptions.orenStandardColorIds
+    : globalPricingOptions.standardColorIds;
+  return standardIds.includes(colorId) ? 0 : globalPricingOptions.colorSurchargeCents;
 }

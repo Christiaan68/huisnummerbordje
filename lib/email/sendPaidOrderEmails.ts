@@ -1,3 +1,4 @@
+import { formatPriceCents } from "@/lib/configuration/pricing";
 import { getLivePricingData } from "@/lib/configuration/livePricing";
 import { getNotificationEmail } from "@/lib/email/settings";
 import { getShapeLanguage } from "@/lib/email/shapeLanguage";
@@ -44,6 +45,47 @@ export class OrderEmailBuildError extends Error {
     super(message);
     this.name = "OrderEmailBuildError";
   }
+}
+
+// Prijsopbouw per stuk (incl. btw) uit de OPGESLAGEN bedragen van de
+// bestelling (toegevoegd 25-11-2026) — nooit uit de actuele prijslijst, zodat
+// een latere prijswijziging een bevestigingsmail (ook een opnieuw verstuurde)
+// nooit verandert. Bestellingen van vóór 25-11-2026 hebben deze bedragen niet
+// → undefined, en de mail toont dan de bestaande opbouw.
+function storedPriceLines(
+  order: OrderRow,
+  earsShape: boolean,
+  colors: { ondergrond?: { name: string; ralCode?: string }; opdruk?: { name: string; ralCode?: string } }
+): { label: string; cents: number }[] | undefined {
+  if (order.price_board_cents === null || order.price_board_cents === undefined) return undefined;
+  const colorText = (c?: { name: string; ralCode?: string }) =>
+    c ? (c.ralCode ? `${c.name} – ${c.ralCode}` : c.name) : "";
+  const lines: { label: string; cents: number }[] = [
+    {
+      label: earsShape ? "Bord" : order.finish === "vlak" ? "Bord facet" : "Bord gewelfd",
+      cents: order.price_board_cents,
+    },
+  ];
+  if (order.price_color1_surcharge_cents != null) {
+    lines.push({ label: `Kleur ondergrond: ${colorText(colors.ondergrond)}`, cents: order.price_color1_surcharge_cents });
+  }
+  if (order.price_color2_surcharge_cents != null) {
+    lines.push({ label: `Kleur opdruk: ${colorText(colors.opdruk)}`, cents: order.price_color2_surcharge_cents });
+  }
+  if (order.price_extra_chars_count > 0) {
+    const unit = order.price_extra_char_unit_cents;
+    lines.push({
+      label:
+        unit != null
+          ? `Extra karakters: ${order.price_extra_chars_count} × ${formatPriceCents(unit)}`
+          : `Extra karakters (${order.price_extra_chars_count}×)`,
+      cents: order.price_extra_chars_cents,
+    });
+  }
+  if (order.price_frame_surcharge_cents > 0) {
+    lines.push({ label: "Kader", cents: order.price_frame_surcharge_cents });
+  }
+  return lines;
 }
 
 export async function buildAndSendOrderEmailsForOrder(
@@ -144,6 +186,10 @@ export async function buildAndSendOrderEmailsForOrder(
     priceExtraCharsCents: order.price_extra_chars_cents,
     priceExtraCharsCount: order.price_extra_chars_count,
     priceFrameSurchargeCents: order.price_frame_surcharge_cents,
+    priceLines: storedPriceLines(order, earsShape, {
+      ondergrond: earsShape ? plateColor : color,
+      opdruk: earsShape ? earColor : printColor,
+    }),
     shippingCarrierName: order.shipping_carrier_name,
     shippingTierName: order.shipping_tier_name,
     shippingCostCents: order.shipping_cost_cents,

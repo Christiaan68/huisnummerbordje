@@ -50,6 +50,9 @@ interface CustomerConfirmationData {
   priceExtraCharsCents?: number;
   priceExtraCharsCount?: number;
   priceFrameSurchargeCents?: number;
+  // Prijsopbouw per stuk, incl. btw (toegevoegd 25-11-2026) — uit de
+  // opgeslagen bestelling. Ontbreekt bij oudere bestellingen.
+  priceLines?: { label: string; cents: number }[];
   // Leveringskosten (toegevoegd 17-9-2026) — vervoerder + verzendstaffel +
   // prijs, volledig bepaald door de prijsbeheeromgeving. Expliciet verzoek
   // van Christiaan: dit MOET in de bevestigingsmail aan de klant staan.
@@ -89,6 +92,7 @@ export function renderCustomerConfirmationEmail(
   const isEarsOrder = Boolean(data.earColorName && data.plateColorName);
   // A1: prijs per stuk = (totaal − verzending) / aantal.
   const quantityNumber = Number(data.quantity);
+  const hasPriceLines = Boolean(data.priceLines && data.priceLines.length);
   const unitPriceCents =
     data.priceTotalCents != null &&
     data.shippingCostCents != null &&
@@ -217,26 +221,32 @@ export function renderCustomerConfirmationEmail(
                         : row(
                             "Kader",
                             data.hasFrame
-                              ? `Ja – ${
-                                  data.priceFrameSurchargeCents != null
-                                    ? `${formatPriceCents(data.priceFrameSurchargeCents)} per stuk`
-                                    : "prijs op aanvraag"
-                                }`
+                              ? hasPriceLines
+                                ? "Ja"
+                                : `Ja – ${
+                                    data.priceFrameSurchargeCents != null
+                                      ? `${formatPriceCents(data.priceFrameSurchargeCents)} per stuk`
+                                      : "prijs op aanvraag"
+                                  }`
                               : "Nee"
                           )
                     }
                     ${
-                      data.priceColorSurchargeCents
-                        ? row("Meerprijs kleur (per stuk)", formatPriceCents(data.priceColorSurchargeCents))
-                        : ""
-                    }
-                    ${
-                      data.priceExtraCharsCents
-                        ? row(
-                            `Meerprijs extra tekens (${data.priceExtraCharsCount}×, per stuk)`,
-                            formatPriceCents(data.priceExtraCharsCents)
-                          )
-                        : ""
+                      /* 25-11-2026: bij nieuwe bestellingen de volledige
+                         prijsopbouw per stuk (incl. btw), zoals onder de
+                         preview in de webshop. Oudere bestellingen: de
+                         bestaande regels. */
+                      hasPriceLines
+                        ? data.priceLines!.map((l) => row(`${l.label} (per stuk)`, formatPriceCents(l.cents))).join("")
+                        : (data.priceColorSurchargeCents
+                            ? row("Meerprijs kleur (per stuk)", formatPriceCents(data.priceColorSurchargeCents))
+                            : "") +
+                          (data.priceExtraCharsCents
+                            ? row(
+                                `Meerprijs extra tekens (${data.priceExtraCharsCount}×, per stuk)`,
+                                formatPriceCents(data.priceExtraCharsCents)
+                              )
+                            : "")
                     }
                     ${
                       /* A1 (testrapport 22-11-2026): duidelijk maken dat het
@@ -266,7 +276,7 @@ export function renderCustomerConfirmationEmail(
                         : ""
                     }
                     ${row(
-                      "Totaalprijs",
+                      "Totaalprijs (incl. btw)",
                       data.priceTotalCents != null
                         ? formatPriceCents(data.priceTotalCents)
                         : "Prijs op aanvraag"

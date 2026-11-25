@@ -5,7 +5,7 @@ import { StepHeader } from "@/components/configurator/StepHeader";
 export default function AfwerkingPage() {
   return (
     <div>
-      <StepHeader eyebrow="Configurator — stap 2 van 7" title="Afwerking" />
+      <StepHeader eyebrow="Configurator — stap 3 van 7" title="Afwerking" />
       <p className="mt-4 text-muted-foreground">
         Kies of je een facet of gewelfd emaille huisnummerbord wilt.
       </p>

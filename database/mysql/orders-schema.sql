@@ -312,3 +312,21 @@ ALTER TABLE configurations ADD COLUMN expired_notified_by VARCHAR(100) NULL;
 -- regel ÉÉNMALIG uit in hetzelfde SQL-scherm om de tabel bij te werken:
 
 ALTER TABLE manual_confirmation_log ADD COLUMN mollie_status_at_confirmation VARCHAR(32) NULL;
+
+-- MIGRATIE 25-11-2026 (verbouwing prijsstructuur): prijsopbouw per stuk
+-- vastleggen bij elke nieuwe bestelling — bordprijs, kleurmeerprijs per
+-- gekozen kleur (1 = ondergrond / vlak, 2 = opdruk / oren), prijs per extra
+-- karakter, toegepast btw-percentage, welke prijsberekening gold ('vast' of
+-- 'inkoop') en de versie van de gepubliceerde prijslijst. Alle bedragen in
+-- centen, incl. btw. Bestaande bestellingen worden NIET gewijzigd: daar
+-- blijven deze kolommen leeg (NULL).
+-- Veilig herhaalbaar ("IF NOT EXISTS"): nog een keer uitvoeren doet niets.
+-- Eerst uitvoeren op de testdatabase (huisnummerbordjes_test), en pas bij
+-- het live zetten op de echte database.
+ALTER TABLE configurations ADD COLUMN IF NOT EXISTS price_model VARCHAR(10) NULL;
+ALTER TABLE configurations ADD COLUMN IF NOT EXISTS price_list_version INT NULL;
+ALTER TABLE configurations ADD COLUMN IF NOT EXISTS price_board_cents INT NULL;
+ALTER TABLE configurations ADD COLUMN IF NOT EXISTS price_color1_surcharge_cents INT NULL;
+ALTER TABLE configurations ADD COLUMN IF NOT EXISTS price_color2_surcharge_cents INT NULL;
+ALTER TABLE configurations ADD COLUMN IF NOT EXISTS price_extra_char_unit_cents INT NULL;
+ALTER TABLE configurations ADD COLUMN IF NOT EXISTS price_vat_pct DECIMAL(5,2) NULL;

@@ -7,6 +7,8 @@ import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { usePricingData } from "@/lib/configuration/PricingDataContext";
 import { productShapes } from "@/config/product-options";
 import { configuratorSteps, getVisibleSteps } from "@/lib/configuration/steps";
+import { boardPriceCentsFor } from "@/lib/configuration/pricing";
+import type { PlateFinish } from "@/types/product";
 import { cn } from "@/lib/utils";
 
 function formatPrice(cents: number | null): string {
@@ -22,7 +24,8 @@ function formatPrice(cents: number | null): string {
 export function SizeSelector() {
   const router = useRouter();
   const { selection, dispatch } = useConfigurator();
-  const { productSizes } = usePricingData();
+  const pricingData = usePricingData();
+  const { productSizes } = pricingData;
   const shape = productShapes.find((s) => s.id === selection.shapeId);
 
   const sizes = productSizes.filter(
@@ -66,8 +69,22 @@ export function SizeSelector() {
     );
   }
 
-  const relevantPrice = (size: (typeof sizes)[number]) =>
-    selection.finish === "vlak" ? size.priceFlatCents : size.priceCurvedCents;
+  // Sinds 25-11-2026 komt de maat vóór de afwerking (facet/gewelfd). Is de
+  // afwerking al gekozen (bv. bij teruggaan), dan de prijs van die
+  // afwerking; heeft de vorm maar één afwerking, dan die prijs; anders de
+  // laagste van de twee als "vanaf"-prijs — nooit als definitieve prijs.
+  const finishes: PlateFinish[] = shape?.availableFinishes.length
+    ? shape.availableFinishes
+    : ["vlak"];
+  const priceLabel = (size: (typeof sizes)[number]): string => {
+    if (selection.finish) return formatPrice(boardPriceCentsFor(size, selection.finish, pricingData));
+    const prices = finishes
+      .map((f) => boardPriceCentsFor(size, f, pricingData))
+      .filter((c): c is number => c !== null);
+    if (!prices.length) return formatPrice(null);
+    const min = Math.min(...prices);
+    return finishes.length > 1 ? `vanaf ${formatPrice(min)}` : formatPrice(min);
+  };
 
   return (
     <div>
@@ -104,7 +121,7 @@ export function SizeSelector() {
               <span className="font-medium text-foreground">{size.name}</span>
             </span>
             <span className="text-sm text-muted-foreground">
-              {formatPrice(relevantPrice(size))}
+              {priceLabel(size)}
             </span>
           </button>
         );

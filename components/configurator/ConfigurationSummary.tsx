@@ -2,6 +2,7 @@
 
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { usePricingData } from "@/lib/configuration/PricingDataContext";
+import { buildPriceLines, productPriceCents, type PriceLine } from "@/lib/configuration/priceLines";
 import {
   productShapes,
   productColors,
@@ -17,6 +18,19 @@ function Row({ label, value }: { label: string; value: string }) {
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="text-right font-medium text-foreground">{value}</dd>
     </div>
+  );
+}
+
+// Prijsopbouw per stuk, incl. btw (25-11-2026) — zelfde regels als onder de
+// preview (lib/configuration/priceLines.ts).
+function PriceLineRows({ lines, total }: { lines: PriceLine[]; total: number }) {
+  return (
+    <>
+      {lines.map((line) => (
+        <Row key={line.label} label={line.label} value={formatPriceCents(line.cents)} />
+      ))}
+      <Row label="Totaal productprijs (per stuk)" value={formatPriceCents(total)} />
+    </>
   );
 }
 
@@ -48,18 +62,7 @@ export function ConfigurationSummary() {
         <Row label="Opdruk kleur" value={earColor?.name ?? "—"} />
         <Row label="Huisnummer" value={selection.customText || "—"} />
         {orderLabel && <Row label="Volgorde" value={orderLabel} />}
-        {price && price.colorSurchargeCents > 0 && (
-          <Row
-            label="Meerprijs kleur"
-            value={formatPriceCents(price.colorSurchargeCents)}
-          />
-        )}
-        {price && price.extraCharsCents > 0 && (
-          <Row
-            label={`Meerprijs extra tekens (${price.extraCharsCount}×)`}
-            value={formatPriceCents(price.extraCharsCents)}
-          />
-        )}
+        {price && <PriceLineRows lines={buildPriceLines(price, true)} total={productPriceCents(price)} />}
         {price && (
           <Row
             label={price.shippingCarrierName ? `Verzending (${price.shippingCarrierName})` : "Verzending"}
@@ -67,7 +70,7 @@ export function ConfigurationSummary() {
           />
         )}
         <Row
-          label="Totaalprijs"
+          label="Totaalprijs (incl. btw)"
           value={price ? formatPriceCents(price.totalCents) : "Prijs op aanvraag"}
         />
       </dl>
@@ -120,25 +123,10 @@ export function ConfigurationSummary() {
       <Row
         label="Kader"
         value={
-          selection.hasFrame
-            ? `Ja – ${
-                price ? formatPriceCents(price.frameSurchargeCents) : "prijs op aanvraag"
-              }`
-            : "Nee"
+          selection.hasFrame ? (price ? "Ja" : "Ja – prijs op aanvraag") : "Nee"
         }
       />
-      {price && price.colorSurchargeCents > 0 && (
-        <Row
-          label="Meerprijs kleur"
-          value={formatPriceCents(price.colorSurchargeCents)}
-        />
-      )}
-      {price && price.extraCharsCents > 0 && (
-        <Row
-          label={`Meerprijs extra tekens (${price.extraCharsCount}×)`}
-          value={formatPriceCents(price.extraCharsCents)}
-        />
-      )}
+      {price && <PriceLineRows lines={buildPriceLines(price, false)} total={productPriceCents(price)} />}
       {price && (
         <Row
           label={price.shippingCarrierName ? `Verzending (${price.shippingCarrierName})` : "Verzending"}
@@ -146,7 +134,7 @@ export function ConfigurationSummary() {
         />
       )}
       <Row
-        label="Totaalprijs"
+        label="Totaalprijs (incl. btw)"
         value={price ? formatPriceCents(price.totalCents) : "Prijs op aanvraag"}
       />
     </dl>

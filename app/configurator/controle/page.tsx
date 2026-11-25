@@ -13,7 +13,7 @@ import { getVisibleSteps } from "@/lib/configuration/steps";
 import { productShapes } from "@/config/product-options";
 import { isEarsShape } from "@/lib/configuration/shape-helpers";
 import { usePricingData } from "@/lib/configuration/PricingDataContext";
-import { calculatePrice } from "@/lib/configuration/pricing";
+import { calculatePrice, totalCentsForQuantity } from "@/lib/configuration/pricing";
 import type { CreateConfigurationInput } from "@/types/configuration";
 import type { ContactDetails } from "@/lib/validation/contact.schema";
 
@@ -177,6 +177,15 @@ export default function ControlePage() {
       ...contact,
     };
 
+    // B7 (25-11-2026): het bedrag dat de klant op dit moment ziet, gaat mee.
+    // De server rekent zelf opnieuw en weigert bij een verschil (bv. omdat
+    // er net een nieuwe prijslijst is gepubliceerd), zodat er nooit
+    // ongemerkt een ander bedrag naar Mollie gaat.
+    const shownPrice = calculatePrice(selection, pricingData);
+    const expectedTotalCents = shownPrice
+      ? totalCentsForQuantity(shownPrice, Number(contact.quantity))
+      : null;
+
     try {
       // Sinds 29-8-2026 (Mollie): dit start alleen nog de betaling — de
       // bevestigingsmails gaan pas uit ná een gelukte betaling, zie
@@ -184,7 +193,7 @@ export default function ControlePage() {
       const response = await fetch("/api/create-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, expectedTotalCents }),
       });
 
       const data = await response.json().catch(() => null);

@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { createConfigurationSchema } from "@/lib/validation/configuration.schema";
 import { contactDetailsSchema } from "@/lib/validation/contact.schema";
-import { calculatePrice, totalCentsForQuantity } from "@/lib/configuration/pricing";
-import { getLivePricingData } from "@/lib/configuration/livePricing";
+import {
+  calculatePrice,
+  totalCentsForQuantity,
+  type PriceBreakdown,
+} from "@/lib/configuration/pricing";
+import { getLivePricingData, type PricingData } from "@/lib/configuration/livePricing";
 import { saveOrderToDatabase } from "@/lib/mysql/client";
 import { buildOrderLabel } from "@/lib/configuration/orderLabel";
 import { createMolliePaymentForOrder } from "@/lib/mollie/client";
@@ -29,6 +33,42 @@ import {
  * (4) geeft de betaal-URL van Mollie terug, waar de browser van de klant
  * naartoe gestuurd wordt.
  */
+// B7 (25-11-2026): de browser stuurt het bedrag mee dat de klant op dat moment
+// ziet. Wijkt het server-side berekende bedrag af (of ontbreekt het, bv. bij
+// een pagina die al open stond vóór een nieuwe prijslijst of nieuwe versie),
+// dan wordt er GEEN betaling gestart en krijgt de klant een duidelijke
+// melding. Het bedrag van de browser wordt nooit zelf gebruikt.
+function priceChangedResponse(expected: unknown, actual: number): NextResponse | null {
+  if (typeof expected === "number" && Number.isInteger(expected) && expected === actual) {
+    return null;
+  }
+  return NextResponse.json(
+    {
+      error:
+        "De prijs is zojuist gewijzigd. Vernieuw de pagina en controleer de nieuwe prijs voordat je bestelt.",
+    },
+    { status: 409 }
+  );
+}
+
+// Extra prijsgegevens die bij de bestelling worden vastgelegd (25-11-2026):
+// de prijsopbouw zoals die op het moment van bestellen gold, zodat de
+// bevestigingsmail en het orderoverzicht nooit uit de actuele prijslijst
+// hoeven te lezen.
+function priceDetailFields(price: PriceBreakdown, pricingData: PricingData) {
+  const ondergrond = price.colorLines.find((l) => l.role === "ondergrond");
+  const opdruk = price.colorLines.find((l) => l.role === "opdruk");
+  return {
+    priceModel: price.pricingModel,
+    priceListVersion: pricingData.priceListVersion,
+    priceBoardCents: price.basePriceCents,
+    priceColor1SurchargeCents: ondergrond ? ondergrond.cents : null,
+    priceColor2SurchargeCents: opdruk ? opdruk.cents : null,
+    priceExtraCharUnitCents: price.extraCharUnitCents,
+    priceVatPct: pricingData.globalPricingOptions.vatPct,
+  };
+}
+
 export async function POST(request: Request) {
   let body: unknown;
   try {
@@ -62,6 +102,7 @@ export async function POST(request: Request) {
 
   const data = parsed.data;
   const contact = parsedContact.data;
+  const expectedTotalCents = (body as { expectedTotalCents?: unknown }).expectedTotalCents;
 
   const pricingData = await getLivePricingData();
 
@@ -148,6 +189,10 @@ export async function POST(request: Request) {
       );
     }
     priceTotalCentsForPayment = totalCentsForQuantity(price, Number(contact.quantity));
+    {
+      const changed = priceChangedResponse(expectedTotalCents, priceTotalCentsForPayment);
+      if (changed) return changed;
+    }
 
     const priceFields = {
       // Totaal voor het gekozen aantal (besluit A1, testrapport 22-11-2026).
@@ -161,6 +206,7 @@ export async function POST(request: Request) {
       shippingCarrierName: price.shippingCarrierName,
       shippingTierName: price.shippingTierName,
       shippingCostCents: price.shippingCostCents,
+      ...priceDetailFields(price, pricingData),
     };
 
     try {
@@ -236,6 +282,11 @@ export async function POST(request: Request) {
       !color ||
       !printColor ||
       !size ||
+      // 25-11-2026: maat moet bij de gekozen vorm horen en de afwerking moet
+      // voor die vorm bestaan (server-side controle, niet alleen in de browser).
+      size.shapeId !== shape.id ||
+      !data.finish ||
+      !shape.availableFinishes.includes(data.finish) ||
       !numberFont ||
       (shape.extraLines >= 1 && !line1Font) ||
       (shape.extraLines >= 2 && !line2Font)
@@ -268,6 +319,10 @@ export async function POST(request: Request) {
       );
     }
     priceTotalCentsForPayment = totalCentsForQuantity(price, Number(contact.quantity));
+    {
+      const changed = priceChangedResponse(expectedTotalCents, priceTotalCentsForPayment);
+      if (changed) return changed;
+    }
 
     const priceFields = {
       // Totaal voor het gekozen aantal (besluit A1, testrapport 22-11-2026).
@@ -281,6 +336,7 @@ export async function POST(request: Request) {
       shippingCarrierName: price.shippingCarrierName,
       shippingTierName: price.shippingTierName,
       shippingCostCents: price.shippingCostCents,
+      ...priceDetailFields(price, pricingData),
     };
 
     try {

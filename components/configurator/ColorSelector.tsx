@@ -6,7 +6,7 @@ import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { usePricingData } from "@/lib/configuration/PricingDataContext";
 import { productShapes, productColors } from "@/config/product-options";
 import { getEarsColorOptions, isEarsShape } from "@/lib/configuration/shape-helpers";
-import { formatPriceCents } from "@/lib/configuration/pricing";
+import { colorSurchargeCentsFor, formatPriceCents } from "@/lib/configuration/pricing";
 import type { ProductColor } from "@/types/product";
 import { cn } from "@/lib/utils";
 
@@ -21,8 +21,7 @@ import { cn } from "@/lib/utils";
 function ColorOptionGrid({
   colors,
   selectedId,
-  standardColorIds,
-  colorSurchargeCents,
+  surchargeFor,
   ariaLabel,
   onSelect,
   blockedId,
@@ -34,8 +33,9 @@ function ColorOptionGrid({
   // gekozen is, kan hier niet gekozen worden (bv. zwart op zwart).
   blockedId?: string | null;
   blockedNote?: string;
-  standardColorIds: string[];
-  colorSurchargeCents: number;
+  // Meerprijs (incl. btw) per kleur, precies het bedrag dat na het kiezen
+  // in de prijs wordt meegeteld (25-11-2026). null = nog niet te bepalen.
+  surchargeFor: (colorId: string) => number | null;
   ariaLabel: string;
   onSelect: (colorId: string) => void;
 }) {
@@ -47,7 +47,7 @@ function ColorOptionGrid({
     >
       {colors.map((color) => {
         const isSelected = selectedId === color.id;
-        const isStandardColor = standardColorIds.includes(color.id);
+        const surcharge = surchargeFor(color.id);
         const isBlocked = Boolean(blockedId) && blockedId === color.id;
 
         return (
@@ -93,9 +93,11 @@ function ColorOptionGrid({
               <span className="text-[11px] text-muted-foreground">
                 {isBlocked
                   ? blockedNote
-                  : isStandardColor
-                    ? "Standaardprijs"
-                    : `Meerprijs +${formatPriceCents(colorSurchargeCents)}`}
+                  : surcharge === null
+                    ? ""
+                    : surcharge === 0
+                      ? formatPriceCents(0)
+                      : `+ ${formatPriceCents(surcharge)}`}
               </span>
             </span>
           </button>
@@ -114,7 +116,18 @@ function ColorOptionGrid({
  * zowel ondergrond als opdruk een meerprijskleur krijgen) — dezelfde
  * inhoud/prijsbron als hier, dus nooit tegenstrijdig.
  */
-function ColorSurchargeHint() {
+function ColorSurchargeHint({ inkoop }: { inkoop: boolean }) {
+  // Nieuwe berekening (25-11-2026): geen vaste standaardkleuren meer; het
+  // bedrag per kleur staat bij elke kleur en hangt af van het gekozen bord.
+  if (inkoop) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Bij elke kleur staat de meerprijs voor het door jou gekozen bord,
+        inclusief btw. De meerprijs geldt apart voor de ondergrond en de
+        opdruk.
+      </p>
+    );
+  }
   return (
     <p className="text-xs text-muted-foreground">
       Zwart, wit en donkerblauw zijn onze standaardkleuren, zonder meerprijs.
@@ -133,7 +146,10 @@ function ColorSurchargeHint() {
 
 export function ColorSelector() {
   const { selection, dispatch } = useConfigurator();
-  const { globalPricingOptions } = usePricingData();
+  const pricingData = usePricingData();
+  const inkoop = pricingData.globalPricingOptions.pricingModel === "inkoop";
+  const surchargeFor = (colorId: string) =>
+    colorSurchargeCentsFor(selection, colorId, pricingData);
   const shape = productShapes.find((s) => s.id === selection.shapeId);
 
   if (isEarsShape(shape)) {
@@ -158,7 +174,7 @@ export function ColorSelector() {
 
     return (
       <div className="space-y-8">
-        <ColorSurchargeHint />
+        <ColorSurchargeHint inkoop={inkoop} />
         <div>
           <p className="mb-3 text-sm font-medium text-foreground">
             Ondergrond kleur
@@ -168,8 +184,7 @@ export function ColorSelector() {
             selectedId={selection.plateColorId}
             blockedId={selection.earColorId}
             blockedNote="Zelfde als opdruk"
-            standardColorIds={globalPricingOptions.orenStandardColorIds}
-            colorSurchargeCents={globalPricingOptions.colorSurchargeCents}
+            surchargeFor={surchargeFor}
             ariaLabel="Kies een ondergrondkleur"
             onSelect={(colorId) => dispatch({ type: "SET_PLATE_COLOR", colorId })}
           />
@@ -183,8 +198,7 @@ export function ColorSelector() {
             selectedId={selection.earColorId}
             blockedId={selection.plateColorId}
             blockedNote="Zelfde als ondergrond"
-            standardColorIds={globalPricingOptions.orenStandardColorIds}
-            colorSurchargeCents={globalPricingOptions.colorSurchargeCents}
+            surchargeFor={surchargeFor}
             ariaLabel="Kies een opdrukkleur"
             onSelect={(colorId) => dispatch({ type: "SET_EAR_COLOR", colorId })}
           />
@@ -203,7 +217,7 @@ export function ColorSelector() {
   // lib/configuration/pricing.ts voor de (per kleur losse) meerprijs.
   return (
     <div className="space-y-8">
-      <ColorSurchargeHint />
+      <ColorSurchargeHint inkoop={inkoop} />
       <div>
         <p className="mb-3 text-sm font-medium text-foreground">
           Ondergrond kleur
@@ -213,8 +227,7 @@ export function ColorSelector() {
           selectedId={selection.colorId}
           blockedId={selection.printColorId}
           blockedNote="Zelfde als opdruk"
-          standardColorIds={globalPricingOptions.standardColorIds}
-          colorSurchargeCents={globalPricingOptions.colorSurchargeCents}
+          surchargeFor={surchargeFor}
           ariaLabel="Kies een ondergrondkleur"
           onSelect={(colorId) => dispatch({ type: "SET_COLOR", colorId })}
         />
@@ -228,8 +241,7 @@ export function ColorSelector() {
           selectedId={selection.printColorId}
           blockedId={selection.colorId}
           blockedNote="Zelfde als ondergrond"
-          standardColorIds={globalPricingOptions.standardColorIds}
-          colorSurchargeCents={globalPricingOptions.colorSurchargeCents}
+          surchargeFor={surchargeFor}
           ariaLabel="Kies een opdrukkleur"
           onSelect={(colorId) => dispatch({ type: "SET_PRINT_COLOR", colorId })}
         />

@@ -13,6 +13,7 @@ import {
 import { isEarsShape, getEarsColorOptions } from "@/lib/configuration/shape-helpers";
 import { computeAutoFit, visualCharCount } from "@/lib/configuration/text-fit";
 import { calculatePrice, formatPriceCents } from "@/lib/configuration/pricing";
+import { buildPriceLines, productPriceCents } from "@/lib/configuration/priceLines";
 import {
   DEFAULT_OVAL_RATIO,
   DEFAULT_LINE_GAP_RATIO,
@@ -831,6 +832,25 @@ export function ProductPreview() {
           )}
         </dl>
 
+        {/* Prijsopbouw per stuk, incl. btw (25-11-2026, verbouwing
+            prijsstructuur) — alleen als er een geldige prijs is; zelfde
+            regels als in de controlestap (lib/configuration/priceLines.ts).
+            Net als de keuzelijst hierboven alleen op grotere schermen (B2). */}
+        {price && (
+          <dl className="mt-4 hidden space-y-1 text-xs lg:block">
+            {buildPriceLines(price, earsShape).map((line) => (
+              <div key={line.label} className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">{line.label}</dt>
+                <dd className="whitespace-nowrap text-foreground">{formatPriceCents(line.cents)}</dd>
+              </div>
+            ))}
+            <div className="flex justify-between gap-3 border-t border-border/60 pt-1 font-medium">
+              <dt className="text-foreground">Totaal productprijs (per stuk)</dt>
+              <dd className="whitespace-nowrap text-foreground">{formatPriceCents(productPriceCents(price))}</dd>
+            </div>
+          </dl>
+        )}
+
         <div className="mt-4 flex items-center justify-between gap-3 rounded-sm border border-border/60 bg-card px-3 py-3 lg:px-4">
           <span className="text-xs uppercase tracking-widest text-muted-foreground">
             Totaalprijs
@@ -861,7 +881,7 @@ export function ProductPreview() {
             in de totaalprijs zitten. */}
         {price && (
           <p className="mt-1 text-center text-xs text-muted-foreground">
-            incl. {formatPriceCents(price.shippingCostCents)} verzending
+            incl. btw en {formatPriceCents(price.shippingCostCents)} verzending
             {price.shippingCarrierName ? ` (${price.shippingCarrierName})` : ""}
           </p>
         )}

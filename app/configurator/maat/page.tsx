@@ -5,7 +5,7 @@ import { StepHeader } from "@/components/configurator/StepHeader";
 export default function MaatPage() {
   return (
     <div>
-      <StepHeader eyebrow="Configurator — stap 4 van 7" title="Maat" />
+      <StepHeader eyebrow="Configurator — stap 2 van 7" title="Maat" />
      <p className="mt-4 text-muted-foreground">
         Kies de maat van jouw Huisnummerbord.
       </p>

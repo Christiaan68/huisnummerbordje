@@ -144,6 +144,17 @@ export interface NewOrderRow {
   shippingTierName: string | null;
   shippingCostCents: number | null;
   priceSource: "prijstool" | "reservekopie";
+  // Prijsopbouw op het moment van bestellen (toegevoegd 25-11-2026,
+  // verbouwing prijsstructuur) — zie database/mysql/orders-schema.sql,
+  // migratie 25-11-2026. Allemaal per stuk, incl. btw. Bij oude
+  // bestellingen zijn deze kolommen leeg (NULL).
+  priceModel: "vast" | "inkoop";
+  priceListVersion: number | null;
+  priceBoardCents: number;
+  priceColor1SurchargeCents: number | null;
+  priceColor2SurchargeCents: number | null;
+  priceExtraCharUnitCents: number;
+  priceVatPct: number | null;
   contactName: string;
   contactAddress: string;
   contactPostalCode: string;
@@ -183,9 +194,12 @@ export async function saveOrderToDatabase(order: NewOrderRow): Promise<number> {
       price_extra_chars_count, price_frame_surcharge_cents,
       shipping_carrier_name, shipping_tier_name, shipping_cost_cents,
       price_source,
+      price_model, price_list_version, price_board_cents,
+      price_color1_surcharge_cents, price_color2_surcharge_cents,
+      price_extra_char_unit_cents, price_vat_pct,
       contact_name, contact_address, contact_postal_code, contact_city,
       contact_email, contact_phone, quantity
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       order.shapeId,
       order.shapeName,
@@ -220,6 +234,13 @@ export async function saveOrderToDatabase(order: NewOrderRow): Promise<number> {
       order.shippingTierName,
       order.shippingCostCents,
       order.priceSource,
+      order.priceModel,
+      order.priceListVersion,
+      order.priceBoardCents,
+      order.priceColor1SurchargeCents,
+      order.priceColor2SurchargeCents,
+      order.priceExtraCharUnitCents,
+      order.priceVatPct,
       order.contactName,
       order.contactAddress,
       order.contactPostalCode,
@@ -385,6 +406,14 @@ export interface OrderRow {
   shipping_tier_name: string | null;
   shipping_cost_cents: number | null;
   price_source: "prijstool" | "reservekopie";
+  // Toegevoegd 25-11-2026 — NULL bij bestellingen van daarvoor.
+  price_model?: "vast" | "inkoop" | null;
+  price_list_version?: number | null;
+  price_board_cents?: number | null;
+  price_color1_surcharge_cents?: number | null;
+  price_color2_surcharge_cents?: number | null;
+  price_extra_char_unit_cents?: number | null;
+  price_vat_pct?: string | number | null;
   contact_name: string;
   contact_address: string;
   contact_postal_code: string;

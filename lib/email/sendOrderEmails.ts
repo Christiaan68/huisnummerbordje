@@ -111,6 +111,11 @@ export interface SendOrderEmailsInput {
   priceExtraCharsCents: number;
   priceExtraCharsCount: number;
   priceFrameSurchargeCents: number;
+  // Prijsopbouw per stuk, incl. btw (toegevoegd 25-11-2026), opgebouwd uit
+  // de bij de bestelling OPGESLAGEN bedragen (zie sendPaidOrderEmails.ts).
+  // Leeg/ontbrekend bij bestellingen van vóór 25-11-2026 → de mail toont
+  // dan de bestaande opbouw.
+  priceLines?: { label: string; cents: number }[];
   // Leveringskosten (toegevoegd 17-9-2026) — vervoerder + verzendstaffel +
   // prijs, komt rechtstreeks uit de opgeslagen bestelling (zie
   // lib/mysql/client.ts, OrderRow) door via app/api/mollie-webhook/route.ts.
@@ -339,6 +344,7 @@ export async function sendOrderEmails(
       paymentMethodName: input.paymentMethodName,
       paidAt: input.paidAtFormatted,
       ...priceFields,
+      priceLines: input.priceLines,
       ...shippingNameFields,
       shippingCostCents: input.shippingCostCents ?? undefined,
       expectedDeliveryText: await getExpectedDeliveryText(),

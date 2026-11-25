@@ -2,7 +2,7 @@ import {
   productSizes as staticProductSizes,
   globalPricingOptions as staticGlobalPricingOptions,
 } from "@/config/product-options";
-import type { ProductSize } from "@/types/product";
+import type { ProductSize, SaleFinishPrices } from "@/types/product";
 
 /**
  * Koppelt de product-ID's van de prijsbeheeromgeving (bijvoorbeeld "1105105")
@@ -59,9 +59,22 @@ const PRIJSTOOL_ID_NAAR_WEBSHOP_ID: Record<string, string> = {
   "6160160": "oren-4-hoeken-160x160",
 };
 
+// Welke prijsberekening de beheertool gepubliceerd heeft (25-11-2026):
+// "vast" = de oude vaste verkoopprijzen + vaste kleurmeerprijs; "inkoop" = de
+// nieuwe berekening (bordprijs en kleurmeerprijs per kleur per product,
+// kant-en-klaar uit de beheertool, zie ProductSize.sale).
+export type PricingModel = "vast" | "inkoop";
+
 export interface PricingData {
   productSizes: ProductSize[];
-  globalPricingOptions: typeof staticGlobalPricingOptions;
+  globalPricingOptions: typeof staticGlobalPricingOptions & {
+    pricingModel: PricingModel;
+    // Btw-percentage uit de beheertool (alleen ter vastlegging bij een
+    // bestelling; alle prijzen zijn al incl. btw). null = onbekend.
+    vatPct: number | null;
+  };
+  // Versienummer van de gepubliceerde prijslijst (voor de bestelling).
+  priceListVersion: number | null;
 }
 
 export interface LivePricingData extends PricingData {
@@ -85,9 +98,15 @@ interface PrijstoolProduct {
   shippingCarrierName?: string | null;
   shippingTierName?: string | null;
   shippingCostCents?: number | null;
+  // Nieuwe berekening (25-11-2026), zie ProductSize.sale.
+  sale?: {
+    vlak: SaleFinishPrices | null;
+    gewelfd: SaleFinishPrices | null;
+  } | null;
 }
 
 interface PrijstoolResponse {
+  version?: number;
   products: PrijstoolProduct[];
   globalOptions: {
     extraCharPrice: number;
@@ -102,7 +121,22 @@ interface PrijstoolResponse {
     // die dit veld nog niet teruggeeft de webshop niet laat crashen — zie
     // de terugval op specialCharPrice hieronder.
     framePrice?: number;
+    pricingModel?: PricingModel;
+    vatPct?: number | null;
   };
+}
+
+function isValidSaleFinish(v: unknown): v is SaleFinishPrices | null {
+  if (v === null) return true;
+  if (!v || typeof v !== "object") return false;
+  const f = v as Record<string, unknown>;
+  if (!Number.isInteger(f.boardCents) || (f.boardCents as number) <= 0) return false;
+  if (!f.colorSurchargeCentsByColorId || typeof f.colorSurchargeCentsByColorId !== "object") {
+    return false;
+  }
+  return Object.values(f.colorSurchargeCentsByColorId as Record<string, unknown>).every(
+    (c) => Number.isInteger(c) && (c as number) >= 0
+  );
 }
 
 function isValidPrijstoolResponse(data: unknown): data is PrijstoolResponse {
@@ -115,15 +149,53 @@ function isValidPrijstoolResponse(data: unknown): data is PrijstoolResponse {
   if (typeof go.colorPrice !== "number") return false;
   if (typeof go.specialCharPrice !== "number") return false;
   if (go.framePrice !== undefined && typeof go.framePrice !== "number") return false;
+  if (go.pricingModel !== undefined && go.pricingModel !== "vast" && go.pricingModel !== "inkoop") {
+    return false;
+  }
+  // Nieuwe berekening: elk product moet geldige verkoopbedragen hebben
+  // (of `null` per uitvoering = prijs op aanvraag) — anders liever niets
+  // tonen dan een verkeerde prijs.
+  if (go.pricingModel === "inkoop") {
+    for (const p of d.products as Record<string, unknown>[]) {
+      const sale = p.sale as Record<string, unknown> | null | undefined;
+      if (!sale || typeof sale !== "object") return false;
+      if (!isValidSaleFinish(sale.vlak) || !isValidSaleFinish(sale.gewelfd)) return false;
+    }
+  }
   return true;
 }
 
+// Als de prijzen niet live opgehaald kunnen worden (besluit B6, 25-11-2026):
+// GEEN terugval meer op de oude vaste prijzen uit config/product-options.ts
+// (die waren verouderd). Alle bordprijzen en verzendkosten worden "onbekend",
+// zodat de configurator "Prijs op aanvraag" toont en bestellen niet mogelijk
+// is (calculatePrice geeft dan null; create-payment weigert). Productnamen,
+// maten en max. karakters blijven gewoon beschikbaar.
 function reservekopie(): LivePricingData {
   return {
-    productSizes: staticProductSizes,
-    globalPricingOptions: staticGlobalPricingOptions,
+    productSizes: staticProductSizes.map((size) => ({
+      ...size,
+      priceFlatCents: null,
+      priceCurvedCents: null,
+      shippingCarrierName: null,
+      shippingTierName: null,
+      shippingCostCents: null,
+      sale: null,
+    })),
+    globalPricingOptions: { ...staticGlobalPricingOptions, pricingModel: "vast", vatPct: null },
+    priceListVersion: null,
     bron: "reservekopie",
   };
+}
+
+// Testversie (Vercel Preview, 25-11-2026): de testwebshop haalt zijn prijzen
+// bij de TEST-beheertool als PRIJSTOOL_TEST_API_URL is ingesteld (alleen
+// Preview), net als TIDB_TEST_DATABASE. Op de echte site verandert er niets.
+function prijstoolBaseUrl(): string | undefined {
+  if (process.env.VERCEL_ENV === "preview" && process.env.PRIJSTOOL_TEST_API_URL) {
+    return process.env.PRIJSTOOL_TEST_API_URL;
+  }
+  return process.env.PRIJSTOOL_API_URL;
 }
 
 /**
@@ -139,7 +211,7 @@ function reservekopie(): LivePricingData {
  * ook niet als de prijstool er even uit ligt.
  */
 export async function getLivePricingData(): Promise<LivePricingData> {
-  const baseUrl = process.env.PRIJSTOOL_API_URL;
+  const baseUrl = prijstoolBaseUrl();
   const apiKey = process.env.PRIJSTOOL_API_KEY;
 
   if (!baseUrl || !apiKey) {
@@ -219,8 +291,10 @@ export async function getLivePricingData(): Promise<LivePricingData> {
         shippingCarrierName: live.shippingCarrierName ?? null,
         shippingTierName: live.shippingTierName ?? null,
         shippingCostCents: live.shippingCostCents ?? null,
+        sale: live.sale ?? null,
       };
     });
+    const pricingModel: PricingModel = data.globalOptions.pricingModel === "inkoop" ? "inkoop" : "vast";
 
     return {
       productSizes: mergedProductSizes,
@@ -236,7 +310,10 @@ export async function getLivePricingData(): Promise<LivePricingData> {
         frameSurchargeCents: Math.round(
           (data.globalOptions.framePrice ?? data.globalOptions.specialCharPrice) * 100
         ),
+        pricingModel,
+        vatPct: typeof data.globalOptions.vatPct === "number" ? data.globalOptions.vatPct : null,
       },
+      priceListVersion: typeof data.version === "number" ? data.version : null,
       bron: "prijstool",
     };
   } catch (err) {
