@@ -71,7 +71,7 @@ function eersteMeerprijsKleur() {
 // en de kleur, en staat in de configurator bij elke kleur. Geen bedrag
 // verzinnen in de FAQ.
 const KLEUR_TEKST_INKOOP =
-  "een meerprijs die afhangt van het gekozen bord en de kleur — het exacte bedrag staat in de configurator bij elke kleur, vóórdat je kiest";
+  "een meerprijs die afhangt van het gekozen bord en de kleur. Het exacte bedrag staat in de configurator bij elke kleur, vóórdat je kiest";
 
 function kleurVoorbeeldEnkel(pricingData: PricingData): string {
   if (pricingData.globalPricingOptions.pricingModel === "inkoop") return KLEUR_TEKST_INKOOP;
@@ -89,7 +89,7 @@ function kleurVoorbeeldEnkel(pricingData: PricingData): string {
 
 function kleurVoorbeeldDubbel(pricingData: PricingData): string {
   if (pricingData.globalPricingOptions.pricingModel === "inkoop") {
-    return `${KLEUR_TEKST_INKOOP}; kies je voor ondergrond én opdruk een kleur met meerprijs, dan tellen beide bedragen mee`;
+    return `${KLEUR_TEKST_INKOOP}. Kies je voor ondergrond én opdruk een kleur met meerprijs, dan tellen beide bedragen mee`;
   }
   const nietStandaard = eersteMeerprijsKleur().find(
     (c) => !pricingData.globalPricingOptions.standardColorIds.includes(c.id)

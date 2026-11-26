@@ -330,3 +330,13 @@ ALTER TABLE configurations ADD COLUMN IF NOT EXISTS price_color1_surcharge_cents
 ALTER TABLE configurations ADD COLUMN IF NOT EXISTS price_color2_surcharge_cents INT NULL;
 ALTER TABLE configurations ADD COLUMN IF NOT EXISTS price_extra_char_unit_cents INT NULL;
 ALTER TABLE configurations ADD COLUMN IF NOT EXISTS price_vat_pct DECIMAL(5,2) NULL;
+
+-- MIGRATIE 26-11-2026: e-mailadres van een betaalde bestelling corrigeren
+-- vanuit de beheertool (knop "E-mailadres corrigeren"). Het oorspronkelijke,
+-- verkeerde adres blijft bewaard in email_original; wie en wanneer staat in
+-- email_corrected_by/email_corrected_at. Bestaande bestellingen: leeg (NULL).
+-- Veilig herhaalbaar. Eerst op de testdatabase, bij het live zetten op de
+-- echte database.
+ALTER TABLE configurations ADD COLUMN IF NOT EXISTS email_original VARCHAR(255) NULL;
+ALTER TABLE configurations ADD COLUMN IF NOT EXISTS email_corrected_at TIMESTAMP NULL;
+ALTER TABLE configurations ADD COLUMN IF NOT EXISTS email_corrected_by VARCHAR(100) NULL;

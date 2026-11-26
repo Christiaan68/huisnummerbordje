@@ -146,10 +146,17 @@ export default async function BestellingBedanktPage({
       <Header showConfiguratorLink={false} />
 
       <main className="relative mx-auto max-w-2xl px-6 pb-20 pt-32 sm:pt-40">
-        <h1 className="font-serif text-3xl text-foreground sm:text-4xl">{title}</h1>
-        <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-          {message}
-        </p>
+        {/* Bij "Betaling wordt verwerkt" tonen kop en tekst zich in
+            PendingPaymentAutoRefresh (26-11-2026), zodat ze na 8 seconden
+            kunnen veranderen in "Betaling nog niet ontvangen". */}
+        {!showAutoRefresh && (
+          <>
+            <h1 className="font-serif text-3xl text-foreground sm:text-4xl">{title}</h1>
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
+              {message}
+            </p>
+          </>
+        )}
 
         {/* Verwachte levertijd (toegevoegd 23-11-2026): tekst uit de
             beheertool (menu "Verwachte levertijd"), alleen bij een
@@ -186,6 +193,8 @@ export default async function BestellingBedanktPage({
             niet meer tot hier — vandaar de expliciete `order &&`. */}
         {showAutoRefresh && order && (
           <PendingPaymentAutoRefresh
+            title={title}
+            message={message}
             orderId={order.id}
             contactName={order.contact_name}
             contactEmail={order.contact_email}

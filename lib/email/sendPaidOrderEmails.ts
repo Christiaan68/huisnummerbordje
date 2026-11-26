@@ -91,7 +91,8 @@ function storedPriceLines(
 export async function buildAndSendOrderEmailsForOrder(
   order: OrderRow,
   paymentMethodName: string | null,
-  paidAt: Date | string | null
+  paidAt: Date | string | null,
+  options: { customerOnly?: boolean } = {}
 ): Promise<SendOrderEmailsResult> {
   const shape = productShapes.find((s) => s.id === order.shape_id);
   const pricingData = await getLivePricingData();
@@ -210,5 +211,5 @@ export async function buildAndSendOrderEmailsForOrder(
     emailLanguage,
     paymentMethodName: paymentMethodName ?? "onbekend",
     paidAtFormatted,
-  });
+  }, options);
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { suggestEmailCorrection } from "@/lib/validation/emailTypo";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -93,6 +94,7 @@ export function ContactDetailsForm({
   // terwijl de losse vakjes (rode rand + foutmelding) exact hetzelfde
   // gedrag houden als voorheen.
   const watchedValues = watch();
+  const emailSuggestion = suggestEmailCorrection(watchedValues.email ?? "");
   const quantityField = register("quantity");
 
   // Totaal voor het gekozen aantal (besluit A1, testrapport 22-11-2026):
@@ -382,6 +384,21 @@ export function ContactDetailsForm({
         {errors.email && (
           <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
         )}
+        {/* Typfout-controle (26-11-2026): alleen een suggestie, één klik
+            om over te nemen — er wordt niets automatisch aangepast. */}
+        {emailSuggestion && (
+          <p className="mt-1 text-sm text-foreground">
+            Bedoel je{" "}
+            <button
+              type="button"
+              onClick={() => setValue("email", emailSuggestion, { shouldValidate: true })}
+              className="font-medium underline underline-offset-4 hover:text-primary"
+            >
+              {emailSuggestion}
+            </button>
+            ?
+          </p>
+        )}
       </div>
 
       <div>
@@ -543,6 +560,15 @@ export function ContactDetailsForm({
         <p className="mb-2 text-xs text-muted-foreground">Veilig betalen met:</p>
         <PaymentMethodIcons />
       </div>
+
+      {/* 26-11-2026: het e-mailadres nog één keer laten zien vlak voor het
+          bestellen, zodat een typfout opvalt. */}
+      {watchedValues.email && !errors.email && (
+        <p className="text-sm text-muted-foreground">
+          We sturen de bevestiging naar{" "}
+          <span className="font-medium text-foreground">{watchedValues.email.trim()}</span>.
+        </p>
+      )}
 
       <div className="flex items-center justify-between gap-4">
         <button

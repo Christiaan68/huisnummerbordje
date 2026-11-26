@@ -586,3 +586,29 @@ export async function forceConfirmOrderWithoutMolliePaid(
 ): Promise<boolean> {
   return confirmOrderManually(orderId, confirmedBy);
 }
+
+/**
+ * E-mailadres van een bestelling corrigeren (toegevoegd 26-11-2026, besluit
+ * Christiaan: een klant die een verkeerd adres intypt en wel betaalt, krijgt
+ * anders nooit een bevestiging). Het oorspronkelijke adres blijft bewaard in
+ * email_original (alleen de eerste keer), met wie en wanneer — zie
+ * database/mysql/orders-schema.sql, migratie 26-11-2026. Verder verandert er
+ * niets aan de bestelling (prijzen en configuratie blijven ongewijzigd).
+ */
+export async function correctOrderEmail(
+  orderId: number,
+  newEmail: string,
+  correctedBy: string
+): Promise<boolean> {
+  const db = getPool();
+  const [result] = (await db.execute(
+    `UPDATE configurations
+       SET email_original = COALESCE(email_original, contact_email),
+           contact_email = ?,
+           email_corrected_at = NOW(),
+           email_corrected_by = ?
+     WHERE id = ?`,
+    [newEmail, correctedBy, orderId]
+  )) as unknown as [{ affectedRows: number }, unknown];
+  return result.affectedRows === 1;
+}

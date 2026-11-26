@@ -161,7 +161,11 @@ export interface SendOrderEmailsResult {
 }
 
 export async function sendOrderEmails(
-  input: SendOrderEmailsInput
+  input: SendOrderEmailsInput,
+  // customerOnly (26-11-2026): alleen de bevestiging aan de klant opnieuw
+  // versturen (na het corrigeren van een verkeerd e-mailadres) — de interne
+  // melding is dan al eerder verstuurd en hoeft niet nog eens.
+  options: { customerOnly?: boolean } = {}
 ): Promise<SendOrderEmailsResult> {
   const priceFields = {
     priceTotalCents: input.priceTotalCents,
@@ -251,7 +255,7 @@ export async function sendOrderEmails(
     : undefined;
 
   let internalEmailSent = false;
-  try {
+  if (!options.customerOnly) try {
     const html = renderConfigurationEmail({
       orderNumber: `#${input.orderId}`,
       shapeName: input.shape.name,

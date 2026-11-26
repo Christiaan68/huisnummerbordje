@@ -6,6 +6,10 @@ import Link from "next/link";
 import { PaymentIssueContact } from "@/components/order/PaymentIssueContact";
 
 interface PendingPaymentAutoRefreshProps {
+  // Kop en tekst van de eerste seconden ("Betaling wordt verwerkt"), zie
+  // app/bestelling/bedankt/page.tsx (26-11-2026).
+  title: string;
+  message: string;
   // Bestelgegevens voor de "Vraag over deze bestelling"-knop (zie
   // PaymentIssueContact hieronder) — nodig zodra die knop, samen met "Naar
   // home", verschijnt (zie de UITBREIDING 16-9-2026 hieronder).
@@ -120,17 +124,35 @@ export function PendingPaymentAutoRefresh(props: PendingPaymentAutoRefreshProps)
     return () => clearTimeout(timer);
   }, [router, attempts]);
 
+  const heading = (
+    <h1 className="font-serif text-3xl text-foreground sm:text-4xl">
+      {attempts < 2 ? props.title : "Betaling nog niet ontvangen"}
+    </h1>
+  );
+
   if (attempts < 2) {
-    return null;
+    return (
+      <>
+        {heading}
+        <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
+          {props.message}
+        </p>
+      </>
+    );
   }
 
+  // 26-11-2026 (Christiaan): na een mislukte of afgebroken poging laat Mollie
+  // de betaling op "open" staan (de klant mag het opnieuw proberen); pas na
+  // de verlooptijd meldt Mollie "verlopen". De webshop kan dus niet zien óf
+  // het mislukt is — daarom een tekst die in alle gevallen klopt.
   return (
     <>
+      {heading}
       <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-        Duurt dit langer dan verwacht? Misschien is je betaling nog niet
-        afgerond. Met de knop hieronder rond je hem alsnog af — er is nog
-        niets van je rekening afgeschreven. Heb je wel betaald, dan
-        verschijnt de bevestiging hier vanzelf.
+        We hebben nog geen geslaagde betaling ontvangen. Is je betaling
+        mislukt of heb je hem afgebroken? Dan is er niets van je rekening
+        afgeschreven en kun je hieronder opnieuw betalen. Heb je wel betaald,
+        dan verschijnt de bevestiging hier vanzelf.
       </p>
 
       {/* B7 (testrapport 22-11-2026): knop om een afgebroken betaling
