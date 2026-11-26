@@ -2,6 +2,8 @@ import { ConfiguratorProvider } from "@/lib/configuration/ConfiguratorContext";
 import { FontPreviewProvider } from "@/lib/configuration/FontPreviewContext";
 import { PricingDataProvider } from "@/lib/configuration/PricingDataContext";
 import { TopBarActionProvider } from "@/lib/configuration/TopBarActionContext";
+import { ShopTextsProvider } from "@/lib/configuration/ShopTextsContext";
+import { getExpectedDeliveryText } from "@/lib/shop-texts";
 import { getLivePricingData } from "@/lib/configuration/livePricing";
 import { ProgressIndicator } from "@/components/configurator/ProgressIndicator";
 import { ProductPreview } from "@/components/configurator/ProductPreview";
@@ -17,10 +19,15 @@ export default async function ConfiguratorLayout({
   // online prijsbeheeromgeving (met automatische terugval op de vaste
   // reservekopie als dat niet lukt) — zie lib/configuration/livePricing.ts.
   const pricingData = await getLivePricingData();
+  // Verwachte levertijd voor de controlestap (26-11-2026): dezelfde zin als
+  // in de bevestigingsmail. getExpectedDeliveryText valt zelf terug op de
+  // standaardtekst als de database niet bereikbaar is.
+  const expectedDeliveryText = await getExpectedDeliveryText();
 
   return (
     <ConfiguratorProvider>
       <PricingDataProvider data={pricingData}>
+        <ShopTextsProvider expectedDeliveryText={expectedDeliveryText}>
         <FontPreviewProvider>
         <TopBarActionProvider>
           <div className="relative min-h-screen">
@@ -83,6 +90,7 @@ export default async function ConfiguratorLayout({
           </div>
         </TopBarActionProvider>
         </FontPreviewProvider>
+        </ShopTextsProvider>
       </PricingDataProvider>
     </ConfiguratorProvider>
   );

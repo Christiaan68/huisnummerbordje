@@ -3,6 +3,7 @@
 import { useConfigurator } from "@/lib/configuration/ConfiguratorContext";
 import { usePricingData } from "@/lib/configuration/PricingDataContext";
 import { buildPriceLines, productPriceCents, type PriceLine } from "@/lib/configuration/priceLines";
+import { useShopTexts } from "@/lib/configuration/ShopTextsContext";
 import {
   productShapes,
   productColors,
@@ -34,6 +35,19 @@ function PriceLineRows({ lines, total }: { lines: PriceLine[]; total: number }) 
   );
 }
 
+// Verwachte levertijd (26-11-2026, op verzoek van Christiaan): dezelfde zin
+// als in de bevestigingsmail aan de klant, onder het overzicht.
+function DeliveryNote() {
+  const { expectedDeliveryText } = useShopTexts();
+  if (!expectedDeliveryText) return null;
+  return (
+    <div className="mt-4 rounded-sm border border-border/60 bg-card px-4 py-3 text-sm">
+      <p className="font-medium text-foreground">Verwachte levertijd</p>
+      <p className="mt-1 text-muted-foreground">{expectedDeliveryText}</p>
+    </div>
+  );
+}
+
 export function ConfigurationSummary() {
   const { selection } = useConfigurator();
   const pricingData = usePricingData();
@@ -55,6 +69,7 @@ export function ConfigurationSummary() {
     const plateColor = earsColors.find((c) => c.id === selection.plateColorId);
 
     return (
+      <>
       <dl>
         <Row label="Vorm" value={shape?.name ?? "—"} />
         <Row label="Maat" value={size?.name ?? "—"} />
@@ -74,6 +89,8 @@ export function ConfigurationSummary() {
           value={price ? formatPriceCents(price.totalCents) : "Prijs op aanvraag"}
         />
       </dl>
+      <DeliveryNote />
+      </>
     );
   }
 
@@ -90,6 +107,7 @@ export function ConfigurationSummary() {
   const hasLine2 = (shape?.extraLines ?? 0) >= 2;
 
   return (
+    <>
     <dl>
       <Row label="Vorm" value={shape?.name ?? "—"} />
       <Row
@@ -138,5 +156,7 @@ export function ConfigurationSummary() {
         value={price ? formatPriceCents(price.totalCents) : "Prijs op aanvraag"}
       />
     </dl>
+    <DeliveryNote />
+    </>
   );
 }

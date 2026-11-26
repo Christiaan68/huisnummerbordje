@@ -1,3 +1,4 @@
+import { colorLabel } from "@/lib/email/colorLabels";
 import { createResendClient } from "@/lib/email/resend";
 import { getSenderFrom, getCustomerReplyTo } from "@/lib/email/senders";
 import { resolveNotificationFromAddress } from "@/lib/email/isValidEmailFormat";
@@ -67,6 +68,13 @@ export interface SendOrderEmailsInput {
   // toelichting bij colorName hierboven.
   earColorName?: string;
   plateColorName?: string;
+  // Kleur-id's (toegevoegd 26-11-2026) — voor de kleurnaam in de taal van
+  // de mail plus de RAL-code, zie lib/email/colorLabels.ts. Ontbreekt een id,
+  // dan wordt de naam hierboven gebruikt.
+  colorId?: string | null;
+  printColorId?: string | null;
+  earColorId?: string | null;
+  plateColorId?: string | null;
   colorHex: string;
   // printColorHex: het beeld-tegenhanger van printColorName hierboven —
   // nodig om de tekstkleur (huisnummer + tekstregels) in de
@@ -249,10 +257,10 @@ export async function sendOrderEmails(
       shapeName: input.shape.name,
       shapeId: input.shape.id,
       finish: input.finish,
-      colorName: input.colorName,
-      printColorName: input.printColorName,
-      earColorName: input.earColorName,
-      plateColorName: input.plateColorName,
+      colorName: colorLabel(input.colorId, input.emailLanguage, input.colorName),
+      printColorName: colorLabel(input.printColorId, input.emailLanguage, input.printColorName),
+      earColorName: colorLabel(input.earColorId, input.emailLanguage, input.earColorName),
+      plateColorName: colorLabel(input.plateColorId, input.emailLanguage, input.plateColorName),
       sizeName: input.sizeName,
       customText: input.customText,
       extraLine1: input.extraLine1 ?? undefined,
@@ -326,10 +334,10 @@ export async function sendOrderEmails(
       contactName: input.contact.name,
       shapeName: input.shape.name,
       finish: input.finish,
-      colorName: input.colorName,
-      printColorName: input.printColorName,
-      earColorName: input.earColorName,
-      plateColorName: input.plateColorName,
+      colorName: colorLabel(input.colorId, "nl", input.colorName),
+      printColorName: colorLabel(input.printColorId, "nl", input.printColorName),
+      earColorName: colorLabel(input.earColorId, "nl", input.earColorName),
+      plateColorName: colorLabel(input.plateColorId, "nl", input.plateColorName),
       sizeName: input.sizeName,
       customText: input.customText,
       extraLine1: input.extraLine1 ?? undefined,
