@@ -20,7 +20,7 @@ import { getPool } from "@/lib/mysql/client";
 export const DEFAULT_DELIVERY_WEEKS = "4 tot 6";
 
 export function expectedDeliverySentence(weeks: string): string {
-  return `Vanwege maatwerk houden we een levertermijn van maximaal ${weeks} weken na het plaatsen van je bestelling aan.`;
+  return `Vanwege maatwerk houden we een levertermijn van ${weeks} weken na het plaatsen van je bestelling aan.`;
 }
 
 /** Alleen het aantal weken, bv. "4 tot 6" (ook voor het FAQ-token {{levertijd-weken}}). */

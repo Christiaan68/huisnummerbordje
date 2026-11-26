@@ -11,6 +11,7 @@ import {
   productSizes as staticProductSizes,
 } from "@/config/product-options";
 import { isEarsShape, getEarsColorOptions } from "@/lib/configuration/shape-helpers";
+import { colorWithRal } from "@/lib/configuration/colorWithRal";
 import { computeAutoFit, visualCharCount } from "@/lib/configuration/text-fit";
 import { calculatePrice, formatPriceCents } from "@/lib/configuration/pricing";
 import { buildPriceLines, productPriceCents } from "@/lib/configuration/priceLines";
@@ -773,22 +774,22 @@ export function ProductPreview() {
             <>
               <div className="flex justify-between border-b border-border/60 pb-1.5">
                 <dt className="text-muted-foreground">Ondergrond kleur</dt>
-                <dd className="text-foreground">{plateColor?.name ?? "—"}</dd>
+                <dd className="text-foreground">{colorWithRal(plateColor)}</dd>
               </div>
               <div className="flex justify-between border-b border-border/60 pb-1.5">
                 <dt className="text-muted-foreground">Opdruk kleur</dt>
-                <dd className="text-foreground">{earColor?.name ?? "—"}</dd>
+                <dd className="text-foreground">{colorWithRal(earColor)}</dd>
               </div>
             </>
           ) : (
             <>
               <div className="flex justify-between border-b border-border/60 pb-1.5">
                 <dt className="text-muted-foreground">Ondergrond kleur</dt>
-                <dd className="text-foreground">{color?.name ?? "—"}</dd>
+                <dd className="text-foreground">{colorWithRal(color)}</dd>
               </div>
               <div className="flex justify-between border-b border-border/60 pb-1.5">
                 <dt className="text-muted-foreground">Opdruk kleur</dt>
-                <dd className="text-foreground">{printColor?.name ?? "—"}</dd>
+                <dd className="text-foreground">{colorWithRal(printColor)}</dd>
               </div>
             </>
           )}

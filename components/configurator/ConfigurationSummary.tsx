@@ -12,6 +12,7 @@ import {
 import { getEarsColorOptions, isEarsShape } from "@/lib/configuration/shape-helpers";
 import { calculatePrice, formatPriceCents } from "@/lib/configuration/pricing";
 import { buildOrderLabel } from "@/lib/configuration/orderLabel";
+import { colorWithRal } from "@/lib/configuration/colorWithRal";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -73,8 +74,8 @@ export function ConfigurationSummary() {
       <dl>
         <Row label="Vorm" value={shape?.name ?? "—"} />
         <Row label="Maat" value={size?.name ?? "—"} />
-        <Row label="Ondergrond kleur" value={plateColor?.name ?? "—"} />
-        <Row label="Opdruk kleur" value={earColor?.name ?? "—"} />
+        <Row label="Ondergrond kleur" value={colorWithRal(plateColor)} />
+        <Row label="Opdruk kleur" value={colorWithRal(earColor)} />
         <Row label="Huisnummer" value={selection.customText || "—"} />
         {orderLabel && <Row label="Volgorde" value={orderLabel} />}
         {price && <PriceLineRows lines={buildPriceLines(price, true)} total={productPriceCents(price)} />}
@@ -120,8 +121,8 @@ export function ConfigurationSummary() {
               : "—"
         }
       />
-      <Row label="Ondergrond kleur" value={color?.name ?? "—"} />
-      <Row label="Opdruk kleur" value={printColor?.name ?? "—"} />
+      <Row label="Ondergrond kleur" value={colorWithRal(color)} />
+      <Row label="Opdruk kleur" value={colorWithRal(printColor)} />
       <Row label="Maat" value={size?.name ?? "—"} />
       <Row label="Huisnummer" value={selection.customText || "—"} />
       <Row label="Lettertype huisnummer" value={numberFont?.name ?? "—"} />
